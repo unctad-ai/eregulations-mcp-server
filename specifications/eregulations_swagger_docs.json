@@ -1,0 +1,3945 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "v1",
+    "title": "eRegulations API"
+  },
+  "host": "api-tanzania.tradeportal.org",
+  "schemes": [
+    "https"
+  ],
+  "paths": {
+    "/Categories": {
+      "get": {
+        "tags": [
+          "Category"
+        ],
+        "summary": "Get the full list of categories",
+        "description": "Get all the categories saved in the instance configuration.",
+        "operationId": "Category_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of bottom menus",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CategoryModel"
+              }
+            }
+          },
+          "404": {
+            "description": "The homepage configuration file was not found"
+          },
+          "400": {
+            "description": "There is no bottom menu configured"
+          }
+        }
+      }
+    },
+    "/Contacts": {
+      "get": {
+        "tags": [
+          "Contact"
+        ],
+        "summary": "Get the list of contacts",
+        "description": "Get all the contacts registered in the system.",
+        "operationId": "Contact_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of entities in charge",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ContactBaseModel"
+              }
+            }
+          },
+          "400": {
+            "description": "There is a problem retrieving the entities in charge"
+          }
+        }
+      }
+    },
+    "/Contacts/{id}": {
+      "get": {
+        "tags": [
+          "Contact"
+        ],
+        "summary": "Get a contact object",
+        "description": "Get the contact that match with the given id.",
+        "operationId": "Contact_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the contact",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full data of a entity in charge",
+            "schema": {
+              "$ref": "#/definitions/DetailedContactModel"
+            }
+          },
+          "404": {
+            "description": "The desired entity in charge was not found"
+          }
+        }
+      }
+    },
+    "/Country": {
+      "get": {
+        "tags": [
+          "Country"
+        ],
+        "summary": "Get all the service links",
+        "description": "Get all the service links applied to the configured country",
+        "operationId": "Country_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of the endpoints in the API",
+            "schema": {
+              "$ref": "#/definitions/BaseLinkableModel"
+            }
+          }
+        }
+      }
+    },
+    "/Country/Details": {
+      "get": {
+        "tags": [
+          "Country"
+        ],
+        "summary": "Get the country details",
+        "description": "Get all the details of the configured country. Name, currecy, languages, etc.",
+        "operationId": "Country_Details",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "Parameters configured for the application instance",
+            "schema": {
+              "$ref": "#/definitions/CountryModel"
+            }
+          }
+        }
+      }
+    },
+    "/Country/About": {
+      "get": {
+        "tags": [
+          "Country"
+        ],
+        "summary": "Get our description and team members",
+        "description": "Get the whole description, images, and team members of the current instance.",
+        "operationId": "Country_AboutUs",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "Team description, images, and a list with the current staff",
+            "schema": {
+              "$ref": "#/definitions/TeamModel"
+            }
+          },
+          "404": {
+            "description": "The homepage configuration file was not found"
+          }
+        }
+      }
+    },
+    "/Country/Contact": {
+      "get": {
+        "tags": [
+          "Country"
+        ],
+        "summary": "Get the contact us information",
+        "description": "Get the contact data of the system. The email, th phone, and the addreess of the current instance.",
+        "operationId": "Country_ContactUs",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "The instance contact. Phone, email, and address",
+            "schema": {
+              "$ref": "#/definitions/SiteContactInformation"
+            }
+          },
+          "400": {
+            "description": "There are no contact information configured"
+          },
+          "404": {
+            "description": "There homepage configuration file was not found"
+          }
+        }
+      }
+    },
+    "/Country/Data": {
+      "get": {
+        "tags": [
+          "Country"
+        ],
+        "summary": "Get the country's statistic data",
+        "description": "Get the computed statistics of the configured country.\r\nAmount of procedures, published procedures, certified procedures, amount of steps,\r\namount of laws, documents and people.",
+        "operationId": "Country_Data",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "Computed statistic data for the application instance",
+            "schema": {
+              "$ref": "#/definitions/CountryDataItemModel"
+            }
+          },
+          "400": {
+            "description": "There is a problem fetching the regulation tree"
+          }
+        }
+      }
+    },
+    "/Country/Progress/{id}": {
+      "get": {
+        "tags": [
+          "Country"
+        ],
+        "summary": "Get the statistic progress of a procedure",
+        "description": "Get the computed statistics progress of the given procedure.\r\nAmount of steps, certified steps, statuses of steps, opened tickets, and archived tickets.",
+        "operationId": "Country_Progress",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Computed statistic progress for the given procedure",
+            "schema": {
+              "$ref": "#/definitions/CountryProgressItemModel"
+            }
+          },
+          "400": {
+            "description": "There is a problem retrieving the desired step"
+          },
+          "404": {
+            "description": "The progress information was not found"
+          }
+        }
+      }
+    },
+    "/CountryParameters": {
+      "get": {
+        "tags": [
+          "CountryParameters"
+        ],
+        "operationId": "CountryParameters_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/DocumentCosts/{id}": {
+      "get": {
+        "tags": [
+          "DocumentCost"
+        ],
+        "operationId": "DocumentCost_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/Filters": {
+      "get": {
+        "tags": [
+          "Filter"
+        ],
+        "summary": "Get the list of filters",
+        "description": "Get all the filters registered in the system.",
+        "operationId": "Filter_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of the filters",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/FilterModel"
+              }
+            }
+          },
+          "400": {
+            "description": "There is a problem retrieving the filters"
+          }
+        }
+      }
+    },
+    "/Filters/{id}": {
+      "get": {
+        "tags": [
+          "Filter"
+        ],
+        "summary": "Get a filter object",
+        "description": "Get the filter that match with the given id. Filter comes with its options.",
+        "operationId": "Filter_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the filter",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired filter with its options",
+            "schema": {
+              "$ref": "#/definitions/DetailedFilterModel"
+            }
+          },
+          "404": {
+            "description": "The filter was not found"
+          }
+        }
+      }
+    },
+    "/Filters/{id}/Options": {
+      "get": {
+        "tags": [
+          "Filter"
+        ],
+        "summary": "Get a list of options",
+        "description": "Get options that belongs to the filter that match with the given id.",
+        "operationId": "Filter_GetOptions",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the filter",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of filter options of the desired filter",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BaseModel"
+              }
+            }
+          },
+          "404": {
+            "description": "The filter was not found"
+          }
+        }
+      }
+    },
+    "/Filters/Tabs": {
+      "get": {
+        "tags": [
+          "Filter"
+        ],
+        "summary": "Get a list of filter tabs",
+        "description": "Get the collection of filters tabs.",
+        "operationId": "Filter_Sets",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of filter tabs with its filters",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/FilterSetModel"
+              }
+            }
+          },
+          "400": {
+            "description": "There is no filter tabs configured"
+          },
+          "404": {
+            "description": "The homepage configuration file was not found"
+          }
+        }
+      }
+    },
+    "/Filters/{id}/Tabs": {
+      "get": {
+        "tags": [
+          "Filter"
+        ],
+        "summary": "Get a filter tab",
+        "description": "Get the desired filter tab that match with the given id.",
+        "operationId": "Filter_GetFilterSet",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the filter tab",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired filter tab with its filters",
+            "schema": {
+              "$ref": "#/definitions/FilterSetModel"
+            }
+          },
+          "400": {
+            "description": "There is no filter tabs configured"
+          },
+          "404": {
+            "description": "The homepage configuration file was not found"
+          }
+        }
+      }
+    },
+    "/Forms": {
+      "get": {
+        "tags": [
+          "Form"
+        ],
+        "summary": "Get the list of forms",
+        "description": "Get all the form documents registered in the system.",
+        "operationId": "Form_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of form documents",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RequirementBaseModel"
+              }
+            }
+          },
+          "400": {
+            "description": "There is a problem retrieving the forms"
+          }
+        }
+      }
+    },
+    "/Forms/{id}": {
+      "get": {
+        "tags": [
+          "Form"
+        ],
+        "summary": "Get a form object",
+        "description": "Get the form document that match with the given id.",
+        "operationId": "Form_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the form",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired form document",
+            "schema": {
+              "$ref": "#/definitions/RequirementModel"
+            }
+          },
+          "404": {
+            "description": "The form document was not found"
+          }
+        }
+      }
+    },
+    "/Laws": {
+      "get": {
+        "tags": [
+          "Law"
+        ],
+        "summary": "Get the list of laws",
+        "description": "Get all the laws documents registered in the system.",
+        "operationId": "Law_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of laws documents",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GenericDocumentBaseModel"
+              }
+            }
+          },
+          "400": {
+            "description": "There is a problem retrieving the laws"
+          }
+        }
+      }
+    },
+    "/Laws/{id}": {
+      "get": {
+        "tags": [
+          "Law"
+        ],
+        "summary": "Get a law object",
+        "description": "Get the law document that match with the given id.",
+        "operationId": "Law_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the law",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired law document",
+            "schema": {
+              "$ref": "#/definitions/GenericDocumentModel"
+            }
+          },
+          "404": {
+            "description": "The law document was not found"
+          }
+        }
+      }
+    },
+    "/Layouts": {
+      "get": {
+        "tags": [
+          "Layout"
+        ],
+        "summary": "Get the layout logos",
+        "description": "Get header logo and footer logo",
+        "operationId": "Layout_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "The URLs of the header logo and the footer logo",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/LayoutModel"
+              }
+            }
+          },
+          "404": {
+            "description": "The homepage config file was not found"
+          },
+          "400": {
+            "description": "There is no footer logo or header logo configured"
+          }
+        }
+      }
+    },
+    "/Layouts/Homepage": {
+      "get": {
+        "tags": [
+          "Layout"
+        ],
+        "summary": "Get the homepage information",
+        "description": "Get background image and the HTML content related to the homepage",
+        "operationId": "Layout_Homepage",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "The homepage background and info",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HomepageModel"
+              }
+            }
+          },
+          "404": {
+            "description": "The homepage config file was not found"
+          },
+          "400": {
+            "description": "There is no homepage background information configured"
+          }
+        }
+      }
+    },
+    "/Menus": {
+      "get": {
+        "tags": [
+          "Menu"
+        ],
+        "summary": "Get the menus tree",
+        "description": "Get the menus tree registered in the system.",
+        "operationId": "Menu_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "The menu tree",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/MenuBaseModel"
+              }
+            }
+          },
+          "400": {
+            "description": "There is a problem retrieving the menus"
+          }
+        }
+      }
+    },
+    "/Menus/{id}": {
+      "get": {
+        "tags": [
+          "Menu"
+        ],
+        "summary": "Get an objective with its children",
+        "description": "Get the objective that match with the given id, with its children.",
+        "operationId": "Menu_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the objective",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The objective related to the menu item",
+            "schema": {
+              "$ref": "#/definitions/ObjectiveBaseModel"
+            }
+          },
+          "404": {
+            "description": "The menu item was not found"
+          }
+        }
+      }
+    },
+    "/Objectives": {
+      "get": {
+        "tags": [
+          "Objective"
+        ],
+        "summary": "Get the objectives tree",
+        "description": "Get the objectives tree registered in the system.",
+        "operationId": "Objective_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "The tree of objectives",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ObjectiveBaseModel"
+              }
+            }
+          },
+          "400": {
+            "description": "There is a problem retrieving the objectives"
+          }
+        }
+      }
+    },
+    "/Objectives/{id}": {
+      "get": {
+        "tags": [
+          "Objective"
+        ],
+        "summary": "Get an objective with its children",
+        "description": "Get the objective that match with the given id, with its children.",
+        "operationId": "Objective_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the objective",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired objective object",
+            "schema": {
+              "$ref": "#/definitions/ObjectiveBaseModel"
+            }
+          },
+          "404": {
+            "description": "The objective was not found"
+          }
+        }
+      }
+    },
+    "/Objectives/Filters": {
+      "get": {
+        "tags": [
+          "Objective"
+        ],
+        "summary": "Get the filters and objectives combined",
+        "description": "Get the list of filers combined with the objectives.",
+        "operationId": "Objective_GetFilters",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of combined filters",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/KeyValuePair[Int32,Int32]"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "There are not filters combined with the objective"
+          }
+        }
+      }
+    },
+    "/Objectives/SearchByFilters": {
+      "post": {
+        "tags": [
+          "Objective"
+        ],
+        "summary": "Search by filters",
+        "description": "Get the procedures that match filter combination",
+        "operationId": "Objective_SearchByFilters",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "application/x-www-form-urlencoded",
+          "text/html"
+        ],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "appliedFilters",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/KeyValuePair[Int32,Int32]"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tree with the search results",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DrillObjective"
+              }
+            }
+          },
+          "400": {
+            "description": "The applied filters were not passed"
+          },
+          "404": {
+            "description": "The is no results that match the applied filters"
+          }
+        }
+      }
+    },
+    "/People": {
+      "get": {
+        "tags": [
+          "Person"
+        ],
+        "summary": "Get the list of people in charge",
+        "description": "Get all the people in charge registered in the system.",
+        "operationId": "Person_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of people in charge",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PersonBaseModel"
+              }
+            }
+          },
+          "400": {
+            "description": "There is a problem retrieving the people in charge"
+          }
+        }
+      }
+    },
+    "/People/{id}": {
+      "get": {
+        "tags": [
+          "Person"
+        ],
+        "summary": "Get a person in charge object",
+        "description": "Get the person in charge that match with the given id.",
+        "operationId": "Person_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the person",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired person in charge",
+            "schema": {
+              "$ref": "#/definitions/DetailedPersonModel"
+            }
+          },
+          "404": {
+            "description": "The person in charge was not found"
+          }
+        }
+      }
+    },
+    "/Procedures/{id}": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get a procedure",
+        "description": "Get the complete information of the procedure that match with the given id.",
+        "operationId": "Procedure_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired procedure object",
+            "schema": {
+              "$ref": "#/definitions/ProcedureModel"
+            }
+          },
+          "404": {
+            "description": "The procedure was not found"
+          }
+        }
+      }
+    },
+    "/Procedures/{id}/Totals": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get a procedure totals",
+        "description": "Get the totals of the procedure that match with the given id.",
+        "operationId": "Procedure_GetResumeTotals",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired total object",
+            "schema": {
+              "$ref": "#/definitions/ResumeTotalModel"
+            }
+          },
+          "404": {
+            "description": "The procedure was not found"
+          }
+        }
+      }
+    },
+    "/Procedures/{id}/Resume": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get a procedure resume",
+        "description": "Get the resume information of the procedure that match with the given id.",
+        "operationId": "Procedure_GetResume",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired resume object",
+            "schema": {
+              "$ref": "#/definitions/ResumeModel"
+            }
+          },
+          "404": {
+            "description": "The procedure was not found"
+          }
+        }
+      }
+    },
+    "/Procedures/{id}/ResumeDetail": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get a detailed procedure resume",
+        "description": "Get the detailed resume information of the procedure that match with the given id.",
+        "operationId": "Procedure_GetResumeDetail",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A detailed resume object",
+            "schema": {
+              "$ref": "#/definitions/ResumeDetailModel"
+            }
+          },
+          "404": {
+            "description": "The procudure was not found"
+          }
+        }
+      }
+    },
+    "/Procedures/{id}/ABC": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get a procedure ABC",
+        "description": "Get the Administrative Burden Calculation of the procedure that match with the given id.",
+        "operationId": "Procedure_Abc",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired administrative burden object",
+            "schema": {
+              "$ref": "#/definitions/AdminBurdenInPersonModel"
+            }
+          },
+          "404": {
+            "description": "The procedure was not found"
+          }
+        }
+      }
+    },
+    "/Procedures/{id}/ABC/Levels": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get the staff levels of the step list",
+        "description": "Get the staff levels of the step list for the procedure that match with the given id.",
+        "operationId": "Procedure_GetStaffLevels",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired staff levels",
+            "schema": {
+              "$ref": "#/definitions/StepWithLevelModel"
+            }
+          },
+          "404": {
+            "description": "The procedure was not found"
+          }
+        }
+      }
+    },
+    "/Procedures/{id}/ABC/Zones": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get the zones of the institution list",
+        "description": "Get the zones of the institution list for the procedure that match with the given id.",
+        "operationId": "Procedure_GetInstitutionZones",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired zones",
+            "schema": {
+              "$ref": "#/definitions/StepWithLevelModel"
+            }
+          },
+          "404": {
+            "description": "The procedure was not found"
+          }
+        }
+      }
+    },
+    "/Procedures/{id}/ABC/Requirements": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get the requirements total costs",
+        "description": "Get the requirements total costs for the procedure that match with the given id.",
+        "operationId": "Procedure_GetRequirementCosts",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired total cost",
+            "schema": {
+              "$ref": "#/definitions/RequirementCostModel"
+            }
+          },
+          "404": {
+            "description": "The procedure was not found"
+          }
+        }
+      }
+    },
+    "/Procedures/{id}/ABC/Full": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get the detailed ABC",
+        "description": "Get the detailed for the procedure that match with the given id.",
+        "operationId": "Procedure_GetFullAbc",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The detailed ABC",
+            "schema": {
+              "$ref": "#/definitions/AbcDetailedModel"
+            }
+          },
+          "404": {
+            "description": "The procedure was not found"
+          }
+        }
+      }
+    },
+    "/Procedures/{procedureId}/{menuId}": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get a procedure associated to a menu",
+        "description": "Get the complete information of the procedure that match with the given procedure id,\r\nand associated with the given menu id.",
+        "operationId": "Procedure_GetWithMenu",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "procedureId",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "menuId",
+            "in": "path",
+            "description": "ID of the menu",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ProcedureModel"
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/Procedures/{procedureId}/{menuId}/Resume": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get a detailed procedure resume associated with a menu",
+        "description": "Get the detailed resume information of the procedure that match with the given procedure id,\r\nand associated with the given menu id.",
+        "operationId": "Procedure_GetResumeWithMenu",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "procedureId",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "menuId",
+            "in": "path",
+            "description": "ID of the menu",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ResumeModel"
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/Procedures/{procedureId}/Steps/{stepId}": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get a step associated to a procedure",
+        "description": "Get the complete information of the step that match with the given step id,\r\nand associated with the given procedure id.",
+        "operationId": "Procedure_GetStep",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "procedureId",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "stepId",
+            "in": "path",
+            "description": "ID of the step",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired step object",
+            "schema": {
+              "$ref": "#/definitions/StepModel"
+            }
+          },
+          "404": {
+            "description": "The step was not found in the selected procedure"
+          }
+        }
+      }
+    },
+    "/Procedures/{procedureId}/{menuId}/Steps/{stepId}": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get a step associated to a procedure and a menu",
+        "description": "Get the complete information of the step that match with the given step id,\r\nand associated with the given procedure id. This procedure is associated also\r\nwith the given menu id.",
+        "operationId": "Procedure_GetStepWithMenu",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "procedureId",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "menuId",
+            "in": "path",
+            "description": "ID of the menu",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "stepId",
+            "in": "path",
+            "description": "ID of the step",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/StepModel"
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/Procedures/{procedureId}/Steps/{stepId}/ABC": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get the ABC of a step associated to a procedure",
+        "description": "Get the administrative burden calculation of the step that match with the given step id,\r\nand associated with the given procedure id.",
+        "operationId": "Procedure_GetStepAbcTable",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "procedureId",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "stepId",
+            "in": "path",
+            "description": "ID of the step",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired ABC table",
+            "schema": {
+              "$ref": "#/definitions/AdminBurdenInPersonModel"
+            }
+          },
+          "400": {
+            "description": "The selected step is a internal one"
+          },
+          "404": {
+            "description": "The step was not found in the selected procedure"
+          }
+        }
+      }
+    },
+    "/Procedures/{procedureId}/Steps/{stepId}/ABC/Zone": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get the zone of the step contact",
+        "description": "Get the zone of the contact for the step that match with the given step id,\r\nand associated with the given procedure id.",
+        "operationId": "Procedure_GetStepContactZone",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "procedureId",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "stepId",
+            "in": "path",
+            "description": "ID of the step",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired zone object",
+            "schema": {
+              "$ref": "#/definitions/ZoneModel"
+            }
+          },
+          "400": {
+            "description": "The selected step is a internal one"
+          },
+          "401": {
+            "description": "The contact zone has no visibility"
+          },
+          "404": {
+            "description": "The step was not found in the selected procedure"
+          }
+        }
+      }
+    },
+    "/Procedures/{procedureId}/Steps/{stepId}/ABC/Requirements": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get the requirements total costs for a step",
+        "description": "Get the requirements total costs for the step that match with the given step id,\r\nand associated with the given procedure id.",
+        "operationId": "Procedure_GetStepRequirementCosts",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "procedureId",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "stepId",
+            "in": "path",
+            "description": "ID of the step",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of requirement costs",
+            "schema": {
+              "$ref": "#/definitions/RequirementCostModel"
+            }
+          },
+          "400": {
+            "description": "The selected step is a internal one"
+          },
+          "401": {
+            "description": "The requirements has no visibility"
+          },
+          "404": {
+            "description": "The step was not found in the selected procedure"
+          }
+        }
+      }
+    },
+    "/Procedures/{procedureId}/Steps/{stepId}/ABC/Full": {
+      "get": {
+        "tags": [
+          "Procedure"
+        ],
+        "summary": "Get the detailed ABC for a Step",
+        "description": "Get the detailed ABC for the step that match with the given step id,\r\nand associated with the given procedure id.",
+        "operationId": "Procedure_GetFullStepAbc",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "procedureId",
+            "in": "path",
+            "description": "ID of the procedure",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "stepId",
+            "in": "path",
+            "description": "ID of the step",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The detailed Step ABC object",
+            "schema": {
+              "$ref": "#/definitions/StepAbcDetailedModel"
+            }
+          },
+          "400": {
+            "description": "The selected step is a internal one"
+          },
+          "404": {
+            "description": "The step was not found in the selected procedure"
+          }
+        }
+      }
+    },
+    "/Units": {
+      "get": {
+        "tags": [
+          "Unit"
+        ],
+        "summary": "Get the list of units in charge",
+        "description": "Get all the units in charge registered in the system.",
+        "operationId": "Unit_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of units in charge",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/UnitBaseModel"
+              }
+            }
+          },
+          "400": {
+            "description": "There is a problem retrieving the units in charge"
+          }
+        }
+      }
+    },
+    "/Units/{id}": {
+      "get": {
+        "tags": [
+          "Unit"
+        ],
+        "summary": "Get a unit in charge object",
+        "description": "Get the unit in charge that match with the given id.",
+        "operationId": "Unit_Get",
+        "consumes": [],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the unit in charge",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The desired unit in charge",
+            "schema": {
+              "$ref": "#/definitions/DetailedUnitModel"
+            }
+          },
+          "404": {
+            "description": "The unit in charge was not found"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "CategoryModel": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "iconURL": {
+          "type": "string"
+        },
+        "procedures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubCategoryModel"
+          }
+        },
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "SubCategoryModel": {
+      "type": "object",
+      "properties": {
+        "isSeparator": {
+          "type": "boolean"
+        },
+        "isEndSeparator": {
+          "type": "boolean"
+        },
+        "url": {
+          "type": "string"
+        },
+        "announceAsNew": {
+          "type": "boolean"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "ContactBaseModel": {
+      "type": "object",
+      "properties": {
+        "city": {
+          "type": "string"
+        },
+        "zipCode": {
+          "type": "string"
+        },
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "DetailedContactModel": {
+      "type": "object",
+      "properties": {
+        "units": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UnitLinkableModel"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BaseLinkableModel"
+          }
+        },
+        "address": {
+          "type": "string"
+        },
+        "countryCode": {
+          "type": "string"
+        },
+        "googleMapsUrl": {
+          "type": "string"
+        },
+        "firstPhone": {
+          "type": "string"
+        },
+        "secondPhone": {
+          "type": "string"
+        },
+        "fisrtFax": {
+          "type": "string"
+        },
+        "secondFax": {
+          "type": "string"
+        },
+        "firstEmail": {
+          "type": "string"
+        },
+        "secondEmail": {
+          "type": "string"
+        },
+        "firstWebsite": {
+          "type": "string"
+        },
+        "secondWebsite": {
+          "type": "string"
+        },
+        "scheduleComments": {
+          "type": "string"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ScheduleModel"
+        },
+        "city": {
+          "type": "string"
+        },
+        "zipCode": {
+          "type": "string"
+        },
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "UnitLinkableModel": {
+      "type": "object",
+      "properties": {
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "BaseLinkableModel": {
+      "type": "object",
+      "properties": {
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "ScheduleModel": {
+      "type": "object",
+      "properties": {
+        "day1": {
+          "$ref": "#/definitions/ScheduleDayModel"
+        },
+        "day2": {
+          "$ref": "#/definitions/ScheduleDayModel"
+        },
+        "day3": {
+          "$ref": "#/definitions/ScheduleDayModel"
+        },
+        "day4": {
+          "$ref": "#/definitions/ScheduleDayModel"
+        },
+        "day5": {
+          "$ref": "#/definitions/ScheduleDayModel"
+        },
+        "day6": {
+          "$ref": "#/definitions/ScheduleDayModel"
+        },
+        "day7": {
+          "$ref": "#/definitions/ScheduleDayModel"
+        }
+      }
+    },
+    "LinkModel": {
+      "type": "object",
+      "properties": {
+        "href": {
+          "type": "string"
+        },
+        "rel": {
+          "type": "string"
+        }
+      }
+    },
+    "ScheduleDayModel": {
+      "type": "object",
+      "properties": {
+        "morningStart": {
+          "type": "string"
+        },
+        "morningEnd": {
+          "type": "string"
+        },
+        "eveningStart": {
+          "type": "string"
+        },
+        "eveningEnd": {
+          "type": "string"
+        },
+        "isClosed": {
+          "type": "boolean"
+        },
+        "isNotAvailable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "CountryModel": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "availableLangs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "thirdPartyList": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "TeamModel": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FileModel"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TeamMemberModel"
+          }
+        },
+        "authorities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TeamAuthorityModel"
+          }
+        }
+      }
+    },
+    "FileModel": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "TeamMemberModel": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "profession": {
+          "type": "string"
+        },
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "TeamAuthorityModel": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "profession": {
+          "type": "string"
+        },
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "SiteContactInformation": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        }
+      }
+    },
+    "CountryDataItemModel": {
+      "type": "object",
+      "properties": {
+        "procedures": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "publishedProcedures": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "certifiedProcedures": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "steps": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "documents": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "people": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "laws": {
+          "format": "int32",
+          "type": "integer"
+        }
+      }
+    },
+    "CountryProgressItemModel": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "certifiedSteps": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "statusA": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "statusB": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "statusC": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "statusD": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "openedTickets": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "archivedTickets": {
+          "format": "int32",
+          "type": "integer"
+        }
+      }
+    },
+    "FilterModel": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        },
+        "isInclusive": {
+          "type": "boolean"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "DetailedFilterModel": {
+      "type": "object",
+      "properties": {
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BaseModel"
+          }
+        },
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        },
+        "isInclusive": {
+          "type": "boolean"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "BaseModel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "FilterSetModel": {
+      "type": "object",
+      "properties": {
+        "presetFilters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PresetFilterModel"
+          }
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DetailedFilterModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "PresetFilterModel": {
+      "type": "object",
+      "properties": {
+        "filterId": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "filterOptionId": {
+          "format": "int32",
+          "type": "integer"
+        }
+      }
+    },
+    "RequirementBaseModel": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "RequirementModel": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BaseLinkableModel"
+          }
+        },
+        "type": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "GenericDocumentBaseModel": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FileModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "GenericDocumentModel": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BaseLinkableModel"
+          }
+        },
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FileModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "LayoutModel": {
+      "type": "object",
+      "properties": {
+        "headerLogos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "footerLogos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "HomepageModel": {
+      "type": "object",
+      "properties": {
+        "backgroundImage": {
+          "type": "string"
+        },
+        "htmlContent": {
+          "type": "string"
+        }
+      }
+    },
+    "MenuBaseModel": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "subMenus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MenuBaseModel"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "ObjectiveBaseModel": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "subMenus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ObjectiveBaseModel"
+          }
+        },
+        "icon": {
+          "$ref": "#/definitions/FileModel"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "KeyValuePair[Int32,Int32]": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "format": "int32",
+          "type": "integer",
+          "readOnly": true
+        },
+        "value": {
+          "format": "int32",
+          "type": "integer",
+          "readOnly": true
+        }
+      }
+    },
+    "DrillObjective": {
+      "type": "object",
+      "properties": {
+        "procedures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Procedure"
+          }
+        },
+        "filteredObjectives": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FilteredObjective"
+          }
+        }
+      }
+    },
+    "Procedure": {
+      "type": "object",
+      "properties": {
+        "childs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Procedure"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "explanatoryText": {
+          "type": "string"
+        },
+        "image1": {
+          "type": "string"
+        },
+        "image2": {
+          "type": "string"
+        },
+        "image3": {
+          "type": "string"
+        },
+        "isVisibleToGuests": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "string"
+        },
+        "isProcedure": {
+          "type": "boolean"
+        },
+        "appliedFilters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValuePair[Int32,List[Int32]]"
+          }
+        },
+        "childFilters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValuePair[Int32,AppliedFilter]"
+          },
+          "readOnly": true
+        },
+        "allFilters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValuePair[Int32,List[Int32]]"
+          },
+          "readOnly": true
+        }
+      }
+    },
+    "FilteredObjective": {
+      "type": "object",
+      "properties": {
+        "filterId": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValuePair[Int32,DrillObjective]"
+          }
+        }
+      }
+    },
+    "KeyValuePair[Int32,List[Int32]]": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "format": "int32",
+          "type": "integer",
+          "readOnly": true
+        },
+        "value": {
+          "type": "array",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "readOnly": true
+        }
+      }
+    },
+    "KeyValuePair[Int32,AppliedFilter]": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "format": "int32",
+          "type": "integer",
+          "readOnly": true
+        },
+        "value": {
+          "$ref": "#/definitions/AppliedFilter",
+          "readOnly": true
+        }
+      }
+    },
+    "KeyValuePair[Int32,DrillObjective]": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "format": "int32",
+          "type": "integer",
+          "readOnly": true
+        },
+        "value": {
+          "$ref": "#/definitions/DrillObjective",
+          "readOnly": true
+        }
+      }
+    },
+    "AppliedFilter": {
+      "type": "object",
+      "properties": {
+        "options": {
+          "type": "array",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "dependantFilter": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyValuePair[Int32,List[Int32]]"
+          }
+        }
+      }
+    },
+    "PersonBaseModel": {
+      "type": "object",
+      "properties": {
+        "profession": {
+          "type": "string"
+        },
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "DetailedPersonModel": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BaseLinkableModel"
+          }
+        },
+        "firstPhone": {
+          "type": "string"
+        },
+        "secondPhone": {
+          "type": "string"
+        },
+        "firstEmail": {
+          "type": "string"
+        },
+        "secondEmail": {
+          "type": "string"
+        },
+        "profession": {
+          "type": "string"
+        },
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "ProcedureModel": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "additionalInfo": {
+          "type": "string"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BlockModel"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "BlockModel": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StepModel"
+          }
+        },
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isOptional": {
+          "type": "boolean"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "StepModel": {
+      "type": "object",
+      "properties": {
+        "online": {
+          "$ref": "#/definitions/StepOnlineModel"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DetailedResultModel"
+          }
+        },
+        "contact": {
+          "$ref": "#/definitions/StepContactModel"
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DetailedRequirementModel"
+          }
+        },
+        "laws": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericDocumentBaseModel"
+          }
+        },
+        "recourses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RecourseModel"
+          }
+        },
+        "certification": {
+          "$ref": "#/definitions/CertificationModel"
+        },
+        "timeframe": {
+          "$ref": "#/definitions/TimeframeModel"
+        },
+        "costs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CostModel"
+          }
+        },
+        "additionalInfo": {
+          "$ref": "#/definitions/AdditionalInfoModel"
+        },
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "isOnline": {
+          "type": "boolean"
+        },
+        "isOptional": {
+          "type": "boolean"
+        },
+        "isCertified": {
+          "type": "boolean"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "StepOnlineModel": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "type": {
+          "format": "int32",
+          "type": "integer"
+        }
+      }
+    },
+    "DetailedResultModel": {
+      "type": "object",
+      "properties": {
+        "isFinalResult": {
+          "type": "boolean"
+        },
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "nbCopy": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "nbOriginal": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "nbAuthenticated": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "comments": {
+          "type": "string"
+        },
+        "filterType": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "filterOption": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "aggregateOperator": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "StepContactModel": {
+      "type": "object",
+      "properties": {
+        "entityInCharge": {
+          "$ref": "#/definitions/ContactModel"
+        },
+        "unitInCharge": {
+          "$ref": "#/definitions/UnitModel"
+        },
+        "personInCharge": {
+          "$ref": "#/definitions/PersonModel"
+        }
+      }
+    },
+    "DetailedRequirementModel": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "nbCopy": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "nbOriginal": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "nbAuthenticated": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "comments": {
+          "type": "string"
+        },
+        "filterType": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "filterOption": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "aggregateOperator": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "RecourseModel": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "isOnline": {
+          "type": "boolean"
+        },
+        "isOptional": {
+          "type": "boolean"
+        },
+        "entityInCharge": {
+          "$ref": "#/definitions/ContactModel"
+        },
+        "unitInCharge": {
+          "$ref": "#/definitions/UnitModel"
+        },
+        "personInCharge": {
+          "$ref": "#/definitions/PersonModel"
+        }
+      }
+    },
+    "CertificationModel": {
+      "type": "object",
+      "properties": {
+        "entityInCharge": {
+          "$ref": "#/definitions/ContactModel"
+        },
+        "date": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FileModel"
+          }
+        }
+      }
+    },
+    "TimeframeModel": {
+      "type": "object",
+      "properties": {
+        "comments": {
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FileModel"
+          }
+        },
+        "timeSpentAtTheCounter": {
+          "$ref": "#/definitions/TimeRangeModel"
+        },
+        "waitingTimeInLine": {
+          "$ref": "#/definitions/TimeRangeModel"
+        },
+        "waitingTimeUntilNextStep": {
+          "$ref": "#/definitions/DayModel"
+        }
+      }
+    },
+    "CostModel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "isSeparator": {
+          "type": "boolean"
+        },
+        "filterOption": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "aggregateOperator": {
+          "type": "string"
+        },
+        "value": {
+          "format": "double",
+          "type": "number"
+        },
+        "averageValue": {
+          "format": "double",
+          "type": "number"
+        },
+        "calculatedValue": {
+          "format": "double",
+          "type": "number"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "parameter": {
+          "type": "string"
+        },
+        "comments": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "averageValueComments": {
+          "type": "string"
+        },
+        "hypothesisLabel": {
+          "type": "string"
+        }
+      }
+    },
+    "AdditionalInfoModel": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FileModel"
+          }
+        }
+      }
+    },
+    "ContactModel": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "countryCode": {
+          "type": "string"
+        },
+        "googleMapsUrl": {
+          "type": "string"
+        },
+        "firstPhone": {
+          "type": "string"
+        },
+        "secondPhone": {
+          "type": "string"
+        },
+        "fisrtFax": {
+          "type": "string"
+        },
+        "secondFax": {
+          "type": "string"
+        },
+        "firstEmail": {
+          "type": "string"
+        },
+        "secondEmail": {
+          "type": "string"
+        },
+        "firstWebsite": {
+          "type": "string"
+        },
+        "secondWebsite": {
+          "type": "string"
+        },
+        "scheduleComments": {
+          "type": "string"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ScheduleModel"
+        },
+        "city": {
+          "type": "string"
+        },
+        "zipCode": {
+          "type": "string"
+        },
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "UnitModel": {
+      "type": "object",
+      "properties": {
+        "scheduleComments": {
+          "type": "string"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ScheduleModel"
+        },
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "PersonModel": {
+      "type": "object",
+      "properties": {
+        "firstPhone": {
+          "type": "string"
+        },
+        "secondPhone": {
+          "type": "string"
+        },
+        "firstEmail": {
+          "type": "string"
+        },
+        "secondEmail": {
+          "type": "string"
+        },
+        "profession": {
+          "type": "string"
+        },
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "TimeRangeModel": {
+      "type": "object",
+      "properties": {
+        "hours": {
+          "$ref": "#/definitions/RangeModel"
+        },
+        "minutes": {
+          "$ref": "#/definitions/RangeModel"
+        }
+      }
+    },
+    "DayModel": {
+      "type": "object",
+      "properties": {
+        "days": {
+          "$ref": "#/definitions/RangeModel"
+        }
+      }
+    },
+    "RangeModel": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "format": "double",
+          "type": "number"
+        },
+        "max": {
+          "format": "double",
+          "type": "number"
+        }
+      }
+    },
+    "ResumeTotalModel": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StepCompactModel"
+          }
+        },
+        "institutionCount": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "requirementCount": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "costs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TotalCostModel"
+          }
+        },
+        "abcCosts": {
+          "$ref": "#/definitions/TotalCostModel"
+        },
+        "timeframe": {
+          "$ref": "#/definitions/TotalCostModel"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        }
+      }
+    },
+    "StepCompactModel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "url": {
+          "type": "string"
+        },
+        "isOnline": {
+          "type": "boolean"
+        }
+      }
+    },
+    "TotalCostModel": {
+      "type": "object",
+      "properties": {
+        "cost": {
+          "format": "double",
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        }
+      }
+    },
+    "ResumeModel": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "institutions": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "results": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "requirements": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "laws": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "costs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TotalCostModel"
+          }
+        },
+        "timeframe": {
+          "$ref": "#/definitions/ResumeTimeframeModel"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "ResumeTimeframeModel": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "$ref": "#/definitions/RangeUnitModel"
+        },
+        "timeSpentAtTheCounter": {
+          "$ref": "#/definitions/TimeRangeModel"
+        },
+        "waitingTimeInLine": {
+          "$ref": "#/definitions/TimeRangeModel"
+        },
+        "waitingTimeUntilNextStep": {
+          "$ref": "#/definitions/DayModel"
+        }
+      }
+    },
+    "RangeUnitModel": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "type": "string"
+        },
+        "min": {
+          "format": "double",
+          "type": "number"
+        },
+        "max": {
+          "format": "double",
+          "type": "number"
+        }
+      }
+    },
+    "ResumeDetailModel": {
+      "type": "object",
+      "properties": {
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BlockResumeModel"
+          }
+        },
+        "institutions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContactBaseModel"
+          }
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DetailedResultModel"
+          }
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DetailedRequirementModel"
+          }
+        },
+        "laws": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericDocumentBaseModel"
+          }
+        },
+        "url": {
+          "type": "string"
+        },
+        "costs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TotalCostModel"
+          }
+        },
+        "timeframe": {
+          "$ref": "#/definitions/ResumeTimeframeModel"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "BlockResumeModel": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StepBaseModel"
+          }
+        },
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isOptional": {
+          "type": "boolean"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "StepBaseModel": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "isOnline": {
+          "type": "boolean"
+        },
+        "isOptional": {
+          "type": "boolean"
+        },
+        "isCertified": {
+          "type": "boolean"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "AdminBurdenInPersonModel": {
+      "type": "object",
+      "properties": {
+        "humanInPersonCost": {
+          "$ref": "#/definitions/InPersonCostModel"
+        },
+        "otherInPersonCost": {
+          "$ref": "#/definitions/InPersonCostModel"
+        },
+        "onlineCost": {
+          "format": "float",
+          "type": "number"
+        },
+        "humanPreparationCost": {
+          "$ref": "#/definitions/PreparationCostModel"
+        },
+        "otherPreparationCost": {
+          "$ref": "#/definitions/PreparationCostModel"
+        },
+        "numberOfUsers": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "printCost": {
+          "format": "float",
+          "type": "number"
+        },
+        "total": {
+          "format": "float",
+          "type": "number"
+        }
+      }
+    },
+    "InPersonCostModel": {
+      "type": "object",
+      "properties": {
+        "reachOffice": {
+          "format": "float",
+          "type": "number"
+        },
+        "waitingInLine": {
+          "format": "float",
+          "type": "number"
+        },
+        "spentTimeAtCounter": {
+          "format": "float",
+          "type": "number"
+        },
+        "returnFromOffice": {
+          "format": "float",
+          "type": "number"
+        }
+      }
+    },
+    "PreparationCostModel": {
+      "type": "object",
+      "properties": {
+        "understand": {
+          "format": "float",
+          "type": "number"
+        },
+        "gatherInfo": {
+          "format": "float",
+          "type": "number"
+        },
+        "fillForm": {
+          "format": "float",
+          "type": "number"
+        }
+      }
+    },
+    "StepWithLevelModel": {
+      "type": "object",
+      "properties": {
+        "stepId": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "staffLevel": {
+          "$ref": "#/definitions/StaffLevelModel"
+        }
+      }
+    },
+    "StaffLevelModel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "level": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "levelText": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "hourlyCost": {
+          "format": "float",
+          "type": "number"
+        }
+      }
+    },
+    "RequirementCostModel": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "total": {
+          "format": "float",
+          "type": "number"
+        }
+      }
+    },
+    "AbcDetailedModel": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StepWithLevelModel"
+          }
+        },
+        "institutions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InstitutionZoneModel"
+          }
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RequirementCostModel"
+          }
+        },
+        "adminBurdenTable": {
+          "$ref": "#/definitions/AdminBurdenInPersonModel"
+        }
+      }
+    },
+    "InstitutionZoneModel": {
+      "type": "object",
+      "properties": {
+        "contactId": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "zone": {
+          "$ref": "#/definitions/ZoneModel"
+        }
+      }
+    },
+    "ZoneModel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "time": {
+          "$ref": "#/definitions/TimeModel"
+        },
+        "price": {
+          "format": "float",
+          "type": "number"
+        }
+      }
+    },
+    "TimeModel": {
+      "type": "object",
+      "properties": {
+        "hour": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "minute": {
+          "format": "int32",
+          "type": "integer"
+        }
+      }
+    },
+    "StepAbcDetailedModel": {
+      "type": "object",
+      "properties": {
+        "zone": {
+          "$ref": "#/definitions/ZoneModel"
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RequirementCostModel"
+          }
+        },
+        "adminBurdenTable": {
+          "$ref": "#/definitions/AdminBurdenModel"
+        }
+      }
+    },
+    "AdminBurdenModel": {
+      "type": "object",
+      "properties": {
+        "humanPreparationCost": {
+          "$ref": "#/definitions/PreparationCostModel"
+        },
+        "otherPreparationCost": {
+          "$ref": "#/definitions/PreparationCostModel"
+        },
+        "numberOfUsers": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "printCost": {
+          "format": "float",
+          "type": "number"
+        },
+        "total": {
+          "format": "float",
+          "type": "number"
+        }
+      }
+    },
+    "UnitBaseModel": {
+      "type": "object",
+      "properties": {
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "DetailedUnitModel": {
+      "type": "object",
+      "properties": {
+        "people": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PersonLinkableModel"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BaseLinkableModel"
+          }
+        },
+        "scheduleComments": {
+          "type": "string"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ScheduleModel"
+        },
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "PersonLinkableModel": {
+      "type": "object",
+      "properties": {
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "profession": {
+          "type": "string"
+        },
+        "pictureUrl": {
+          "type": "string"
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
