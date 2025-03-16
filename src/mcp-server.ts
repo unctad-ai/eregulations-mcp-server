@@ -60,13 +60,16 @@ function formatProcedureForLLM(procedure: any): string {
   // Handle blocks section which contains the steps
   if (procedure.data?.blocks && procedure.data.blocks.length) {
     result += 'Steps:\n';
+    let stepNumber = 1; // Track step number for proper numbering
     procedure.data.blocks.forEach((block: any) => {
       if (block.steps && block.steps.length) {
-        block.steps.forEach((step: any, index: number) => {
-          result += `${index + 1}. ${step.name} (Step ID: ${step.id})\n`;
+        block.steps.forEach((step: any) => {
+          result += `${stepNumber++}. ${step.name} (Step ID: ${step.id})\n`;
           
+          // Check if step can be completed online
           if (step.isOnline) {
-            result += `   - Can be completed online\n`;
+            const onlineUrl = step.online?.url || step.data?.url || "";
+            result += `   - Can be completed online${onlineUrl ? ` at ${onlineUrl}` : ""}\n`;
           }
           
           if (step.contact?.entityInCharge) {
