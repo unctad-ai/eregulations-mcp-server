@@ -1,11 +1,61 @@
 import axios from 'axios';
 import { logger } from '../utils/logger.js';
+import { TTLCache } from '../utils/cache.js';
+
+/**
+ * Cache TTL constants in milliseconds
+ */
+const CACHE_TTL = {
+  PROCEDURES_LIST: 24 * 60 * 60 * 1000,
+  PROCEDURE_DETAILS: 8 * 60 * 60 * 1000,
+  PROCEDURE_COMPONENTS: 4 * 60 * 60 * 1000,
+  FILTERS: 24 * 60 * 60 * 1000,
+  SEARCH_RESULTS: 1 * 60 * 60 * 1000
+};
 
 export class ERegulationsApi {
   private baseUrl: string;
+  private cache: TTLCache;
+  private cacheEnabled: boolean;
 
-  constructor(baseUrl: string) {
+  constructor(baseUrl: string, cacheEnabled: boolean = true) {
     this.baseUrl = baseUrl;
+    this.cache = new TTLCache();
+    this.cacheEnabled = cacheEnabled;
+    
+    // Periodically clean expired cache entries every 30 minutes
+    if (cacheEnabled) {
+      setInterval(() => {
+        const removed = this.cache.cleanExpired();
+        if (removed > 0) {
+          logger.debug(`Cache cleanup: removed ${removed} expired items`);
+        }
+      }, 30 * 60 * 1000);
+    }
+  }
+
+  private async fetchWithCache<T>(cacheKey: string, fetchFn: () => Promise<T>, ttl: number): Promise<T> {
+    if (this.cacheEnabled) {
+      const cachedData = this.cache.get(cacheKey);
+      if (cachedData) {
+        logger.log(`Returning data for ${cacheKey} from cache`);
+        return cachedData;
+      }
+    }
+
+    try {
+      const data = await fetchFn();
+
+      if (this.cacheEnabled) {
+        this.cache.set(cacheKey, data, ttl);
+        logger.debug(`Cached data for ${cacheKey}`);
+      }
+
+      return data;
+    } catch (error) {
+      logger.error(`Error fetching data for ${cacheKey}:`, error);
+      throw error;
+    }
   }
 
   /**
@@ -54,7 +104,8 @@ export class ERegulationsApi {
    * Get a list of all procedures via the Objectives endpoint
    */
   async getProceduresList() {
-    try {
+    const cacheKey = 'procedures_list';
+    return this.fetchWithCache(cacheKey, async () => {
       logger.log('Fetching procedures from API...');
       const response = await axios.get(`${this.baseUrl}/Objectives`);
       let procedures: any[] = [];
@@ -84,10 +135,7 @@ export class ERegulationsApi {
       
       // Process all procedures recursively
       return this.extractAllProcedures(procedures);
-    } catch (error) {
-      logger.error('Error in getProceduresList:', error);
-      return [];
-    }
+    }, CACHE_TTL.PROCEDURES_LIST);
   }
 
   private async getUrlFromLinks(id: number, procedures?: any[]): Promise<string | null> {
@@ -124,7 +172,8 @@ export class ERegulationsApi {
    * Get detailed information about a specific procedure
    */
   async getProcedureById(id: number) {
-    try {
+    const cacheKey = `procedure_${id}`;
+    return this.fetchWithCache(cacheKey, async () => {
       logger.log(`Fetching procedure details for ID ${id}...`);
       
       // First try to get the correct URL from the procedure's links
@@ -146,7 +195,7 @@ export class ERegulationsApi {
       });
       
       // Add URL info to the response data
-      const enrichedData = {
+      return {
         ...response.data,
         _links: {
           self: url,
@@ -155,68 +204,38 @@ export class ERegulationsApi {
           abc: `${url}/ABC`
         }
       };
-
-      return enrichedData;
-    } catch (error: any) {
-      logger.error(`Error in getProcedureById(${id}):`, error);
-      logger.error('Full error details:', error.response?.data || error.message);
-      
-      if (error.response?.status === 404) {
-        throw new Error(`Procedure with ID ${id} not found. Please verify the procedure ID exists.`);
-      }
-      
-      if (error.response?.status === 403) {
-        throw new Error(`Access forbidden to procedure ${id}. This may require authentication.`);
-      }
-      
-      throw new Error(`Failed to fetch procedure details: ${error.message}`);
-    }
+    }, CACHE_TTL.PROCEDURE_DETAILS);
   }
 
   /**
    * Get a summary of a procedure (number of steps, institutions, requirements)
    */
   async getProcedureResume(id: number) {
-    try {
+    const cacheKey = `procedure_resume_${id}`;
+    return this.fetchWithCache(cacheKey, async () => {
       logger.log(`Fetching procedure resume for ID ${id}...`);
       const response = await axios.get(`${this.baseUrl}/Procedures/${id}/Resume`);
       return response.data;
-    } catch (error: any) {
-      logger.error(`Error in getProcedureResume(${id}):`, error);
-      
-      if (error.response?.status === 404) {
-        throw new Error(`Procedure resume not found for ID ${id}. Please verify the procedure ID exists.`);
-      }
-      
-      throw new Error(`Failed to fetch procedure resume: ${error.message}`);
-    }
+    }, CACHE_TTL.PROCEDURE_COMPONENTS);
   }
 
   /**
    * Get a detailed procedure resume
    */
   async getProcedureDetailedResume(id: number) {
-    try {
+    const cacheKey = `procedure_detailed_resume_${id}`;
+    return this.fetchWithCache(cacheKey, async () => {
       const response = await axios.get(`${this.baseUrl}/Procedures/${id}/ResumeDetail`);
       return response.data;
-    } catch (error) {
-      logger.error(`Error in getProcedureDetailedResume(${id}):`, error);
-      // Return basic mock data
-      return {
-        id: id,
-        steps: 3,
-        institutions: 2,
-        requirements: 5,
-        detailedInfo: "Mock detailed information"
-      };
-    }
+    }, CACHE_TTL.PROCEDURE_COMPONENTS);
   }
 
   /**
    * Get information about a specific step within a procedure
    */
   async getProcedureStep(procedureId: number, stepId: number) {
-    try {
+    const cacheKey = `procedure_${procedureId}_step_${stepId}`;
+    return this.fetchWithCache(cacheKey, async () => {
       logger.log(`Fetching step ${stepId} for procedure ${procedureId}...`);
       
       // First get the procedure to verify it exists and get its URL
@@ -247,76 +266,59 @@ export class ERegulationsApi {
       }
       
       throw new Error(`Step ${stepId} not found in procedure ${procedureId}`);
-    } catch (error: any) {
-      logger.error(`Error in getProcedureStep(${procedureId}, ${stepId}):`, error);
-      logger.error('Full error details:', error.response?.data || error.message);
-      throw error;
-    }
+    }, CACHE_TTL.PROCEDURE_COMPONENTS);
   }
 
   /**
    * Get procedure totals (costs and time)
    */
   async getProcedureTotals(id: number) {
-    try {
+    const cacheKey = `procedure_totals_${id}`;
+    return this.fetchWithCache(cacheKey, async () => {
       const response = await axios.get(`${this.baseUrl}/Procedures/${id}/Totals`);
       return response.data;
-    } catch (error) {
-      logger.error(`Error in getProcedureTotals(${id}):`, error);
-      // Return mock data
-      return {
-        id: id,
-        time: {
-          hours: 24,
-          days: 3
-        },
-        costs: {
-          total: 150,
-          currency: "USD"
-        }
-      };
-    }
+    }, CACHE_TTL.PROCEDURE_COMPONENTS);
   }
 
   /**
    * Get the administrative burden calculation of a procedure
    */
   async getProcedureABC(id: number) {
-    const response = await axios.get(`${this.baseUrl}/Procedures/${id}/ABC`);
-    return response.data;
+    const cacheKey = `procedure_abc_${id}`;
+    return this.fetchWithCache(cacheKey, async () => {
+      const response = await axios.get(`${this.baseUrl}/Procedures/${id}/ABC`);
+      return response.data;
+    }, CACHE_TTL.PROCEDURE_COMPONENTS);
   }
 
   /**
    * Get available filters
    */
   async getFilters() {
-    try {
+    const cacheKey = 'filters';
+    return this.fetchWithCache(cacheKey, async () => {
       const response = await axios.get(`${this.baseUrl}/Filters`);
       return response.data?.data || [];
-    } catch (error) {
-      logger.error('Error getting filters:', error);
-      return [];
-    }
+    }, CACHE_TTL.FILTERS);
   }
 
   /**
    * Get options for a specific filter
    */
   async getFilterOptions(filterId: number) {
-    try {
+    const cacheKey = `filter_options_${filterId}`;
+    return this.fetchWithCache(cacheKey, async () => {
       const response = await axios.get(`${this.baseUrl}/Filters/${filterId}/Options`);
       return response.data?.data || [];
-    } catch (error) {
-      logger.error(`Error getting options for filter ${filterId}:`, error);
-      return [];
-    }
+    }, CACHE_TTL.FILTERS);
   }
 
   /**
    * Search procedures by filters
    */
   async searchByFilters(filters: Array<{ filterId: number; filterOptionId: number }>) {
-    try {
+    const cacheKey = `search_filters_${JSON.stringify(filters)}`;
+    return this.fetchWithCache(cacheKey, async () => {
       const response = await axios.post(`${this.baseUrl}/Objectives/SearchByFilters`, filters);
       
       if (response.data?.exactMatchObjectives?.length > 0) {
@@ -326,17 +328,19 @@ export class ERegulationsApi {
         return response.data.filteredMatches;
       }
       return [];
-    } catch (error) {
-      logger.error('Error in searchByFilters:', error);
-      return [];
-    }
+    }, CACHE_TTL.SEARCH_RESULTS);
   }
 
   /**
    * Search procedures by name (client-side implementation)
    */
   async searchByName(query: string) {
-    try {
+    if (!query) {
+      return this.getProceduresList();
+    }
+    
+    const cacheKey = `search_name_${query.toLowerCase()}`;
+    return this.fetchWithCache(cacheKey, async () => {
       // Get all procedures and filter client-side
       const procedures = await this.getProceduresList();
       if (!Array.isArray(procedures)) {
@@ -349,9 +353,6 @@ export class ERegulationsApi {
         }
         return false;
       });
-    } catch (error) {
-      logger.error('Error in searchByName:', error);
-      return [];
-    }
+    }, CACHE_TTL.SEARCH_RESULTS);
   }
 }
