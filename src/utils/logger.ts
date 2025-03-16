@@ -19,25 +19,34 @@ export class Logger {
     }
     return Logger.instance;
   }
+
+  private getTimestamp(): string {
+    return new Date().toISOString();
+  }
   
   public log(...args: any[]): void {
     if (this.isVerbose) {
-      console.log(...args);
+      console.log(`[${this.getTimestamp()}]`, ...args);
     }
+  }
+
+  public info(...args: any[]): void {
+    // Info always logs regardless of environment for critical operational information
+    console.log(`[${this.getTimestamp()}][INFO]`, ...args);
   }
   
   public debug(...args: any[]): void {
     if (this.isDebug) {
-      console.debug(...args);
+      console.debug(`[${this.getTimestamp()}][DEBUG]`, ...args);
     }
   }
   
   public warn(...args: any[]): void {
-    console.warn(...args);
+    console.warn(`[${this.getTimestamp()}][WARN]`, ...args);
   }
   
   public error(...args: any[]): void {
-    console.error(...args);
+    console.error(`[${this.getTimestamp()}][ERROR]`, ...args);
   }
   
   public setVerbose(isVerbose: boolean): void {

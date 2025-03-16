@@ -24,7 +24,7 @@ app.use((req, res, next) => {
 
 // SSE endpoint
 app.get("/sse", async (req, res) => {
-  logger.log("Received SSE connection");
+  logger.info("Received SSE connection");
   
   try {
     // Create a new transport
@@ -36,7 +36,7 @@ app.get("/sse", async (req, res) => {
     // Store the transport using its session ID
     const sessionId = transport.sessionId;
     transports.set(sessionId, transport);
-    logger.log(`Created transport with session ID: ${sessionId}`);
+    logger.info(`New transport created with session ID: ${sessionId}`);
     logger.log("Connected to transport successfully");
     
     // Set up error handler
@@ -46,13 +46,13 @@ app.get("/sse", async (req, res) => {
     
     // Set up close handler
     transport.onclose = () => {
-      logger.log(`Closing transport for session ${sessionId}`);
+      logger.info(`Closing transport for session ${sessionId}`);
       transports.delete(sessionId);
     };
     
     // Handle connection close
     req.on('close', () => {
-      logger.log(`SSE connection closed for session ${sessionId}`);
+      logger.info(`SSE connection closed for session ${sessionId}`);
       transport.close().catch((err) => logger.error("Error closing transport:", err));
       transports.delete(sessionId);
     });
@@ -66,25 +66,25 @@ app.get("/sse", async (req, res) => {
 
 // Message endpoint for client to post messages to the server
 app.post("/message", async (req, res) => {
-  logger.log("Received message from client");
+  logger.info("Received message from client");
   
   // Get session ID from query parameter or header
   const sessionId = req.query.sessionId?.toString() || req.headers['x-session-id']?.toString();
   
   if (!sessionId) {
-    logger.log("No session ID provided");
+    logger.warn("No session ID provided");
     return res.status(400).json({ error: "No session ID provided" });
   }
   
   const transport = transports.get(sessionId);
   if (!transport) {
-    logger.log(`No transport found for session ${sessionId}`);
+    logger.warn(`No transport found for session ${sessionId}`);
     return res.status(404).json({ error: "No active connection for this session" });
   }
   
   try {
     await transport.handlePostMessage(req, res);
-    logger.log("Successfully handled post message");
+    logger.info("Successfully handled post message");
   } catch (error) {
     logger.error("Error handling post message:", error);
     if (!res.headersSent) {
@@ -103,12 +103,13 @@ app.get("/health", (req, res) => {
     activeSessions: transports.size,
     serverReady: !!server
   };
+  logger.info(`Health check: ${transports.size} active sessions`);
   res.status(200).json(status);
 });
 
 // Start the server
 const PORT = process.env.PORT || 7000;
 app.listen(PORT, () => {
-  logger.log(`eRegulations MCP server running on port ${PORT}`);
-  logger.log(`Connect via SSE at http://localhost:${PORT}/sse`);
+  logger.info(`eRegulations MCP server running on port ${PORT}`);
+  logger.info(`Connect via SSE at http://localhost:${PORT}/sse`);
 });
