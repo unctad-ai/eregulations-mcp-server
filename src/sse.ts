@@ -27,6 +27,12 @@ app.get("/sse", async (req, res) => {
   logger.info("Received SSE connection");
   
   try {
+    // Set headers for SSE response
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Cache-Control', 'no-cache');
+
     // Create a new transport
     const transport = new SSEServerTransport("/message", res);
     
