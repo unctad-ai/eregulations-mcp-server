@@ -48,7 +48,7 @@ async function main() {
   if (useSSE) {
     console.log('Using SSE transport to connect to running MCP server');
     // Use URL object for SSEClientTransport as required by the SDK
-    transport = new SSEClientTransport(new URL("http://localhost:3001/sse"));
+    transport = new SSEClientTransport(new URL("http://localhost:7000/sse"));
   } else {
     console.log('Launching MCP server with stdio transport');
     transport = new StdioClientTransport({
