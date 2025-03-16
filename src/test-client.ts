@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const useSSE = process.env.TRANSPORT === 'sse';
+console.log(`Using ${useSSE ? 'sse' : "stdio"} transport`);
 
 async function main() {
   console.log('Starting eRegulations MCP test client...');
@@ -59,12 +60,28 @@ async function main() {
         arguments: {}
       });
       
-      console.log('Response type:', typeof listResult);
-      console.log('Response structure:', Object.keys(listResult));
+      // Add debug logging for the raw data
+      console.log('\n=== Raw API Response ===');
       if (listResult.content && Array.isArray(listResult.content)) {
-        console.log('Content types:', listResult.content.map((item: any) => item.type));
+        const jsonContent = listResult.content.find(item => item.text.startsWith('```json'));
+        if (jsonContent) {
+          const procedures = JSON.parse(jsonContent.text.replace(/```json\n|\n```/g, ''));
+          console.log('Raw procedures structure:', JSON.stringify(procedures[0], null, 2));
+          console.log('Total procedures:', procedures.length);
+          if (procedures[0]?.childs) {
+            console.log('Number of child procedures:', procedures[0].childs.length);
+          }
+        }
       }
-      console.log('First part of response:', JSON.stringify(listResult).slice(0, 150) + '...');
+      
+      console.log('\n=== Formatted Procedures List ===');
+      if (listResult.content && Array.isArray(listResult.content)) {
+        listResult.content.forEach((item: any) => {
+          if (item.type === 'text' && !item.text.startsWith('```')) {
+            console.log('\n' + item.text);
+          }
+        });
+      }
     } catch (error: any) {
       console.error('Error calling listProcedures:', error.message || error);
     }
@@ -85,6 +102,29 @@ async function main() {
         console.log('Content types:', detailsResult.content.map((item: any) => item.type));
       }
       console.log('First part of response:', JSON.stringify(detailsResult).slice(0, 150) + '...');
+    } catch (error: any) {
+      console.error('Error calling getProcedureDetails:', error.message || error);
+    }
+    
+    console.log('\nTesting getProcedureDetails tool with a valid ID (725):');
+    try {
+      console.log('Making API request for procedure 725...');
+      const detailsResult = await client.callTool({
+        name: "getProcedureDetails",
+        arguments: {
+          procedureId: 725 // Using a valid procedure ID that we know exists
+        }
+      });
+      
+      console.log('API response:', JSON.stringify(detailsResult, null, 2));
+      
+      if (detailsResult.content && Array.isArray(detailsResult.content)) {
+        detailsResult.content.forEach((item: any) => {
+          if (item.type === 'text' && !item.text.startsWith('```')) {
+            console.log('\n' + item.text);
+          }
+        });
+      }
     } catch (error: any) {
       console.error('Error calling getProcedureDetails:', error.message || error);
     }

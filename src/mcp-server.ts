@@ -43,26 +43,107 @@ enum ToolName {
 function formatProcedureForLLM(procedure: any): string {
   if (!procedure) return "No procedure data available";
   
-  let result = `Procedure: ${procedure.name || 'Unnamed'} (ID: ${procedure.id || 'Unknown'})\n`;
+  let result = '';
   
-  if (procedure.additionalInfo) {
-    result += `\nDescription: ${procedure.additionalInfo}\n`;
+  // Get name from full procedure data structure
+  const name = procedure.fullName || procedure.name || (procedure.data && procedure.data.name);
+  result += `Procedure: ${name} (ID: ${procedure.id || 'Unknown'})\n\n`;
+  
+  if (procedure.data?.url) {
+    result += `Online Portal: ${procedure.data.url}\n\n`;
+  }
+
+  if (procedure.data?.additionalInfo) {
+    result += `Description: ${procedure.data.additionalInfo}\n\n`;
   }
   
-  if (procedure.blocks && procedure.blocks.length) {
-    result += "\nBlocks:\n";
-    procedure.blocks.forEach((block: any, index: number) => {
-      result += `${index + 1}. ${block.name || 'Unnamed block'}\n`;
-      
+  // Handle blocks section which contains the steps
+  if (procedure.data?.blocks && procedure.data.blocks.length) {
+    result += 'Steps:\n';
+    procedure.data.blocks.forEach((block: any) => {
       if (block.steps && block.steps.length) {
-        block.steps.forEach((step: any, stepIndex: number) => {
-          result += `   ${index + 1}.${stepIndex + 1}. ${step.name || 'Unnamed step'} (Step ID: ${step.id || 'Unknown'})\n`;
+        block.steps.forEach((step: any, index: number) => {
+          result += `${index + 1}. ${step.name}\n`;
+          
           if (step.isOnline) {
-            result += `      - Available online\n`;
+            result += `   - Can be completed online\n`;
           }
+          
+          if (step.contact?.entityInCharge) {
+            result += `   - Entity: ${step.contact.entityInCharge.name}\n`;
+            if (step.contact.entityInCharge.firstPhone) {
+              result += `   - Phone: ${step.contact.entityInCharge.firstPhone}\n`;
+            }
+            if (step.contact.entityInCharge.firstEmail) {
+              result += `   - Email: ${step.contact.entityInCharge.firstEmail}\n`;
+            }
+          }
+          
+          if (step.requirements && step.requirements.length) {
+            result += '   Requirements:\n';
+            step.requirements.forEach((req: any) => {
+              result += `   - ${req.name}\n`;
+              if (req.comments) {
+                result += `     Note: ${req.comments}\n`;
+              }
+            });
+          }
+          
+          if (step.timeframe) {
+            const tf = step.timeframe;
+            if (tf.timeSpentAtTheCounter?.minutes?.max) {
+              result += `   - Time at counter: up to ${tf.timeSpentAtTheCounter.minutes.max} minutes\n`;
+            }
+            if (tf.waitingTimeInLine?.minutes?.max) {
+              result += `   - Waiting time: up to ${tf.waitingTimeInLine.minutes.max} minutes\n`;
+            }
+            if (tf.waitingTimeUntilNextStep?.days?.max) {
+              result += `   - Processing time: up to ${tf.waitingTimeUntilNextStep.days.max} days\n`;
+            }
+          }
+          
+          if (step.additionalInfo?.text) {
+            result += `   Note: ${step.additionalInfo.text}\n`;
+          }
+          
+          result += '\n';
         });
       }
     });
+  }
+  
+  // Handle results section (final documents)
+  if (procedure.data?.blocks) {
+    const finalResults = procedure.data.blocks
+      .flatMap((block: any) => block.steps || [])
+      .flatMap((step: any) => step.results || [])
+      .filter((result: any) => result.isFinalResult);
+    
+    if (finalResults.length) {
+      result += '\nFinal Documents:\n';
+      finalResults.forEach((doc: any) => {
+        result += `- ${doc.name}\n`;
+      });
+    }
+  }
+  
+  // Add resume info if available
+  if (procedure.resume) {
+    result += '\nSummary:\n';
+    result += `Total steps: ${procedure.resume.totalSteps || procedure.data?.blocks?.reduce((acc: number, block: any) => acc + (block.steps?.length || 0), 0) || 'Unknown'}\n`;
+    result += `Total institutions: ${procedure.resume.totalInstitutions || 'Unknown'}\n`;
+    result += `Total requirements: ${procedure.resume.totalRequirements || 'Unknown'}\n`;
+  }
+  
+  // Add totals info if available
+  if (procedure.totals) {
+    result += '\nTotals:\n';
+    if (procedure.totals.time) {
+      result += `Time: ${procedure.totals.time}\n`;
+    }
+    if (procedure.totals.cost) {
+      result += `Cost: ${procedure.totals.cost}\n`;
+    }
   }
   
   return result;
@@ -148,13 +229,14 @@ export const createServer = (baseUrl: string) => {
           let proceduresSummary = `Found ${proceduresArray.length} procedures:\n\n`;
           
           if (proceduresArray.length > 0) {
-            proceduresArray.slice(0, 10).forEach((proc: any, index: number) => {
-              proceduresSummary += `${index + 1}. ${proc.name || 'Unknown'} (ID: ${proc.id || 'N/A'})\n`;
+            proceduresArray.forEach((proc: any, index: number) => {
+              const id = proc.id || 'N/A';
+              const name = proc.fullName || proc.name || 'Unknown';
+              const description = proc.explanatoryText ? `\n   Description: ${proc.explanatoryText}` : '';
+              const online = proc.isOnline ? ' (Online)' : '';
+              
+              proceduresSummary += `${index + 1}. ${name}${online} (ID: ${id})${description}\n`;
             });
-            
-            if (proceduresArray.length > 10) {
-              proceduresSummary += `\n... and ${proceduresArray.length - 10} more procedures.`;
-            }
           } else {
             proceduresSummary += "No procedures found.";
           }
@@ -194,41 +276,45 @@ export const createServer = (baseUrl: string) => {
       handler: async (args: any) => {
         try {
           const { procedureId } = args;
+          
+          // Get the basic procedure details first
           const procedure = await api.getProcedureById(procedureId);
-          const resume = await api.getProcedureResume(procedureId);
           
+          // Try to get additional information in parallel
+          const [resume, totals] = await Promise.all([
+            api.getProcedureResume(procedureId).catch(err => null),
+            api.getProcedureTotals(procedureId).catch(err => null)
+          ]);
+
           // Format procedure data for LLM consumption
-          const formattedProcedure = formatProcedureForLLM(procedure);
-          
-          // Prepare summary data from resume
-          let resumeText = "";
-          if (resume) {
-            resumeText = `\nSummary:\n- Total steps: ${resume.steps || 'Unknown'}\n` +
-                        `- Institutions involved: ${resume.institutionCount || 'Unknown'}\n` +
-                        `- Requirements: ${resume.requirementCount || 'Unknown'}\n`;
-          }
-          
+          let formattedProcedure = formatProcedureForLLM({
+            ...procedure,
+            resume,
+            totals
+          });
+
           return {
             content: [
               { 
                 type: "text", 
-                text: formattedProcedure + resumeText
+                text: formattedProcedure
               },
               {
                 type: "text",
-                text: "```json\n" + JSON.stringify({procedure, summary: resume}, null, 2) + "\n```",
+                text: "```json\n" + JSON.stringify({procedure, resume, totals}, null, 2) + "\n```",
                 annotations: {
                   role: "data"
                 }
               }
             ],
           };
-        } catch (error) {
+        } catch (error: any) {
+          const errorMessage = error.message || String(error);
           return {
             content: [
               {
                 type: "text",
-                text: `Error retrieving procedure details: ${error instanceof Error ? error.message : String(error)}`,
+                text: `Error retrieving procedure details: ${errorMessage}\n\nValid procedure IDs can be found by using the listProcedures tool first.`,
               },
             ],
           };

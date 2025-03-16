@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "mcp-inspector": "npx @modelcontextprotocol/inspector",
-    "mcp-inspector-sse": "npx @modelcontextprotocol/inspector node dist/sse.js"
+    "mcp-inspector-sse": "npx @modelcontextprotocol/inspector node dist/sse.js",
+    "mcp-client": "node dist/test-client.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.1",
