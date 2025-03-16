@@ -28,10 +28,10 @@ RUN npm ci --omit=dev
 
 # Environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=7000
 
 # Expose the port
-EXPOSE 3000
+EXPOSE ${PORT}
 
 # Command to run the server
 CMD ["node", "dist/sse.js"]
