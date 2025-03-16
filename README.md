@@ -14,7 +14,7 @@ A Model Context Protocol (MCP) server implementation for accessing eRegulations 
 
 ```bash
 # Clone the repository
-git clone https://github.com/benmoumen/eregulations-mcp-server
+git clone https://github.com/benmoumen/eregulations-mcp-server.git
 cd eregulations-mcp-server
 
 # Install dependencies
