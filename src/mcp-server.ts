@@ -33,11 +33,19 @@ const SearchProceduresSchema = z.object({
   })).optional().describe("API-compatible filter criteria")
 });
 
+const GetFiltersSchema = z.object({});
+
+const GetFilterOptionsSchema = z.object({
+  filterId: z.number().describe("ID of the filter to get options for")
+});
+
 enum ToolName {
   LIST_PROCEDURES = "listProcedures",
   GET_PROCEDURE_DETAILS = "getProcedureDetails",
   GET_PROCEDURE_STEP = "getProcedureStep",
   SEARCH_PROCEDURES = "searchProcedures",
+  GET_FILTERS = "getFilters",
+  GET_FILTER_OPTIONS = "getFilterOptions"
 }
 
 /**
@@ -267,7 +275,9 @@ export const createServer = (baseUrl: string) => {
           listProcedures: true,
           getProcedureDetails: true,
           getProcedureStep: true,
-          searchProcedures: true
+          searchProcedures: true,
+          getFilters: true,
+          getFilterOptions: true
         },
       },
     }
@@ -490,6 +500,79 @@ export const createServer = (baseUrl: string) => {
               {
                 type: "text",
                 text: `Error searching procedures: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+          };
+        }
+      }
+    },
+    {
+      name: ToolName.GET_FILTERS,
+      description: "Get available filter categories that can be used with searchProcedures",
+      inputSchema: zodToJsonSchema(GetFiltersSchema) as ToolInput,
+      handler: async () => {
+        try {
+          const filters = await api.getFilters();
+          return {
+            content: [
+              {
+                type: "text",
+                text: filters.map((f: { name: string; id: number }) => 
+                  `- ${f.name} (ID: ${f.id})`
+                ).join('\n')
+              },
+              {
+                type: "text",
+                text: "```json\n" + JSON.stringify(filters, null, 2) + "\n```",
+                annotations: {
+                  role: "data"
+                }
+              }
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error retrieving filters: ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+          };
+        }
+      }
+    },
+    {
+      name: ToolName.GET_FILTER_OPTIONS,
+      description: "Get available options for a specific filter category",
+      inputSchema: zodToJsonSchema(GetFilterOptionsSchema) as ToolInput,
+      handler: async (args: any) => {
+        try {
+          const { filterId } = args;
+          const options = await api.getFilterOptions(filterId);
+          return {
+            content: [
+              {
+                type: "text",
+                text: options.map((o: { name: string; id: number }) => 
+                  `- ${o.name} (ID: ${o.id})`
+                ).join('\n')
+              },
+              {
+                type: "text",
+                text: "```json\n" + JSON.stringify(options, null, 2) + "\n```",
+                annotations: {
+                  role: "data"
+                }
+              }
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error retrieving filter options: ${error instanceof Error ? error.message : String(error)}`,
               },
             ],
           };
