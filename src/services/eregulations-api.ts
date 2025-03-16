@@ -100,23 +100,22 @@ export class ERegulationsApi {
       const procedure = procedures.find((p: any) => p.id === id);
       if (!procedure) {
         console.log(`No procedure found with ID ${id}`);
-        return null;
+        // If we can't find the procedure in the list, construct the URL directly
+        return `${this.baseUrl}/Procedures/${id}`;
       }
-      
-      console.log('Found procedure:', JSON.stringify(procedure, null, 2));
       
       // Find the procedure link
       const procedureLink = procedure.links?.find((link: any) => link.rel === "procedure");
       if (!procedureLink) {
-        console.log(`No procedure link found in procedure ${id}`);
-        return null;
+        console.log(`No procedure link found in procedure ${id}, using direct URL`);
+        return `${this.baseUrl}/Procedures/${id}`;
       }
       
-      console.log(`Found procedure link: ${procedureLink.href}`);
       return procedureLink.href;
     } catch (error) {
       console.error('Error getting URL from links:', error);
-      return null;
+      // Fallback to direct URL construction
+      return `${this.baseUrl}/Procedures/${id}`;
     }
   }
 
@@ -130,12 +129,12 @@ export class ERegulationsApi {
       // First try to get the correct URL from the procedure's links
       const url = await this.getUrlFromLinks(id);
       if (!url) {
-        throw new Error(`Could not find URL for procedure ${id}`);
+        throw new Error(`Could not construct URL for procedure ${id}`);
       }
       
       console.log(`Making API request to: ${url}`);
       
-      // Use the URL from the links array with necessary headers
+      // Use the URL with necessary headers
       const response = await axios.get(url, {
         headers: {
           'Accept': 'application/json',
@@ -145,7 +144,7 @@ export class ERegulationsApi {
         }
       });
       
-      // Add URL info to the response
+      // Add URL info to the response data
       const enrichedData = {
         ...response.data,
         _links: {

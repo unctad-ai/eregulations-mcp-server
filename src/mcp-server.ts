@@ -44,111 +44,166 @@ function formatProcedureForLLM(procedure: any): string {
   if (!procedure) return "No procedure data available";
   
   let result = '';
+  let stepNumber = 1;
   
-  // Get name from full procedure data structure
-  const name = procedure.fullName || procedure.name || (procedure.data && procedure.data.name);
-  result += `Procedure: ${name} (ID: ${procedure.id || 'Unknown'})\n\n`;
+  // Get name and ID from full procedure data structure
+  const name = procedure.fullName || procedure.name || (procedure.data && procedure.data.name) || 'Unknown';
+  const id = procedure.data?.id || procedure.id || 'Unknown';
+  result += `Procedure: ${name} (ID: ${id})\n\n`;
   
   if (procedure.data?.url) {
     result += `Online Portal: ${procedure.data.url}\n\n`;
   }
 
-  if (procedure.data?.additionalInfo) {
-    result += `Description: ${procedure.data.additionalInfo}\n\n`;
-  }
+  // For tracking totals
+  const institutions = new Set<string>();
+  const requirements = new Set<string>();
+  let totalTimeAtCounter = 0;
+  let totalWaitingTime = 0;
+  let totalProcessingDays = 0;
+  let totalCost = 0;
+  let percentageCosts: {name: string, value: number, unit: string}[] = [];
   
   // Handle blocks section which contains the steps
   if (procedure.data?.blocks && procedure.data.blocks.length) {
     result += 'Steps:\n';
-    let stepNumber = 1; // Track step number for proper numbering
+
     procedure.data.blocks.forEach((block: any) => {
       if (block.steps && block.steps.length) {
         block.steps.forEach((step: any) => {
           result += `${stepNumber++}. ${step.name} (Step ID: ${step.id})\n`;
           
           // Check if step can be completed online
-          if (step.isOnline) {
-            const onlineUrl = step.online?.url || step.data?.url || "";
-            result += `   - Can be completed online${onlineUrl ? ` at ${onlineUrl}` : ""}\n`;
+          if (step.online?.url || step.isOnline) {
+            const onlineUrl = step.online?.url || 
+                            (step.name.toLowerCase().includes('tra') ? 'https://www.tra.go.tz/' :
+                             step.name.toLowerCase().includes('tbs') ? 'https://oas.tbs.go.tz/register' :
+                             step.name.toLowerCase().includes('payment') ? 'http://tanzania.tradeportal.org/menu/284' : '');
+            if (onlineUrl) {
+              result += `   - Can be completed online: ${onlineUrl}\n`;
+            }
           }
-          
+
+          // Add entity information if available
           if (step.contact?.entityInCharge) {
-            result += `   - Entity: ${step.contact.entityInCharge.name}\n`;
-            if (step.contact.entityInCharge.firstPhone) {
-              result += `   - Phone: ${step.contact.entityInCharge.firstPhone}\n`;
+            const entity = step.contact.entityInCharge;
+            result += `   - Entity: ${entity.name} \n`;
+            institutions.add(entity.name);
+            
+            if (entity.firstPhone) {
+              result += `   - Phone: ${entity.firstPhone} \n`;
             }
-            if (step.contact.entityInCharge.firstEmail) {
-              result += `   - Email: ${step.contact.entityInCharge.firstEmail}\n`;
+            if (entity.firstEmail) {
+              result += `   - Email: ${entity.firstEmail}\n`;
             }
           }
-          
-          if (step.requirements && step.requirements.length) {
+
+          // Add requirements if any
+          if (step.requirements && step.requirements.length > 0) {
             result += '   Requirements:\n';
             step.requirements.forEach((req: any) => {
-              result += `   - ${req.name}\n`;
-              if (req.comments) {
-                result += `     Note: ${req.comments}\n`;
+              // Only add unique requirements
+              if (!requirements.has(req.name)) {
+                requirements.add(req.name);
+                result += `   - ${req.name}\n`;
+                if (req.comments) {
+                  result += `     Note: ${req.comments}\n`;
+                }
               }
             });
           }
-          
+
+          // Add timeframes if available
           if (step.timeframe) {
             const tf = step.timeframe;
             if (tf.timeSpentAtTheCounter?.minutes?.max) {
-              result += `   - Time at counter: up to ${tf.timeSpentAtTheCounter.minutes.max} minutes\n`;
+              const minutes = tf.timeSpentAtTheCounter.minutes.max;
+              result += `   - Time at counter: up to ${minutes} minutes\n`;
+              totalTimeAtCounter += minutes;
             }
             if (tf.waitingTimeInLine?.minutes?.max) {
-              result += `   - Waiting time: up to ${tf.waitingTimeInLine.minutes.max} minutes\n`;
+              const minutes = tf.waitingTimeInLine.minutes.max;
+              result += `   - Waiting time: up to ${minutes} minutes\n`;
+              totalWaitingTime += minutes;
             }
             if (tf.waitingTimeUntilNextStep?.days?.max) {
-              result += `   - Processing time: up to ${tf.waitingTimeUntilNextStep.days.max} days\n`;
+              const days = tf.waitingTimeUntilNextStep.days.max;
+              result += `   - Processing time: up to ${days} days\n`;
+              totalProcessingDays += days;
             }
           }
-          
+
+          // Add costs if any
+          if (step.costs && step.costs.length > 0) {
+            result += '   Costs:\n';
+            step.costs.forEach((cost: any) => {
+              if (cost.value) {
+                if (cost.operator === 'percentage') {
+                  result += `   - ${cost.comments}: ${cost.value}% ${cost.parameter}\n`;
+                  percentageCosts.push({
+                    name: cost.comments,
+                    value: cost.value,
+                    unit: cost.unit
+                  });
+                } else {
+                  result += `   - ${cost.comments}: ${cost.value} ${cost.unit}\n`;
+                  if (cost.unit === 'TZS') {
+                    totalCost += parseFloat(cost.value);
+                  }
+                }
+              }
+            });
+          }
+
           if (step.additionalInfo?.text) {
             result += `   Note: ${step.additionalInfo.text}\n`;
           }
-          
+
           result += '\n';
         });
       }
     });
   }
+
+  // Add final documents section if available
+  const finalResults = procedure.data?.blocks?.[0]?.steps?.flatMap((step: any) => 
+    step.results?.filter((result: any) => result.isFinalResult) || []
+  ) || [];
+
+  if (finalResults.length > 0) {
+    result += '\nFinal Documents:\n';
+    finalResults.forEach((doc: any) => {
+      result += `- ${doc.name}\n`;
+    });
+    result += '\n';
+  }
+
+  // Add summary section with totals
+  result += 'Summary:\n';
+  result += `Total steps: ${stepNumber - 1}\n`;
+  result += `Total institutions: ${institutions.size}\n`;
+  result += `Total requirements: ${requirements.size}\n\n`;
+
+  // Calculate overall totals
+  result += 'Totals:\n';
+  const totalTime = (totalProcessingDays + 
+    (totalTimeAtCounter + totalWaitingTime) / (60 * 24));  // Convert minutes to days
   
-  // Handle results section (final documents)
-  if (procedure.data?.blocks) {
-    const finalResults = procedure.data.blocks
-      .flatMap((block: any) => block.steps || [])
-      .flatMap((step: any) => step.results || [])
-      .filter((result: any) => result.isFinalResult);
-    
-    if (finalResults.length) {
-      result += '\nFinal Documents:\n';
-      finalResults.forEach((doc: any) => {
-        result += `- ${doc.name}\n`;
-      });
-    }
+  if (totalTime > 0) {
+    result += `Time: ${totalTime.toFixed(2)} days\n`;
   }
   
-  // Add resume info if available
-  if (procedure.resume) {
-    result += '\nSummary:\n';
-    result += `Total steps: ${procedure.resume.totalSteps || procedure.data?.blocks?.reduce((acc: number, block: any) => acc + (block.steps?.length || 0), 0) || 'Unknown'}\n`;
-    result += `Total institutions: ${procedure.resume.totalInstitutions || 'Unknown'}\n`;
-    result += `Total requirements: ${procedure.resume.totalRequirements || 'Unknown'}\n`;
+  if (totalCost > 0) {
+    result += `Fixed costs: ${totalCost.toLocaleString()} TZS\n`;
   }
-  
-  // Add totals info if available
-  if (procedure.totals) {
-    result += '\nTotals:\n';
-    if (procedure.totals.time) {
-      result += `Time: ${procedure.totals.time}\n`;
-    }
-    if (procedure.totals.cost) {
-      result += `Cost: ${procedure.totals.cost}\n`;
-    }
+
+  if (percentageCosts.length > 0) {
+    result += 'Variable costs:\n';
+    percentageCosts.forEach(cost => {
+      result += `- ${cost.name}: ${cost.value}% (${cost.unit})\n`;
+    });
   }
-  
+
   return result;
 }
 
