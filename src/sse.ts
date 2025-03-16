@@ -27,12 +27,6 @@ app.get("/sse", async (req, res) => {
   logger.info("Received SSE connection");
   
   try {
-    // Set headers for SSE response
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Cache-Control', 'no-cache');
-
     // Create a new transport
     const transport = new SSEServerTransport("/message", res);
     
@@ -73,6 +67,11 @@ app.get("/sse", async (req, res) => {
 // Message endpoint for client to post messages to the server
 app.post("/message", async (req, res) => {
   logger.info("Received message from client");
+
+  // Set headers for SSE response
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Cache-Control', 'no-cache');
   
   // Get session ID from query parameter or header
   const sessionId = req.query.sessionId?.toString() || req.headers['x-session-id']?.toString();
