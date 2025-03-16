@@ -27,7 +27,26 @@ const GetProcedureStepSchema = z.object({
 
 const SearchProceduresSchema = z.object({
   query: z.string().describe("Search query for procedures"),
-  filters: z.array(z.any()).optional().describe("Optional filters to apply")
+  filterData: z.object({
+    objective: z.object({
+      category: z.array(z.string()).describe("Category filter e.g. ['TRADE']"),
+      subCategory: z.array(z.string()).describe("Sub-categories e.g. ['EXPORT', 'IMPORT']"),
+      status: z.string().describe("Status filter e.g. 'ACTIVE'")
+    }).describe("Objective-related filters"),
+    country: z.string().describe("Country code e.g. 'TZ'"),
+    maxProcessingTime: z.number().describe("Maximum processing time in days")
+  }).optional().describe("Advanced filter criteria"),
+  filters: z.array(z.object({
+    key: z.number().describe("Filter type key: 1=Category, 2=SubCategory, 3=ProcessingTime, 4=Cost, 5=Agency, 6=Status, 7=DateRange"),
+    value: z.union([
+      z.string(),
+      z.array(z.string()),
+      z.object({
+        gte: z.string().or(z.number()).optional(),
+        lte: z.string().or(z.number()).optional()
+      })
+    ]).describe("Filter value, can be string, string array, or range object")
+  })).optional().describe("Legacy filter format - prefer using filterData instead")
 });
 
 enum ToolName {

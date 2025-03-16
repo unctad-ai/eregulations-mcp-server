@@ -129,24 +129,50 @@ async function main() {
       console.error('Error calling getProcedureDetails:', error.message || error);
     }
     
-    // Test searchProcedures tool
-    console.log('\nTesting searchProcedures tool:');
+    // Test searchProcedures tool with basic query
+    console.log('\nTesting searchProcedures tool with basic query:');
     try {
-      const searchResult = await client.callTool({
+      const basicSearchResult = await client.callTool({
         name: "searchProcedures",
         arguments: {
           query: "import"
         }
       });
       
-      console.log('Response type:', typeof searchResult);
-      console.log('Response structure:', Object.keys(searchResult));
-      if (searchResult.content && Array.isArray(searchResult.content)) {
-        console.log('Content types:', searchResult.content.map((item: any) => item.type));
-      }
-      console.log('First part of response:', JSON.stringify(searchResult).slice(0, 150) + '...');
+      console.log('Basic search response:', JSON.stringify(basicSearchResult).slice(0, 150) + '...');
     } catch (error: any) {
       console.error('Error calling searchProcedures:', error.message || error);
+    }
+
+    // Test searchProcedures tool with advanced filters
+    console.log('\nTesting searchProcedures tool with advanced filters:');
+    try {
+      const advancedSearchResult = await client.callTool({
+        name: "searchProcedures",
+        arguments: {
+          query: "trade",
+          filterData: {
+            objective: {
+              category: ["TRADE"],
+              subCategory: ["EXPORT", "IMPORT"],
+              status: "ACTIVE"
+            },
+            country: "TZ",
+            maxProcessingTime: 30
+          }
+        }
+      });
+      
+      console.log('\n=== Advanced Search Results ===');
+      if (advancedSearchResult.content && Array.isArray(advancedSearchResult.content)) {
+        advancedSearchResult.content.forEach((item: any) => {
+          if (item.type === 'text' && !item.text.startsWith('```')) {
+            console.log('\n' + item.text);
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error calling searchProcedures with filters:', error.message || error);
     }
     
     // Test getProcedureStep tool with a valid step from procedure 725
