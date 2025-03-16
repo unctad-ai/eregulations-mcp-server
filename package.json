@@ -12,7 +12,8 @@
     "dev": "ts-node-esm src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "mcp-inspector": "npm run sse & sleep 2 && npx @modelcontextprotocol/inspector"
+    "mcp-inspector": "npx @modelcontextprotocol/inspector",
+    "mcp-inspector-sse": "npx @modelcontextprotocol/inspector node dist/sse.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.1",

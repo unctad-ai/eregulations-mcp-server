@@ -121,7 +121,12 @@ export const createServer = (baseUrl: string) => {
     },
     {
       capabilities: {
-        tools: {},
+        tools: {
+          listProcedures: true,
+          getProcedureDetails: true,
+          getProcedureStep: true,
+          searchProcedures: true
+        },
       },
     }
   );
