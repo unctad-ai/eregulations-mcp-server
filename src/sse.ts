@@ -23,49 +23,43 @@ app.use((req, res, next) => {
   next();
 });
 
-// Helper to set SSE headers
-const setSSEHeaders = (res: express.Response) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Cache-Control', 'no-cache');
-  // Disable buffering for proxies
-  res.setHeader('X-Accel-Buffering', 'no');
-};
-
 // SSE endpoint
 app.get("/sse", async (req, res) => {
   const sessionId = req.query.sessionId?.toString() || uuidv4();
   logger.info(`Received SSE connection for session: ${sessionId}`);
-
-  // Set headers for SSE
-  setSSEHeaders(res);
-  
-  // Keep connection alive with a ping every 30 seconds
-  const heartbeat = setInterval(() => {
-    res.write(": heartbeat\n\n");
-  }, 30000);
   
   try {
-    // Create a new transport
+    // Create a new transport - this will set headers internally when start() is called
     const transport = new SSEServerTransport("/message", res);
     
     // Store the transport with the session ID
     transports.set(sessionId, transport);
     logger.info(`Created transport for session: ${sessionId}. Active sessions: ${transports.size}`);
     
-    // Send the session ID to the client
+    // Connect the server to this transport
+    // This will call transport.start() internally, which sets the SSE headers
+    await server.connect(transport);
+    
+    // Set up heartbeat AFTER headers have been set by the transport
+    const heartbeat = setInterval(() => {
+      try {
+        res.write(": heartbeat\n\n");
+      } catch (err) {
+        clearInterval(heartbeat);
+        logger.warn(`Failed to send heartbeat to session ${sessionId}, connection may be closed`);
+      }
+    }, 30000);
+    
+    // Send the session ID to the client after transport is connected
     res.write(`data: ${JSON.stringify({ sessionId })}\n\n`);
     
-    // Connect the server to this transport (this will call start() internally)
-    await server.connect(transport);
-
     // Handle client disconnect
     req.on('close', () => {
       clearInterval(heartbeat);
       transports.delete(sessionId);
       logger.info(`Client disconnected: ${sessionId}. Remaining sessions: ${transports.size}`);
     });
-
+    
     // Set up close handler
     server.onclose = async () => {
       logger.info(`Closing transport for session: ${sessionId}`);
@@ -77,11 +71,18 @@ app.get("/sse", async (req, res) => {
     };
     
   } catch (error) {
-    clearInterval(heartbeat);
     transports.delete(sessionId);
     logger.error(`Error setting up SSE transport for session ${sessionId}:`, error);
     if (!res.headersSent) {
       res.status(500).end(`Error setting up SSE transport: ${error instanceof Error ? error.message : String(error)}`);
+    } else {
+      // Try to end the response with an error message if headers are already sent
+      try {
+        res.write(`data: ${JSON.stringify({ error: "Connection error", message: String(error) })}\n\n`);
+        res.end();
+      } catch (writeError) {
+        logger.error(`Failed to write error to response:`, writeError);
+      }
     }
   }
 });
