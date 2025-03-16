@@ -27,14 +27,12 @@ describe('Advanced Search Tests', () => {
     await client.close();
   });
 
-  it('should search by category and subcategory', async () => {
+  it('should search by type of operation', async () => {
     const result = await client.callTool({
       name: "searchProcedures",
       arguments: {
-        query: "trade",
         filters: [
-          { key: 1, value: "TRADE" },          // Category filter
-          { key: 2, value: ["EXPORT", "IMPORT"] }  // Sub-categories
+          { filterId: 3, filterOptionId: 3 }  // Type of operation = Export
         ]
       }
     });
@@ -42,13 +40,12 @@ describe('Advanced Search Tests', () => {
     expect(Array.isArray(result.content)).toBe(true);
   });
 
-  it('should search by processing time and cost range', async () => {
+  it('should search by type of product', async () => {
     const result = await client.callTool({
       name: "searchProcedures",
       arguments: {
         filters: [
-          { key: 3, value: { lte: 30 } },     // Processing time <= 30 days
-          { key: 4, value: { gte: 100 } }     // Cost >= 100
+          { filterId: 4, filterOptionId: 1 }  // Type of product (first option)
         ]
       }
     });
@@ -56,58 +53,27 @@ describe('Advanced Search Tests', () => {
     expect(Array.isArray(result.content)).toBe(true);
   });
 
-  it('should search by executing agency and status', async () => {
-    const result = await client.callTool({
-      name: "searchProcedures",
-      arguments: {
-        filters: [
-          { key: 5, value: ["Customs", "Ministry of Trade"] },  // Executing agencies
-          { key: 6, value: "ACTIVE" }                          // Status
-        ]
-      }
-    });
-    expect(result.content).toBeDefined();
-    expect(Array.isArray(result.content)).toBe(true);
-  });
-
-  it('should search by date range', async () => {
-    const result = await client.callTool({
-      name: "searchProcedures",
-      arguments: {
-        filters: [
-          { 
-            key: 7, 
-            value: {
-              gte: '2023-01-01',
-              lte: '2023-12-31'
-            }
-          }
-        ]
-      }
-    });
-    expect(result.content).toBeDefined();
-    expect(Array.isArray(result.content)).toBe(true);
-  });
-
-  it('should combine multiple filter types', async () => {
+  it('should combine text search with filters', async () => {
     const result = await client.callTool({
       name: "searchProcedures",
       arguments: {
         query: "import",
         filters: [
-          { key: 1, value: "TRADE" },                          // Category
-          { key: 2, value: ["IMPORT"] },                       // Sub-category
-          { key: 3, value: { lte: 30 } },                      // Processing time
-          { key: 4, value: { gte: 100 } },                     // Cost
-          { key: 5, value: ["Customs"] },                      // Executing agency
-          { key: 6, value: "ACTIVE" },                         // Status
-          { 
-            key: 7,                                            // Date range
-            value: {
-              gte: '2023-01-01',
-              lte: '2023-12-31'
-            }
-          }
+          { filterId: 3, filterOptionId: 4 }  // Type of operation = Import
+        ]
+      }
+    });
+    expect(result.content).toBeDefined();
+    expect(Array.isArray(result.content)).toBe(true);
+  });
+
+  it('should handle multiple filters', async () => {
+    const result = await client.callTool({
+      name: "searchProcedures",
+      arguments: {
+        filters: [
+          { filterId: 3, filterOptionId: 3 },  // Type of operation = Export
+          { filterId: 4, filterOptionId: 1 }   // First product type
         ]
       }
     });

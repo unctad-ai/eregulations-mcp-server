@@ -286,30 +286,47 @@ export class ERegulationsApi {
   }
 
   /**
+   * Get available filters
+   */
+  async getFilters() {
+    try {
+      const response = await axios.get(`${this.baseUrl}/Filters`);
+      return response.data?.data || [];
+    } catch (error) {
+      console.error('Error getting filters:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get options for a specific filter
+   */
+  async getFilterOptions(filterId: number) {
+    try {
+      const response = await axios.get(`${this.baseUrl}/Filters/${filterId}/Options`);
+      return response.data?.data || [];
+    } catch (error) {
+      console.error(`Error getting options for filter ${filterId}:`, error);
+      return [];
+    }
+  }
+
+  /**
    * Search procedures by filters
    */
-  async searchByFilters(filters: any[]) {
+  async searchByFilters(filters: Array<{ filterId: number; filterOptionId: number }>) {
     try {
       const response = await axios.post(`${this.baseUrl}/Objectives/SearchByFilters`, filters);
-      // Ensure we return an array
-      if (Array.isArray(response.data)) {
-        return response.data;
-      } else if (response.data && typeof response.data === 'object') {
-        // If it's an object with items/results/data property that's an array
-        const possibleArrayProps = ['items', 'results', 'data', 'procedures', 'objectives'];
-        for (const prop of possibleArrayProps) {
-          if (Array.isArray(response.data[prop])) {
-            return response.data[prop];
-          }
-        }
-        // If it's an object but we can't find a property that's an array, return it as a single-item array
-        return [response.data];
+      
+      if (response.data?.exactMatchObjectives?.length > 0) {
+        return response.data.exactMatchObjectives;
       }
-      // Default to empty array
+      if (response.data?.filteredMatches?.length > 0) {
+        return response.data.filteredMatches;
+      }
       return [];
     } catch (error) {
       console.error('Error in searchByFilters:', error);
-      // Return empty array on error
       return [];
     }
   }

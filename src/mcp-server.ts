@@ -26,27 +26,11 @@ const GetProcedureStepSchema = z.object({
 });
 
 const SearchProceduresSchema = z.object({
-  query: z.string().describe("Search query for procedures"),
-  filterData: z.object({
-    objective: z.object({
-      category: z.array(z.string()).describe("Category filter e.g. ['TRADE']"),
-      subCategory: z.array(z.string()).describe("Sub-categories e.g. ['EXPORT', 'IMPORT']"),
-      status: z.string().describe("Status filter e.g. 'ACTIVE'")
-    }).describe("Objective-related filters"),
-    country: z.string().describe("Country code e.g. 'TZ'"),
-    maxProcessingTime: z.number().describe("Maximum processing time in days")
-  }).optional().describe("Advanced filter criteria"),
+  query: z.string().optional().describe("Optional text search query"),
   filters: z.array(z.object({
-    key: z.number().describe("Filter type key: 1=Category, 2=SubCategory, 3=ProcessingTime, 4=Cost, 5=Agency, 6=Status, 7=DateRange"),
-    value: z.union([
-      z.string(),
-      z.array(z.string()),
-      z.object({
-        gte: z.string().or(z.number()).optional(),
-        lte: z.string().or(z.number()).optional()
-      })
-    ]).describe("Filter value, can be string, string array, or range object")
-  })).optional().describe("Legacy filter format - prefer using filterData instead")
+    filterId: z.number().describe("ID of the filter category (from /Filters endpoint)"),
+    filterOptionId: z.number().describe("ID of the selected option (from /Filters/{id}/Options endpoint)")
+  })).optional().describe("API-compatible filter criteria")
 });
 
 enum ToolName {
@@ -439,34 +423,47 @@ export const createServer = (baseUrl: string) => {
     },
     {
       name: ToolName.SEARCH_PROCEDURES,
-      description: "Search for procedures by name or apply filters",
+      description: "Search for procedures using text search and/or filters. Use getFilters() first to get available filter categories, then getFilterOptions(filterId) to get valid options for each filter.",
       inputSchema: zodToJsonSchema(SearchProceduresSchema) as ToolInput,
       handler: async (args: any) => {
         try {
           const { query, filters } = args;
           let apiResults;
           
-          // If filters are provided, use them
-          if (filters && filters.length > 0) {
-            apiResults = await api.searchByFilters(filters);
-          } else {
-            // Use our searchByName method instead of manually filtering
-            apiResults = await api.searchByName(query);
+          // If both query and filters provided, combine results
+          if (query && filters?.length > 0) {
+            const [nameResults, filterResults] = await Promise.all([
+              api.searchByName(query),
+              api.searchByFilters(filters)
+            ]);
+            
+            // Find procedures that match both name and filters
+            apiResults = nameResults.filter(proc => 
+              filterResults.some((f: { id: number }) => f.id === proc.id)
+            );
           }
+          // Only filters provided
+          else if (filters?.length > 0) {
+            apiResults = await api.searchByFilters(filters);
+          }
+          // Only name search or no criteria
+          else {
+            apiResults = await api.searchByName(query || '');
+          }
+
+          // Format results for display
+          let searchResults = `Found ${apiResults.length} procedures`;
+          if (query) searchResults += ` matching "${query}"`;
+          if (filters?.length) searchResults += ` with ${filters.length} active filters`;
+          searchResults += ':\n\n';
           
-          // Ensure results is an array
-          const results = Array.isArray(apiResults) ? apiResults : [];
-          
-          // Format results for LLM consumption
-          let searchResults = `Found ${results.length} procedures matching "${query}":\n\n`;
-          
-          if (results.length > 0) {
-            results.slice(0, 10).forEach((proc: any, index: number) => {
+          if (apiResults.length > 0) {
+            apiResults.slice(0, 10).forEach((proc: any, index: number) => {
               searchResults += `${index + 1}. ${proc.name || 'Unknown'} (ID: ${proc.id || 'N/A'})\n`;
             });
             
-            if (results.length > 10) {
-              searchResults += `\n... and ${results.length - 10} more results.`;
+            if (apiResults.length > 10) {
+              searchResults += `\n... and ${apiResults.length - 10} more results.`;
             }
           } else {
             searchResults += "No matching procedures found.";
@@ -480,7 +477,7 @@ export const createServer = (baseUrl: string) => {
               },
               {
                 type: "text",
-                text: "```json\n" + JSON.stringify(results, null, 2) + "\n```",
+                text: "```json\n" + JSON.stringify(apiResults, null, 2) + "\n```",
                 annotations: {
                   role: "data"
                 }

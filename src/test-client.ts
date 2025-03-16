@@ -1,10 +1,12 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { ERegulationsApi } from "./services/eregulations-api.js";
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const api = new ERegulationsApi('https://api-tanzania.tradeportal.org');
 
 const useSSE = process.env.TRANSPORT === 'sse';
 console.log(`Using ${useSSE ? 'sse' : "stdio"} transport`);
@@ -173,6 +175,45 @@ async function main() {
       }
     } catch (error: any) {
       console.error('Error calling searchProcedures with filters:', error.message || error);
+    }
+
+    // Test getting available filters
+    console.log('\nGetting available filters:');
+    try {
+      const filters = await api.getFilters();
+      console.log('Available filters:', filters);
+    
+      if (filters.length > 0) {
+        // Get options for first filter
+        const firstFilter = filters[0];
+        console.log(`\nGetting options for filter "${firstFilter.name}" (ID: ${firstFilter.id}):`);
+        const options = await api.getFilterOptions(firstFilter.id);
+        console.log('Filter options:', options);
+    
+        if (options.length > 0) {
+          // Test search with the first filter and option
+          console.log('\nTesting search with filter:', firstFilter.name);
+          const searchResult = await client.callTool({
+            name: "searchProcedures",
+            arguments: {
+              filters: [{
+                filterId: firstFilter.id,
+                filterOptionId: options[0].id
+              }]
+            }
+          });
+          
+          if (searchResult.content && Array.isArray(searchResult.content)) {
+            searchResult.content.forEach((item: any) => {
+              if (item.type === 'text' && !item.text.startsWith('```')) {
+                console.log('\n' + item.text);
+              }
+            });
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Error testing filters:', error.message || error);
     }
     
     // Test getProcedureStep tool with a valid step from procedure 725
