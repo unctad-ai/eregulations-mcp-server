@@ -460,6 +460,25 @@ export const createServer = (baseUrl: string) => {
     }
   );
   
+  // Setup cleanup handlers
+  const cleanup = () => {
+    logger.log('Cleaning up server resources...');
+    api.dispose();
+  };
+
+  // Handle process termination signals
+  process.on('SIGTERM', () => {
+    logger.log('SIGTERM received, cleaning up...');
+    cleanup();
+    process.exit(0);
+  });
+
+  process.on('SIGINT', () => {
+    logger.log('SIGINT received, cleaning up...');
+    cleanup();
+    process.exit(0);
+  });
+
   // Define all tools
   const handlers = [
     {
@@ -782,5 +801,5 @@ export const createServer = (baseUrl: string) => {
     throw new Error(errorMsg);
   });
 
-  return { server, handlers };
+return { server, handlers };
 };

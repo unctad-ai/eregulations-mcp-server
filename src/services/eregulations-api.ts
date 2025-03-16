@@ -1,36 +1,41 @@
 import axios from 'axios';
 import { logger } from '../utils/logger.js';
-import { TTLCache } from '../utils/cache.js';
+import { SqliteCache } from '../utils/db-cache.js';
 
 /**
  * Cache TTL constants in milliseconds
  */
 const CACHE_TTL = {
-  PROCEDURES_LIST: 24 * 60 * 60 * 1000,
-  PROCEDURE_DETAILS: 8 * 60 * 60 * 1000,
-  PROCEDURE_COMPONENTS: 4 * 60 * 60 * 1000,
-  FILTERS: 24 * 60 * 60 * 1000,
-  SEARCH_RESULTS: 1 * 60 * 60 * 1000
+  PROCEDURES_LIST: 24 * 60 * 60 * 1000, // 24 hours
+  PROCEDURE_DETAILS: 8 * 60 * 60 * 1000, // 8 hours
+  PROCEDURE_COMPONENTS: 4 * 60 * 60 * 1000, // 4 hours
+  SEARCH_RESULTS: 1 * 60 * 60 * 1000, // 1 hour
 };
 
 export class ERegulationsApi {
   private baseUrl: string;
-  private cache: TTLCache;
+  private cache: SqliteCache;
   private cacheEnabled: boolean;
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(baseUrl: string, cacheEnabled: boolean = true) {
     this.baseUrl = baseUrl;
-    this.cache = new TTLCache();
     this.cacheEnabled = cacheEnabled;
     
-    // Periodically clean expired cache entries every 30 minutes
+    // Initialize the SQLite-based cache with the baseUrl for isolation
+    this.cache = new SqliteCache(baseUrl);
+    
+    // Periodically clean expired cache entries everyday
     if (cacheEnabled) {
-      setInterval(() => {
+      this.cleanupInterval = setInterval(() => {
         const removed = this.cache.cleanExpired();
         if (removed > 0) {
           logger.debug(`Cache cleanup: removed ${removed} expired items`);
         }
-      }, 30 * 60 * 1000);
+      }, 24 * 60 * 60 * 1000);
+    } else {
+      this.cache.clear();
+      logger.warn('Cache is disabled. All requests will be made to the server.');
     }
   }
 
@@ -296,5 +301,18 @@ export class ERegulationsApi {
         return false;
       });
     }, CACHE_TTL.SEARCH_RESULTS);
+  }
+
+  /**
+   * Cleanup resources when instance is no longer needed
+   */
+  dispose(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+    
+    // Close the database connection
+    this.cache.close();
   }
 }

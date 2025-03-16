@@ -39,3 +39,6 @@ Thumbs.db
 *~
 \#*
 .*.swp
+
+# Sqlite DB
+data/cache/*.sqlite
