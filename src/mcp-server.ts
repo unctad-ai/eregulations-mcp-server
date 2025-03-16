@@ -10,6 +10,7 @@ import {
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { ERegulationsApi } from "./services/eregulations-api.js";
+import { logger } from "./utils/logger.js";
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
 type ToolInput = z.infer<typeof ToolInputSchema>;
@@ -382,6 +383,8 @@ function formatStepForLLM(step: any): string {
 export const createServer = (baseUrl: string) => {
   const api = new ERegulationsApi(baseUrl);
   
+  logger.log(`Creating MCP server with API URL: ${baseUrl}`);
+  
   const server = new Server(
     {
       name: "eregulations-mcp-server",
@@ -410,6 +413,7 @@ export const createServer = (baseUrl: string) => {
       inputSchema: zodToJsonSchema(ListProceduresSchema) as ToolInput,
       handler: async () => {
         try {
+          logger.log(`Handling LIST_PROCEDURES request`);
           const procedures = await api.getProceduresList();
           
           // Ensure procedures is an array
@@ -431,6 +435,8 @@ export const createServer = (baseUrl: string) => {
             proceduresSummary += "No procedures found.";
           }
           
+          logger.log(`LIST_PROCEDURES returning ${proceduresArray.length} procedures`);
+          
           // Return both human-readable text and structured data
           return {
             content: [
@@ -448,6 +454,7 @@ export const createServer = (baseUrl: string) => {
             ],
           };
         } catch (error) {
+          logger.error(`Error in LIST_PROCEDURES handler:`, error);
           return {
             content: [
               {
@@ -466,23 +473,31 @@ export const createServer = (baseUrl: string) => {
       handler: async (args: any) => {
         try {
           const { procedureId } = args;
+          logger.log(`Handling GET_PROCEDURE_DETAILS request for procedure ID ${procedureId}`);
           
           // Get the basic procedure details first
           const procedure = await api.getProcedureById(procedureId);
           
           // Try to get additional information in parallel
           const [resume, totals] = await Promise.all([
-            api.getProcedureResume(procedureId).catch(err => null),
-            api.getProcedureTotals(procedureId).catch(err => null)
+            api.getProcedureResume(procedureId).catch(err => {
+              logger.error(`Error fetching procedure resume for ID ${procedureId}:`, err);
+              return null;
+            }),
+            api.getProcedureTotals(procedureId).catch(err => {
+              logger.error(`Error fetching procedure totals for ID ${procedureId}:`, err);
+              return null;
+            })
           ]);
-
           // Format procedure data for LLM consumption
           let formattedProcedure = formatProcedureForLLM({
             ...procedure,
             resume,
             totals
           });
-
+          
+          logger.log(`Successfully retrieved details for procedure ID ${procedureId}`);
+          
           return {
             content: [
               { 
@@ -500,6 +515,8 @@ export const createServer = (baseUrl: string) => {
           };
         } catch (error: any) {
           const errorMessage = error.message || String(error);
+          logger.error(`Error in GET_PROCEDURE_DETAILS handler for ID ${args?.procedureId}:`, errorMessage);
+          
           return {
             content: [
               {
@@ -631,7 +648,12 @@ export const createServer = (baseUrl: string) => {
       inputSchema: zodToJsonSchema(GetFiltersSchema) as ToolInput,
       handler: async () => {
         try {
+          logger.log(`Handling GET_FILTERS request`);
+          
           const filters = await api.getFilters();
+          
+          logger.log(`Successfully retrieved ${filters.length} filters`);
+          
           return {
             content: [
               {
@@ -650,6 +672,8 @@ export const createServer = (baseUrl: string) => {
             ],
           };
         } catch (error) {
+          logger.error(`Error in GET_FILTERS handler:`, error);
+          
           return {
             content: [
               {
@@ -702,6 +726,8 @@ export const createServer = (baseUrl: string) => {
 
   // Register the tool list handler
   server.setRequestHandler(ListToolsRequestSchema, async () => {
+    logger.log("Handling ListToolsRequest");
+    
     const tools: Tool[] = handlers.map(handler => ({
       name: handler.name,
       description: handler.description,
@@ -714,10 +740,13 @@ export const createServer = (baseUrl: string) => {
   // Register the tool call handler
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+    logger.log(`Handling tool call: ${name}`);
     
     const handler = handlers.find(h => h.name === name);
     if (!handler) {
-      throw new Error(`Unknown tool: ${name}`);
+      const errorMsg = `Unknown tool: ${name}`;
+      logger.error(errorMsg);
+      throw new Error(errorMsg);
     }
     
     return handler.handler(args);
@@ -725,6 +754,8 @@ export const createServer = (baseUrl: string) => {
 
   // Register standard prompts handlers
   server.setRequestHandler(ListPromptsRequestSchema, async () => {
+    logger.log("Handling ListPromptsRequest");
+    
     return {
       prompts: [
         {
@@ -796,6 +827,7 @@ export const createServer = (baseUrl: string) => {
   // Register handler for getting a specific prompt
   server.setRequestHandler(GetPromptRequestSchema, async (request) => {
     const { name } = request.params;
+    logger.log(`Handling GetPromptRequest for prompt: ${name}`);
     
     // Return messages for the requested prompt
     if (Object.values(PromptName).includes(name as PromptName)) {
@@ -812,7 +844,9 @@ export const createServer = (baseUrl: string) => {
       };
     }
     
-    throw new Error(`Unknown prompt: ${name}`);
+    const errorMsg = `Unknown prompt: ${name}`;
+    logger.error(errorMsg);
+    throw new Error(errorMsg);
   });
 
   return { server, handlers };

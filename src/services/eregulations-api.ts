@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from '../utils/logger.js';
 
 export class ERegulationsApi {
   private baseUrl: string;
@@ -54,12 +55,12 @@ export class ERegulationsApi {
    */
   async getProceduresList() {
     try {
-      console.log('Fetching procedures from API...');
+      logger.log('Fetching procedures from API...');
       const response = await axios.get(`${this.baseUrl}/Objectives`);
       let procedures: any[] = [];
 
       // Add debug logging for the raw response
-      console.log('Raw API response:', JSON.stringify(response.data, null, 2).slice(0, 500) + '...');
+      logger.debug('Raw API response:', JSON.stringify(response.data, null, 2).slice(0, 500) + '...');
 
       // Handle different response formats - ensure we always have an array to process
       if (Array.isArray(response.data)) {
@@ -79,12 +80,12 @@ export class ERegulationsApi {
         }
       }
 
-      console.log(`Found ${procedures.length} top-level procedures`);
+      logger.log(`Found ${procedures.length} top-level procedures`);
       
       // Process all procedures recursively
       return this.extractAllProcedures(procedures);
     } catch (error) {
-      console.error('Error in getProceduresList:', error);
+      logger.error('Error in getProceduresList:', error);
       return [];
     }
   }
@@ -99,7 +100,7 @@ export class ERegulationsApi {
       // Find the procedure by ID
       const procedure = procedures.find((p: any) => p.id === id);
       if (!procedure) {
-        console.log(`No procedure found with ID ${id}`);
+        logger.log(`No procedure found with ID ${id}`);
         // If we can't find the procedure in the list, construct the URL directly
         return `${this.baseUrl}/Procedures/${id}`;
       }
@@ -107,13 +108,13 @@ export class ERegulationsApi {
       // Find the procedure link
       const procedureLink = procedure.links?.find((link: any) => link.rel === "procedure");
       if (!procedureLink) {
-        console.log(`No procedure link found in procedure ${id}, using direct URL`);
+        logger.log(`No procedure link found in procedure ${id}, using direct URL`);
         return `${this.baseUrl}/Procedures/${id}`;
       }
       
       return procedureLink.href;
     } catch (error) {
-      console.error('Error getting URL from links:', error);
+      logger.error('Error getting URL from links:', error);
       // Fallback to direct URL construction
       return `${this.baseUrl}/Procedures/${id}`;
     }
@@ -124,7 +125,7 @@ export class ERegulationsApi {
    */
   async getProcedureById(id: number) {
     try {
-      console.log(`Fetching procedure details for ID ${id}...`);
+      logger.log(`Fetching procedure details for ID ${id}...`);
       
       // First try to get the correct URL from the procedure's links
       const url = await this.getUrlFromLinks(id);
@@ -132,7 +133,7 @@ export class ERegulationsApi {
         throw new Error(`Could not construct URL for procedure ${id}`);
       }
       
-      console.log(`Making API request to: ${url}`);
+      logger.log(`Making API request to: ${url}`);
       
       // Use the URL with necessary headers
       const response = await axios.get(url, {
@@ -157,8 +158,8 @@ export class ERegulationsApi {
 
       return enrichedData;
     } catch (error: any) {
-      console.error(`Error in getProcedureById(${id}):`, error);
-      console.error('Full error details:', error.response?.data || error.message);
+      logger.error(`Error in getProcedureById(${id}):`, error);
+      logger.error('Full error details:', error.response?.data || error.message);
       
       if (error.response?.status === 404) {
         throw new Error(`Procedure with ID ${id} not found. Please verify the procedure ID exists.`);
@@ -177,11 +178,11 @@ export class ERegulationsApi {
    */
   async getProcedureResume(id: number) {
     try {
-      console.log(`Fetching procedure resume for ID ${id}...`);
+      logger.log(`Fetching procedure resume for ID ${id}...`);
       const response = await axios.get(`${this.baseUrl}/Procedures/${id}/Resume`);
       return response.data;
     } catch (error: any) {
-      console.error(`Error in getProcedureResume(${id}):`, error);
+      logger.error(`Error in getProcedureResume(${id}):`, error);
       
       if (error.response?.status === 404) {
         throw new Error(`Procedure resume not found for ID ${id}. Please verify the procedure ID exists.`);
@@ -199,7 +200,7 @@ export class ERegulationsApi {
       const response = await axios.get(`${this.baseUrl}/Procedures/${id}/ResumeDetail`);
       return response.data;
     } catch (error) {
-      console.error(`Error in getProcedureDetailedResume(${id}):`, error);
+      logger.error(`Error in getProcedureDetailedResume(${id}):`, error);
       // Return basic mock data
       return {
         id: id,
@@ -216,7 +217,7 @@ export class ERegulationsApi {
    */
   async getProcedureStep(procedureId: number, stepId: number) {
     try {
-      console.log(`Fetching step ${stepId} for procedure ${procedureId}...`);
+      logger.log(`Fetching step ${stepId} for procedure ${procedureId}...`);
       
       // First get the procedure to verify it exists and get its URL
       const procedure = await this.getProcedureById(procedureId);
@@ -247,8 +248,8 @@ export class ERegulationsApi {
       
       throw new Error(`Step ${stepId} not found in procedure ${procedureId}`);
     } catch (error: any) {
-      console.error(`Error in getProcedureStep(${procedureId}, ${stepId}):`, error);
-      console.error('Full error details:', error.response?.data || error.message);
+      logger.error(`Error in getProcedureStep(${procedureId}, ${stepId}):`, error);
+      logger.error('Full error details:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -261,7 +262,7 @@ export class ERegulationsApi {
       const response = await axios.get(`${this.baseUrl}/Procedures/${id}/Totals`);
       return response.data;
     } catch (error) {
-      console.error(`Error in getProcedureTotals(${id}):`, error);
+      logger.error(`Error in getProcedureTotals(${id}):`, error);
       // Return mock data
       return {
         id: id,
@@ -293,7 +294,7 @@ export class ERegulationsApi {
       const response = await axios.get(`${this.baseUrl}/Filters`);
       return response.data?.data || [];
     } catch (error) {
-      console.error('Error getting filters:', error);
+      logger.error('Error getting filters:', error);
       return [];
     }
   }
@@ -306,7 +307,7 @@ export class ERegulationsApi {
       const response = await axios.get(`${this.baseUrl}/Filters/${filterId}/Options`);
       return response.data?.data || [];
     } catch (error) {
-      console.error(`Error getting options for filter ${filterId}:`, error);
+      logger.error(`Error getting options for filter ${filterId}:`, error);
       return [];
     }
   }
@@ -326,7 +327,7 @@ export class ERegulationsApi {
       }
       return [];
     } catch (error) {
-      console.error('Error in searchByFilters:', error);
+      logger.error('Error in searchByFilters:', error);
       return [];
     }
   }
@@ -349,7 +350,7 @@ export class ERegulationsApi {
         return false;
       });
     } catch (error) {
-      console.error('Error in searchByName:', error);
+      logger.error('Error in searchByName:', error);
       return [];
     }
   }
