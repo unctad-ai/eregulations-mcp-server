@@ -107,7 +107,7 @@ app.get("/health", (req, res) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 7000;
 app.listen(PORT, () => {
   logger.log(`eRegulations MCP server running on port ${PORT}`);
   logger.log(`Connect via SSE at http://localhost:${PORT}/sse`);

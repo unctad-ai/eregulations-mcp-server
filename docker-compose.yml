@@ -1,0 +1,13 @@
+services:
+  eregulations-mcp:
+    build: .
+    container_name: eregulations-mcp
+    ports:
+      - "127.0.0.1:7000:7000"
+    environment:
+      - EREGULATIONS_API_URL=https://api-tanzania.tradeportal.org
+      - PORT=7000
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  # Other MCP servers can be added here
