@@ -12,8 +12,7 @@
     "dev": "ts-node-esm src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "mcp-inspector": "npx @modelcontextprotocol/inspector",
-    "mcp-inspector-sse": "npx @modelcontextprotocol/inspector node dist/sse.js",
+    "mcp-inspector": "npx @modelcontextprotocol/inspector -e EREGULATIONS_API_URL=https://api-tanzania.tradeportal.org -e DEBUG=true node dist/index.js",
     "test-client": "node dist/test-client.js"
   },
   "dependencies": {

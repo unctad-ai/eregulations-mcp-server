@@ -65,7 +65,7 @@ app.get("/sse", async (req, res) => {
 });
 
 // Message endpoint for client to post messages to the server
-app.post("/message", express.json(), async (req, res) => {
+app.post("/message", async (req, res) => {
   logger.log("Received message from client");
   
   // Get session ID from query parameter or header
