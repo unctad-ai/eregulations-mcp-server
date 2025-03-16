@@ -181,7 +181,7 @@ function formatProcedureForLLM(procedure: any): string {
   result += `Procedure: ${name} (ID: ${id})\n\n`;
   
   if (procedure.data?.url) {
-    result += `Online Portal: ${procedure.data.url}\n\n`;
+    result += `Information Portal: ${procedure.data.url}\n\n`;
   }
 
   // For tracking totals
