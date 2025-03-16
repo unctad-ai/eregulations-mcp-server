@@ -6,7 +6,7 @@ import { logger } from "./utils/logger.js";
 // Default API URL
 const API_URL = process.env.EREGULATIONS_API_URL || "https://api-tanzania.tradeportal.org";
 const app = express();
-const { server } = createServer(API_URL);
+const { server, cleanup } = createServer(API_URL);
 
 // Map to store transports by session ID
 const transports = new Map<string, SSEServerTransport>();
@@ -32,30 +32,15 @@ app.get("/sse", async (req, res) => {
     
     // Connect the server to this transport (this will call start() internally)
     await server.connect(transport);
-    
-    // Store the transport using its session ID
-    const sessionId = transport.sessionId;
-    transports.set(sessionId, transport);
-    logger.info(`New transport created with session ID: ${sessionId}`);
-    logger.log("Connected to transport successfully");
-    
-    // Set up error handler
-    transport.onerror = (error) => {
-      logger.error("Transport error:", error);
-    };
-    
+
     // Set up close handler
-    transport.onclose = () => {
-      logger.info(`Closing transport for session ${sessionId}`);
-      transports.delete(sessionId);
+    server.onclose = async () => {
+      logger.info(`Closing transport`);
+      await cleanup();
+      await server.close();
+      process.exit(0);
     };
     
-    // Handle connection close
-    req.on('close', () => {
-      logger.info(`SSE connection closed for session ${sessionId}`);
-      transport.close().catch((err) => logger.error("Error closing transport:", err));
-      transports.delete(sessionId);
-    });
   } catch (error) {
     logger.error("Error setting up SSE transport:", error);
     if (!res.headersSent) {

@@ -7,12 +7,13 @@ const API_URL = process.env.EREGULATIONS_API_URL || "https://api-tanzania.tradep
 
 async function main() {
   const transport = new StdioServerTransport();
-  const { server } = createServer(API_URL);
+  const { server, cleanup } = createServer(API_URL);
   
   await server.connect(transport);
   
   // Cleanup on exit
   process.on("SIGINT", async () => {
+    await cleanup();
     await server.close();
     process.exit(0);
   });
