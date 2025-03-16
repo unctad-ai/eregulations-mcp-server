@@ -13,13 +13,13 @@ console.log(`Using ${useSSE ? 'sse' : "stdio"} transport`);
 
 // Define available test options
 const availableTests = {
-  prompts: "Test the standard prompts functionality",
-  listTools: "Test the tool listing functionality",
-  filters: "Test the filter-related tools",
-  listProcedures: "Test the listProcedures tool",
-  procedureDetails: "Test the getProcedureDetails tool",
-  searchProcedures: "Test the searchProcedures tool",
-  all: "Run all tests sequentially"
+  "prompts": "Test the standard prompts functionality",
+  "list-tools": "Test the tool listing functionality",
+  "filters": "Test the filter-related tools",
+  "list-procedures": "Test the listProcedures tool",
+  "procedure-details": "Test the getProcedureDetails tool",
+  "search-procedures": "Test the searchProcedures tool",
+  "all": "Run all tests sequentially"
 };
 
 // Parse command line arguments to determine which tests to run
@@ -80,7 +80,7 @@ async function main() {
     // Define test functions for each feature
     const tests = {
       // Test prompts functionality
-      prompts: async () => {
+      "prompts": async () => {
         console.log('\n=== Testing Standard Prompts ===');
         try {
           // List available prompts
@@ -141,7 +141,7 @@ async function main() {
       },
       
       // Test listing tools
-      listTools: async () => {
+      "list-tools": async () => {
         console.log('\n=== Testing Tool Listing ===');
         try {
           const toolList = await client.listTools();
@@ -158,7 +158,7 @@ async function main() {
       },
       
       // Test getFilters tool
-      filters: async () => {
+      "filters": async () => {
         console.log('\n=== Testing Filter Tools ===');
         try {
           console.log('\nTesting getFilters:');
@@ -199,7 +199,7 @@ async function main() {
       },
       
       // Test listProcedures tool
-      listProcedures: async () => {
+      "list-procedures": async () => {
         console.log('\n=== Testing listProcedures Tool ===');
         try {
           const listResult = await client.callTool({
@@ -226,7 +226,7 @@ async function main() {
       },
       
       // Test getProcedureDetails tool
-      procedureDetails: async () => {
+      "procedure-details": async () => {
         console.log('\n=== Testing getProcedureDetails Tool ===');
         try {
           console.log('\nGetting details for procedure ID 725:');
@@ -256,7 +256,7 @@ async function main() {
       },
       
       // Test searchProcedures tool
-      searchProcedures: async () => {
+      "search-procedures": async () => {
         console.log('\n=== Testing searchProcedures Tool ===');
         try {
           console.log('\nSearching for "import":');
