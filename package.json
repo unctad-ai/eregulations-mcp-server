@@ -14,7 +14,6 @@
     "test:watch": "vitest",
     "mcp-inspector": "npx @modelcontextprotocol/inspector",
     "mcp-inspector-sse": "npx @modelcontextprotocol/inspector node dist/sse.js",
-    "mcp-client": "node dist/test-client.js",
     "test-client": "node dist/test-client.js"
   },
   "dependencies": {

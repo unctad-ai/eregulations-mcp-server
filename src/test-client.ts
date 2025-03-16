@@ -11,6 +11,35 @@ const api = new ERegulationsApi('https://api-tanzania.tradeportal.org');
 const useSSE = process.env.TRANSPORT === 'sse';
 console.log(`Using ${useSSE ? 'sse' : "stdio"} transport`);
 
+// Define available test options
+const availableTests = {
+  prompts: "Test the standard prompts functionality",
+  listTools: "Test the tool listing functionality",
+  filters: "Test the filter-related tools",
+  listProcedures: "Test the listProcedures tool",
+  procedureDetails: "Test the getProcedureDetails tool",
+  searchProcedures: "Test the searchProcedures tool",
+  all: "Run all tests sequentially"
+};
+
+// Parse command line arguments to determine which tests to run
+const args = process.argv.slice(2);
+const testFilter = args.length > 0 ? args[0].toLowerCase() : '';
+
+// If no arguments provided or help requested, display available options
+if (!testFilter || testFilter === 'help' || testFilter === '-h' || testFilter === '--help') {
+  console.log('\nAvailable test options:');
+  
+  const maxLength = Math.max(...Object.keys(availableTests).map(k => k.length));
+  Object.entries(availableTests).forEach(([name, description]) => {
+    console.log(`  ${name.padEnd(maxLength + 2)}${description}`);
+  });
+  
+  console.log('\nUsage:');
+  console.log('  node dist/test-client.js [test-name]\n');
+  process.exit(0);
+}
+
 async function main() {
   console.log('Starting eRegulations MCP test client...');
   
@@ -35,224 +64,277 @@ async function main() {
     },
     {
       capabilities: {
-        tools: {}
+        tools: {},
+        prompts: true // Enable standard prompts capability
       }
     }
   );
+  
+  let allPassed = true;
   
   try {
     console.log('Connecting to MCP server...');
     await client.connect(transport);
     console.log('Connected successfully!');
     
-    // List available tools
-    console.log('\nListing available tools:');
-    const toolList = await client.listTools();
-    console.log(`Found ${toolList.tools.length} tools:`);
-    
-    for (const tool of toolList.tools) {
-      console.log(`- ${tool.name}: ${tool.description}`);
-    }
-    
-    // Test listProcedures tool
-    console.log('\nTesting listProcedures tool:');
-    try {
-      const listResult = await client.callTool({
-        name: "listProcedures",
-        arguments: {}
-      });
-      
-      // Add debug logging for the raw data
-      console.log('\n=== Raw API Response ===');
-      if (listResult.content && Array.isArray(listResult.content)) {
-        const jsonContent = listResult.content.find(item => item.text.startsWith('```json'));
-        if (jsonContent) {
-          const procedures = JSON.parse(jsonContent.text.replace(/```json\n|\n```/g, ''));
-          console.log('Raw procedures structure:', JSON.stringify(procedures[0], null, 2));
-          console.log('Total procedures:', procedures.length);
-          if (procedures[0]?.childs) {
-            console.log('Number of child procedures:', procedures[0].childs.length);
-          }
-        }
-      }
-      
-      console.log('\n=== Formatted Procedures List ===');
-      if (listResult.content && Array.isArray(listResult.content)) {
-        listResult.content.forEach((item: any) => {
-          if (item.type === 'text' && !item.text.startsWith('```')) {
-            console.log('\n' + item.text);
-          }
-        });
-      }
-    } catch (error: any) {
-      console.error('Error calling listProcedures:', error.message || error);
-    }
-    
-    // Test getProcedureDetails tool
-    console.log('\nTesting getProcedureDetails tool:');
-    try {
-      const detailsResult = await client.callTool({
-        name: "getProcedureDetails",
-        arguments: {
-          procedureId: 1
-        }
-      });
-      
-      console.log('Response type:', typeof detailsResult);
-      console.log('Response structure:', Object.keys(detailsResult));
-      if (detailsResult.content && Array.isArray(detailsResult.content)) {
-        console.log('Content types:', detailsResult.content.map((item: any) => item.type));
-      }
-      console.log('First part of response:', JSON.stringify(detailsResult).slice(0, 150) + '...');
-    } catch (error: any) {
-      console.error('Error calling getProcedureDetails:', error.message || error);
-    }
-    
-    console.log('\nTesting getProcedureDetails tool with a valid ID (725):');
-    try {
-      console.log('Making API request for procedure 725...');
-      const detailsResult = await client.callTool({
-        name: "getProcedureDetails",
-        arguments: {
-          procedureId: 725 // Using a valid procedure ID that we know exists
-        }
-      });
-      
-      console.log('API response:', JSON.stringify(detailsResult, null, 2));
-      
-      if (detailsResult.content && Array.isArray(detailsResult.content)) {
-        detailsResult.content.forEach((item: any) => {
-          if (item.type === 'text' && !item.text.startsWith('```')) {
-            console.log('\n' + item.text);
-          }
-        });
-      }
-    } catch (error: any) {
-      console.error('Error calling getProcedureDetails:', error.message || error);
-    }
-    
-    // Test searchProcedures tool with basic query
-    console.log('\nTesting searchProcedures tool with basic query:');
-    try {
-      const basicSearchResult = await client.callTool({
-        name: "searchProcedures",
-        arguments: {
-          query: "import"
-        }
-      });
-      
-      console.log('Basic search response:', JSON.stringify(basicSearchResult).slice(0, 150) + '...');
-    } catch (error: any) {
-      console.error('Error calling searchProcedures:', error.message || error);
-    }
-
-    // Test searchProcedures tool with advanced filters
-    console.log('\nTesting searchProcedures tool with advanced filters:');
-    try {
-      const advancedSearchResult = await client.callTool({
-        name: "searchProcedures",
-        arguments: {
-          query: "trade",
-          filterData: {
-            objective: {
-              category: ["TRADE"],
-              subCategory: ["EXPORT", "IMPORT"],
-              status: "ACTIVE"
-            },
-            country: "TZ",
-            maxProcessingTime: 30
-          }
-        }
-      });
-      
-      console.log('\n=== Advanced Search Results ===');
-      if (advancedSearchResult.content && Array.isArray(advancedSearchResult.content)) {
-        advancedSearchResult.content.forEach((item: any) => {
-          if (item.type === 'text' && !item.text.startsWith('```')) {
-            console.log('\n' + item.text);
-          }
-        });
-      }
-    } catch (error: any) {
-      console.error('Error calling searchProcedures with filters:', error.message || error);
-    }
-
-    // Test getting available filters
-    console.log('\nGetting available filters:');
-    try {
-      const filters = await api.getFilters();
-      console.log('Available filters:', filters);
-    
-      if (filters.length > 0) {
-        // Get options for first filter
-        const firstFilter = filters[0];
-        console.log(`\nGetting options for filter "${firstFilter.name}" (ID: ${firstFilter.id}):`);
-        const options = await api.getFilterOptions(firstFilter.id);
-        console.log('Filter options:', options);
-    
-        if (options.length > 0) {
-          // Test search with the first filter and option
-          console.log('\nTesting search with filter:', firstFilter.name);
-          const searchResult = await client.callTool({
-            name: "searchProcedures",
-            arguments: {
-              filters: [{
-                filterId: firstFilter.id,
-                filterOptionId: options[0].id
-              }]
+    // Define test functions for each feature
+    const tests = {
+      // Test prompts functionality
+      prompts: async () => {
+        console.log('\n=== Testing Standard Prompts ===');
+        try {
+          // List available prompts
+          const promptsResponse = await client.listPrompts();
+          
+          if (promptsResponse && promptsResponse.prompts) {
+            console.log('Prompts received successfully!');
+            console.log(`Found ${promptsResponse.prompts.length} prompts.`);
+            
+            // Display each prompt
+            console.log('\nAvailable Prompts:');
+            promptsResponse.prompts.forEach((prompt) => {
+              console.log(`\n--- ${prompt.name} ---`);
+              console.log(`Description: ${prompt.description}`);
+              if (prompt.arguments && prompt.arguments.length) {
+                console.log('Arguments:');
+                prompt.arguments.forEach(arg => {
+                  console.log(`  - ${arg.name}: ${arg.description} ${arg.required ? '(required)' : '(optional)'}`);
+                });
+              }
+            });
+            
+            // Test getting a specific prompt
+            if (promptsResponse.prompts.length > 0) {
+              const firstPrompt = promptsResponse.prompts[0].name;
+              console.log(`\nTesting getPrompt for "${firstPrompt}":`);
+              
+              const promptResult = await client.getPrompt({ 
+                name: firstPrompt,
+                arguments: {} 
+              });
+              
+              if (promptResult && promptResult.messages) {
+                console.log(`Successfully received prompt template with ${promptResult.messages.length} messages.`);
+                console.log('First message preview:');
+                const firstMsg = promptResult.messages[0];
+                // Type-safe access to message content
+                if (firstMsg.content && typeof firstMsg.content === 'object' && 'text' in firstMsg.content && typeof firstMsg.content.text === 'string') {
+                  // Show first few lines
+                  const previewLines = firstMsg.content.text.split('\n').slice(0, 5);
+                  console.log(previewLines.join('\n') + '\n...');
+                }
+                return true;
+              } else {
+                console.log('No prompt content received or unexpected format.');
+                return false;
+              }
             }
+            return true;
+          } else {
+            console.log('No prompts available or unexpected response format:', promptsResponse);
+            return false;
+          }
+        } catch (error: any) {
+          console.error('Error testing prompts:', error.message || error);
+          return false;
+        }
+      },
+      
+      // Test listing tools
+      listTools: async () => {
+        console.log('\n=== Testing Tool Listing ===');
+        try {
+          const toolList = await client.listTools();
+          console.log(`Found ${toolList.tools.length} tools:`);
+          
+          for (const tool of toolList.tools) {
+            console.log(`- ${tool.name}: ${tool.description}`);
+          }
+          return true;
+        } catch (error: any) {
+          console.error('Error listing tools:', error.message || error);
+          return false;
+        }
+      },
+      
+      // Test getFilters tool
+      filters: async () => {
+        console.log('\n=== Testing Filter Tools ===');
+        try {
+          console.log('\nTesting getFilters:');
+          const filtersResult = await client.callTool({
+            name: "getFilters",
+            arguments: {}
           });
           
-          if (searchResult.content && Array.isArray(searchResult.content)) {
-            searchResult.content.forEach((item: any) => {
+          if (filtersResult.content && Array.isArray(filtersResult.content)) {
+            filtersResult.content.forEach((item: any) => {
               if (item.type === 'text' && !item.text.startsWith('```')) {
                 console.log('\n' + item.text);
               }
             });
           }
+          
+          // Test a single filter options
+          console.log('\nTesting getFilterOptions:');
+          const filterOptionsResult = await client.callTool({
+            name: "getFilterOptions",
+            arguments: {
+              filterId: 3 // Type of operation filter
+            }
+          });
+          
+          if (filterOptionsResult.content && Array.isArray(filterOptionsResult.content)) {
+            filterOptionsResult.content.forEach((item: any) => {
+              if (item.type === 'text' && !item.text.startsWith('```')) {
+                console.log('\n' + item.text);
+              }
+            });
+          }
+          return true;
+        } catch (error: any) {
+          console.error('Error testing filter tools:', error.message || error);
+          return false;
+        }
+      },
+      
+      // Test listProcedures tool
+      listProcedures: async () => {
+        console.log('\n=== Testing listProcedures Tool ===');
+        try {
+          const listResult = await client.callTool({
+            name: "listProcedures",
+            arguments: {}
+          });
+          
+          console.log('\nProcedures Summary:');
+          if (listResult.content && Array.isArray(listResult.content)) {
+            // Print the text content (not the JSON)
+            listResult.content.forEach((item: any) => {
+              if (item.type === 'text' && !item.text.startsWith('```')) {
+                // Limit output to first few lines for brevity
+                const lines = item.text.split('\n');
+                console.log(lines.slice(0, 10).join('\n') + '\n...');
+              }
+            });
+          }
+          return true;
+        } catch (error: any) {
+          console.error('Error calling listProcedures:', error.message || error);
+          return false;
+        }
+      },
+      
+      // Test getProcedureDetails tool
+      procedureDetails: async () => {
+        console.log('\n=== Testing getProcedureDetails Tool ===');
+        try {
+          console.log('\nGetting details for procedure ID 725:');
+          const detailsResult = await client.callTool({
+            name: "getProcedureDetails",
+            arguments: {
+              procedureId: 725 // Using a valid procedure ID
+            }
+          });
+          
+          if (detailsResult.content && Array.isArray(detailsResult.content)) {
+            // Print first 15 lines of the procedure details
+            const textContent = detailsResult.content.find((item: any) => 
+              item.type === 'text' && !item.text.startsWith('```')
+            );
+            
+            if (textContent) {
+              const lines = textContent.text.split('\n');
+              console.log(lines.slice(0, 15).join('\n') + '\n...');
+            }
+          }
+          return true;
+        } catch (error: any) {
+          console.error('Error calling getProcedureDetails:', error.message || error);
+          return false;
+        }
+      },
+      
+      // Test searchProcedures tool
+      searchProcedures: async () => {
+        console.log('\n=== Testing searchProcedures Tool ===');
+        try {
+          console.log('\nSearching for "import":');
+          const searchResult = await client.callTool({
+            name: "searchProcedures",
+            arguments: {
+              query: "import"
+            }
+          });
+          
+          if (searchResult.content && Array.isArray(searchResult.content)) {
+            // Print first few lines of results
+            const textContent = searchResult.content.find((item: any) => 
+              item.type === 'text' && !item.text.startsWith('```')
+            );
+            
+            if (textContent) {
+              const lines = textContent.text.split('\n');
+              console.log(lines.slice(0, 10).join('\n') + '\n...');
+            }
+          }
+          return true;
+        } catch (error: any) {
+          console.error('Error calling searchProcedures:', error.message || error);
+          return false;
         }
       }
-    } catch (error: any) {
-      console.error('Error testing filters:', error.message || error);
+    };
+    
+    // Validate that the selected test exists
+    if (testFilter !== 'all' && !Object.keys(tests).includes(testFilter)) {
+      console.error(`Error: Test "${testFilter}" not found.`);
+      console.log(`Available tests: ${Object.keys(tests).join(', ')}, all`);
+      process.exit(1);
     }
     
-    // Test getProcedureStep tool with a valid step from procedure 725
-    console.log('\nTesting getProcedureStep tool:');
-    try {
-      console.log('Making API request for step 2787 in procedure 725...');
-      const stepResult = await client.callTool({
-        name: "getProcedureStep",
-        arguments: {
-          procedureId: 725,
-          stepId: 2787 // This is the first step "Submit application for buying cloves" from our previous test
-        }
-      });
-      
-      console.log('API response:', JSON.stringify(stepResult, null, 2));
-      
-      if (stepResult.content && Array.isArray(stepResult.content)) {
-        stepResult.content.forEach((item: any) => {
-          if (item.type === 'text' && !item.text.startsWith('```')) {
-            console.log('\n' + item.text);
-          }
-        });
+    // Run the specified test or all tests
+    const testResults = new Map<string, boolean>();
+    
+    if (testFilter === 'all') {
+      console.log('Running all tests...');
+      for (const [testName, testFn] of Object.entries(tests)) {
+        testResults.set(testName, await testFn());
       }
-    } catch (error: any) {
-      console.error('Error calling getProcedureStep:', error.message || error);
+    } else {
+      // Run only the specified test
+      console.log(`Running test: ${testFilter}`);
+      const testFn = tests[testFilter as keyof typeof tests];
+      testResults.set(testFilter, await testFn());
+    }
+    
+    // Print test results summary
+    console.log('\n=== Test Results Summary ===');
+    allPassed = true;
+    for (const [testName, result] of testResults.entries()) {
+      console.log(`${testName}: ${result ? '✅ PASS' : '❌ FAIL'}`);
+      if (!result) allPassed = false;
+    }
+    
+    if (allPassed) {
+      console.log('\nAll tests passed successfully! 🎉');
+    } else {
+      console.log('\nSome tests failed. Check the logs for details.');
     }
     
   } catch (error: any) {
     console.error('Connection failed:', error.message || error);
+    allPassed = false;
   } finally {
     try {
       console.log('\nDisconnecting...');
-      // Use close() instead of disconnect()
       await client.close();
       console.log('Disconnected successfully');
     } catch (error: any) {
       console.error('Error during disconnect:', error.message || error);
+      allPassed = false;
     }
-    process.exit(0);
+    process.exit(allPassed ? 0 : 1);
   }
 }
 

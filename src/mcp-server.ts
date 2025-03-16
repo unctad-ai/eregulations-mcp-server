@@ -1,7 +1,8 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
-  CompleteRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
   ListToolsRequestSchema,
   Tool,
   ToolSchema,
@@ -12,6 +13,7 @@ import { ERegulationsApi } from "./services/eregulations-api.js";
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
 type ToolInput = z.infer<typeof ToolInputSchema>;
+
 
 /* Input schemas for tools implemented in this server */
 const ListProceduresSchema = z.object({});
@@ -39,6 +41,8 @@ const GetFilterOptionsSchema = z.object({
   filterId: z.number().describe("ID of the filter to get options for")
 });
 
+const PromptTemplatesSchema = z.object({});
+
 enum ToolName {
   LIST_PROCEDURES = "listProcedures",
   GET_PROCEDURE_DETAILS = "getProcedureDetails",
@@ -47,6 +51,120 @@ enum ToolName {
   GET_FILTERS = "getFilters",
   GET_FILTER_OPTIONS = "getFilterOptions"
 }
+
+enum PromptName {
+  LIST_PROCEDURES = "listProcedures",
+  GET_PROCEDURE_DETAILS = "getProcedureDetails",
+  GET_PROCEDURE_STEP = "getProcedureStep",
+  SEARCH_PROCEDURES = "searchProcedures",
+  GET_FILTERS = "getFilters",
+  GET_FILTER_OPTIONS = "getFilterOptions"
+}
+
+// Tool prompt templates with more consistent formatting based on MCP standard
+const PROMPT_TEMPLATES = {
+  [PromptName.LIST_PROCEDURES]: `# List Procedures
+Get a list of all available procedures in the eRegulations system.
+
+## Usage
+\`\`\`json
+{
+  "name": "listProcedures"
+}
+\`\`\`
+
+## Returns
+A list of procedures with their IDs, names, and basic details.`,
+
+  [PromptName.GET_PROCEDURE_DETAILS]: `# Get Procedure Details
+Get detailed information about a specific procedure by its ID.
+
+## Usage
+\`\`\`json
+{
+  "name": "getProcedureDetails",
+  "arguments": {
+    "procedureId": 725  // Replace with the ID of the procedure you want to retrieve
+  }
+}
+\`\`\`
+
+## Notes
+- Use listProcedures first to find valid procedure IDs
+- Returns complete information about steps, requirements, timelines and costs`,
+
+  [PromptName.GET_PROCEDURE_STEP]: `# Get Procedure Step
+Get information about a specific step within a procedure.
+
+## Usage
+\`\`\`json
+{
+  "name": "getProcedureStep",
+  "arguments": {
+    "procedureId": 725,  // ID of the procedure
+    "stepId": 2787      // ID of the step within that procedure
+  }
+}
+\`\`\`
+
+## Notes
+- Use getProcedureDetails first to find valid step IDs within a procedure
+- Returns detailed information about a specific step including requirements and contact information`,
+
+  [PromptName.SEARCH_PROCEDURES]: `# Search Procedures
+Search for procedures by text and/or filters.
+
+## Usage
+\`\`\`json
+{
+  "name": "searchProcedures",
+  "arguments": {
+    "query": "import",      // Optional text to search for
+    "filters": [           // Optional array of filters
+      {
+        "filterId": 3,      // ID from getFilters() - e.g., "Type of operation"
+        "filterOptionId": 4  // ID from getFilterOptions() - e.g., "Import"
+      }
+    ]
+  }
+}
+\`\`\`
+
+## Notes
+- Both query and filters parameters are optional
+- Use getFilters and getFilterOptions first to find valid filter/option IDs
+- When both query and filters are provided, only procedures that match both criteria are returned`,
+
+  [PromptName.GET_FILTERS]: `# Get Filters
+Get available filter categories for searching procedures.
+
+## Usage
+\`\`\`json
+{
+  "name": "getFilters"
+}
+\`\`\`
+
+## Returns
+A list of filter categories (with IDs) that can be used with searchProcedures.`,
+
+  [PromptName.GET_FILTER_OPTIONS]: `# Get Filter Options
+Get available options for a specific filter category.
+
+## Usage
+\`\`\`json
+{
+  "name": "getFilterOptions",
+  "arguments": {
+    "filterId": 3  // ID of the filter from getFilters() - e.g., "Type of operation"
+  }
+}
+\`\`\`
+
+## Notes
+- Use getFilters first to find valid filter IDs
+- Returns options that can be used with the specified filter in searchProcedures`
+};
 
 /**
  * Format procedure data in a way that's more suitable for LLMs to process
@@ -279,6 +397,7 @@ export const createServer = (baseUrl: string) => {
           getFilters: true,
           getFilterOptions: true
         },
+        prompts: {},
       },
     }
   );
@@ -602,6 +721,98 @@ export const createServer = (baseUrl: string) => {
     }
     
     return handler.handler(args);
+  });
+
+  // Register standard prompts handlers
+  server.setRequestHandler(ListPromptsRequestSchema, async () => {
+    return {
+      prompts: [
+        {
+          name: PromptName.LIST_PROCEDURES,
+          description: "Get a list of all available procedures in the eRegulations system",
+        },
+        {
+          name: PromptName.GET_PROCEDURE_DETAILS,
+          description: "Get detailed information about a specific procedure by its ID",
+          arguments: [
+            {
+              name: "procedureId",
+              description: "ID of the procedure to retrieve",
+              required: true,
+            },
+          ],
+        },
+        {
+          name: PromptName.GET_PROCEDURE_STEP,
+          description: "Get information about a specific step within a procedure",
+          arguments: [
+            {
+              name: "procedureId",
+              description: "ID of the procedure",
+              required: true,
+            },
+            {
+              name: "stepId",
+              description: "ID of the step within the procedure",
+              required: true,
+            },
+          ],
+        },
+        {
+          name: PromptName.SEARCH_PROCEDURES,
+          description: "Search for procedures by text and/or filters",
+          arguments: [
+            {
+              name: "query",
+              description: "Text search query",
+              required: false,
+            },
+            {
+              name: "filters",
+              description: "Array of filter criteria (filterId and filterOptionId)",
+              required: false,
+            },
+          ],
+        },
+        {
+          name: PromptName.GET_FILTERS,
+          description: "Get available filter categories for searching procedures",
+        },
+        {
+          name: PromptName.GET_FILTER_OPTIONS,
+          description: "Get available options for a specific filter category",
+          arguments: [
+            {
+              name: "filterId",
+              description: "ID of the filter to get options for",
+              required: true,
+            },
+          ],
+        },
+      ],
+    };
+  });
+
+  // Register handler for getting a specific prompt
+  server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+    const { name } = request.params;
+    
+    // Return messages for the requested prompt
+    if (Object.values(PromptName).includes(name as PromptName)) {
+      return {
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: PROMPT_TEMPLATES[name as PromptName],
+            },
+          },
+        ],
+      };
+    }
+    
+    throw new Error(`Unknown prompt: ${name}`);
   });
 
   return { server, handlers };

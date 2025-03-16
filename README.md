@@ -7,6 +7,8 @@ A Model Context Protocol (MCP) server implementation for accessing eRegulations 
 - Access eRegulations data through a standardized protocol
 - Query procedures, steps, requirements, and costs
 - Search for procedures by name or criteria
+- Filter procedures by categories and options
+- MCP prompt templates to guide LLM tool usage
 - Support for both standard I/O and HTTP connections
 
 ## Installation
@@ -75,11 +77,26 @@ Parameters:
 
 ### `searchProcedures`
 
-Searches for procedures by name or applies specified filters.
+Searches for procedures by text and/or filters.
 
 Parameters:
-- `query`: Search query for procedures
-- `filters`: Optional filters to apply (array format matching eRegulations API)
+- `query`: Optional text search query
+- `filters`: Optional array of filters in the format `[{ filterId: number, filterOptionId: number }, ...]`
+
+### `getFilters`
+
+Gets available filter categories that can be used with searchProcedures.
+
+### `getFilterOptions`
+
+Gets available options for a specific filter category.
+
+Parameters:
+- `filterId`: ID of the filter to get options for
+
+## Prompt Templates
+
+The server provides prompt templates to guide LLMs in using the available tools correctly. These templates explain the proper format and parameters for each tool. LLM clients that support the MCP prompt templates capability will automatically receive these templates to improve their ability to work with the API.
 
 ## Development
 
@@ -92,6 +109,9 @@ npm test
 
 # Run tests with watch mode
 npm run test:watch
+
+# Run test client (try filter features)
+npm run test-client
 ```
 
 ## License
