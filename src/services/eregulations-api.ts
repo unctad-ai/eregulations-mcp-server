@@ -217,29 +217,40 @@ export class ERegulationsApi {
    */
   async getProcedureStep(procedureId: number, stepId: number) {
     try {
-      const response = await axios.get(
-        `${this.baseUrl}/Procedures/${procedureId}/Steps/${stepId}`
-      );
-      return response.data;
-    } catch (error) {
-      // Mock data in case of API error
+      console.log(`Fetching step ${stepId} for procedure ${procedureId}...`);
+      
+      // First get the procedure to verify it exists and get its URL
+      const procedure = await this.getProcedureById(procedureId);
+      if (!procedure) {
+        throw new Error(`Could not find procedure with ID ${procedureId}`);
+      }
+      
+      // Find the step within the procedure blocks
+      if (procedure.data?.blocks) {
+        for (const block of procedure.data.blocks) {
+          if (block.steps) {
+            const step = block.steps.find((s: any) => s.id === stepId);
+            if (step) {
+              // Enrich step data with additional context
+              return {
+                ...step,
+                procedureId,
+                procedureName: procedure.data.name,
+                _links: {
+                  self: step.links?.find((link: any) => link.rel === "step")?.href,
+                  procedure: procedure._links?.self
+                }
+              };
+            }
+          }
+        }
+      }
+      
+      throw new Error(`Step ${stepId} not found in procedure ${procedureId}`);
+    } catch (error: any) {
       console.error(`Error in getProcedureStep(${procedureId}, ${stepId}):`, error);
-      return {
-        id: stepId,
-        name: `Mock Step ${stepId}`,
-        isOnline: Math.random() > 0.5,
-        isOptional: Math.random() > 0.7,
-        isCertified: Math.random() > 0.8,
-        contact: {
-          entityInCharge: { id: 1, name: "Mock Entity" },
-          unitInCharge: { id: 2, name: "Mock Unit" },
-          personInCharge: { id: 3, name: "Mock Person" }
-        },
-        requirements: [
-          { id: 101, name: "Required Document 1" },
-          { id: 102, name: "Required Document 2" }
-        ]
-      };
+      console.error('Full error details:', error.response?.data || error.message);
+      throw error;
     }
   }
 

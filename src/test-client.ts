@@ -149,6 +149,31 @@ async function main() {
       console.error('Error calling searchProcedures:', error.message || error);
     }
     
+    // Test getProcedureStep tool with a valid step from procedure 725
+    console.log('\nTesting getProcedureStep tool:');
+    try {
+      console.log('Making API request for step 2787 in procedure 725...');
+      const stepResult = await client.callTool({
+        name: "getProcedureStep",
+        arguments: {
+          procedureId: 725,
+          stepId: 2787 // This is the first step "Submit application for buying cloves" from our previous test
+        }
+      });
+      
+      console.log('API response:', JSON.stringify(stepResult, null, 2));
+      
+      if (stepResult.content && Array.isArray(stepResult.content)) {
+        stepResult.content.forEach((item: any) => {
+          if (item.type === 'text' && !item.text.startsWith('```')) {
+            console.log('\n' + item.text);
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error calling getProcedureStep:', error.message || error);
+    }
+    
   } catch (error: any) {
     console.error('Connection failed:', error.message || error);
   } finally {
