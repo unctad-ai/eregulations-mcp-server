@@ -63,7 +63,7 @@ function formatProcedureForLLM(procedure: any): string {
     procedure.data.blocks.forEach((block: any) => {
       if (block.steps && block.steps.length) {
         block.steps.forEach((step: any, index: number) => {
-          result += `${index + 1}. ${step.name}\n`;
+          result += `${index + 1}. ${step.name} (Step ID: ${step.id})\n`;
           
           if (step.isOnline) {
             result += `   - Can be completed online\n`;
