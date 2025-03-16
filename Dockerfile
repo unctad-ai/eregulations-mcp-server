@@ -27,18 +27,16 @@ COPY --from=builder /app/dist ./dist
 
 # Create data directory structure
 RUN mkdir -p /app/data/cache
-# If there are any specific files in the data directory, copy them here
-COPY --from=builder /app/data/cache/*.sqlite /app/data/cache/ 2>/dev/null || true
 
 # Install production dependencies only
 RUN npm ci --omit=dev
 
 # Environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=7000
 
 # Expose the port
-EXPOSE 3000
+EXPOSE ${PORT}
 
 # Command to run the server
 CMD ["node", "dist/sse.js"]
