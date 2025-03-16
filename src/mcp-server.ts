@@ -29,37 +29,21 @@ const GetProcedureStepSchema = z.object({
 });
 
 const SearchProceduresSchema = z.object({
-  query: z.string().optional().describe("Optional text search query"),
-  filters: z.array(z.object({
-    filterId: z.number().describe("ID of the filter category (from /Filters endpoint)"),
-    filterOptionId: z.number().describe("ID of the selected option (from /Filters/{id}/Options endpoint)")
-  })).optional().describe("API-compatible filter criteria")
+  query: z.string().optional().describe("Text search query")
 });
-
-const GetFiltersSchema = z.object({});
-
-const GetFilterOptionsSchema = z.object({
-  filterId: z.number().describe("ID of the filter to get options for")
-});
-
-const PromptTemplatesSchema = z.object({});
 
 enum ToolName {
   LIST_PROCEDURES = "listProcedures",
   GET_PROCEDURE_DETAILS = "getProcedureDetails",
   GET_PROCEDURE_STEP = "getProcedureStep",
-  SEARCH_PROCEDURES = "searchProcedures",
-  GET_FILTERS = "getFilters",
-  GET_FILTER_OPTIONS = "getFilterOptions"
+  SEARCH_PROCEDURES = "searchProcedures"
 }
 
 enum PromptName {
   LIST_PROCEDURES = "listProcedures",
   GET_PROCEDURE_DETAILS = "getProcedureDetails",
   GET_PROCEDURE_STEP = "getProcedureStep",
-  SEARCH_PROCEDURES = "searchProcedures",
-  GET_FILTERS = "getFilters",
-  GET_FILTER_OPTIONS = "getFilterOptions"
+  SEARCH_PROCEDURES = "searchProcedures"
 }
 
 // Tool prompt templates with more consistent formatting based on MCP standard
@@ -113,58 +97,21 @@ Get information about a specific step within a procedure.
 - Returns detailed information about a specific step including requirements and contact information`,
 
   [PromptName.SEARCH_PROCEDURES]: `# Search Procedures
-Search for procedures by text and/or filters.
+Search for procedures by text.
 
 ## Usage
 \`\`\`json
 {
   "name": "searchProcedures",
   "arguments": {
-    "query": "import",      // Optional text to search for
-    "filters": [           // Optional array of filters
-      {
-        "filterId": 3,      // ID from getFilters() - e.g., "Type of operation"
-        "filterOptionId": 4  // ID from getFilterOptions() - e.g., "Import"
-      }
-    ]
+    "query": "import"  // Optional text to search for
   }
 }
 \`\`\`
 
 ## Notes
-- Both query and filters parameters are optional
-- Use getFilters and getFilterOptions first to find valid filter/option IDs
-- When both query and filters are provided, only procedures that match both criteria are returned`,
-
-  [PromptName.GET_FILTERS]: `# Get Filters
-Get available filter categories for searching procedures.
-
-## Usage
-\`\`\`json
-{
-  "name": "getFilters"
-}
-\`\`\`
-
-## Returns
-A list of filter categories (with IDs) that can be used with searchProcedures.`,
-
-  [PromptName.GET_FILTER_OPTIONS]: `# Get Filter Options
-Get available options for a specific filter category.
-
-## Usage
-\`\`\`json
-{
-  "name": "getFilterOptions",
-  "arguments": {
-    "filterId": 3  // ID of the filter from getFilters() - e.g., "Type of operation"
-  }
-}
-\`\`\`
-
-## Notes
-- Use getFilters first to find valid filter IDs
-- Returns options that can be used with the specified filter in searchProcedures`
+- Returns procedures whose names match the search query
+- If no query is provided, returns all procedures`
 };
 
 /**
@@ -396,9 +343,7 @@ export const createServer = (baseUrl: string) => {
           listProcedures: true,
           getProcedureDetails: true,
           getProcedureStep: true,
-          searchProcedures: true,
-          getFilters: true,
-          getFilterOptions: true
+          searchProcedures: true
         },
         prompts: {},
       },
@@ -569,38 +514,16 @@ export const createServer = (baseUrl: string) => {
     },
     {
       name: ToolName.SEARCH_PROCEDURES,
-      description: "Search for procedures using text search and/or filters. Use getFilters() first to get available filter categories, then getFilterOptions(filterId) to get valid options for each filter.",
+      description: "Search for procedures using text search",
       inputSchema: zodToJsonSchema(SearchProceduresSchema) as ToolInput,
       handler: async (args: any) => {
         try {
-          const { query, filters } = args;
-          let apiResults;
-          
-          // If both query and filters provided, combine results
-          if (query && filters?.length > 0) {
-            const [nameResults, filterResults] = await Promise.all([
-              api.searchByName(query),
-              api.searchByFilters(filters)
-            ]);
-            
-            // Find procedures that match both name and filters
-            apiResults = nameResults.filter(proc => 
-              filterResults.some((f: { id: number }) => f.id === proc.id)
-            );
-          }
-          // Only filters provided
-          else if (filters?.length > 0) {
-            apiResults = await api.searchByFilters(filters);
-          }
-          // Only name search or no criteria
-          else {
-            apiResults = await api.searchByName(query || '');
-          }
+          const { query } = args;
+          const apiResults = await api.searchByName(query || '');
 
           // Format results for display
           let searchResults = `Found ${apiResults.length} procedures`;
           if (query) searchResults += ` matching "${query}"`;
-          if (filters?.length) searchResults += ` with ${filters.length} active filters`;
           searchResults += ':\n\n';
           
           if (apiResults.length > 0) {
@@ -641,87 +564,7 @@ export const createServer = (baseUrl: string) => {
           };
         }
       }
-    },
-    {
-      name: ToolName.GET_FILTERS,
-      description: "Get available filter categories that can be used with searchProcedures",
-      inputSchema: zodToJsonSchema(GetFiltersSchema) as ToolInput,
-      handler: async () => {
-        try {
-          logger.log(`Handling GET_FILTERS request`);
-          
-          const filters = await api.getFilters();
-          
-          logger.log(`Successfully retrieved ${filters.length} filters`);
-          
-          return {
-            content: [
-              {
-                type: "text",
-                text: filters.map((f: { name: string; id: number }) => 
-                  `- ${f.name} (ID: ${f.id})`
-                ).join('\n')
-              },
-              {
-                type: "text",
-                text: "```json\n" + JSON.stringify(filters, null, 2) + "\n```",
-                annotations: {
-                  role: "data"
-                }
-              }
-            ],
-          };
-        } catch (error) {
-          logger.error(`Error in GET_FILTERS handler:`, error);
-          
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error retrieving filters: ${error instanceof Error ? error.message : String(error)}`,
-              },
-            ],
-          };
-        }
-      }
-    },
-    {
-      name: ToolName.GET_FILTER_OPTIONS,
-      description: "Get available options for a specific filter category",
-      inputSchema: zodToJsonSchema(GetFilterOptionsSchema) as ToolInput,
-      handler: async (args: any) => {
-        try {
-          const { filterId } = args;
-          const options = await api.getFilterOptions(filterId);
-          return {
-            content: [
-              {
-                type: "text",
-                text: options.map((o: { name: string; id: number }) => 
-                  `- ${o.name} (ID: ${o.id})`
-                ).join('\n')
-              },
-              {
-                type: "text",
-                text: "```json\n" + JSON.stringify(options, null, 2) + "\n```",
-                annotations: {
-                  role: "data"
-                }
-              }
-            ],
-          };
-        } catch (error) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error retrieving filter options: ${error instanceof Error ? error.message : String(error)}`,
-              },
-            ],
-          };
-        }
-      }
-    },
+    }
   ];
 
   // Register the tool list handler
@@ -791,35 +634,15 @@ export const createServer = (baseUrl: string) => {
         },
         {
           name: PromptName.SEARCH_PROCEDURES,
-          description: "Search for procedures by text and/or filters",
+          description: "Search for procedures by text",
           arguments: [
             {
               name: "query",
               description: "Text search query",
               required: false,
-            },
-            {
-              name: "filters",
-              description: "Array of filter criteria (filterId and filterOptionId)",
-              required: false,
-            },
+            }
           ],
-        },
-        {
-          name: PromptName.GET_FILTERS,
-          description: "Get available filter categories for searching procedures",
-        },
-        {
-          name: PromptName.GET_FILTER_OPTIONS,
-          description: "Get available options for a specific filter category",
-          arguments: [
-            {
-              name: "filterId",
-              description: "ID of the filter to get options for",
-              required: true,
-            },
-          ],
-        },
+        }
       ],
     };
   });

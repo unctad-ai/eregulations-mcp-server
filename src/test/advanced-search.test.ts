@@ -27,54 +27,22 @@ describe('Advanced Search Tests', () => {
     await client.close();
   });
 
-  it('should search by type of operation', async () => {
+  it('should search by text query', async () => {
     const result = await client.callTool({
       name: "searchProcedures",
       arguments: {
-        filters: [
-          { filterId: 3, filterOptionId: 3 }  // Type of operation = Export
-        ]
+        query: "import"
       }
     });
     expect(result.content).toBeDefined();
     expect(Array.isArray(result.content)).toBe(true);
   });
 
-  it('should search by type of product', async () => {
+  it('should handle empty search query', async () => {
     const result = await client.callTool({
       name: "searchProcedures",
       arguments: {
-        filters: [
-          { filterId: 4, filterOptionId: 1 }  // Type of product (first option)
-        ]
-      }
-    });
-    expect(result.content).toBeDefined();
-    expect(Array.isArray(result.content)).toBe(true);
-  });
-
-  it('should combine text search with filters', async () => {
-    const result = await client.callTool({
-      name: "searchProcedures",
-      arguments: {
-        query: "import",
-        filters: [
-          { filterId: 3, filterOptionId: 4 }  // Type of operation = Import
-        ]
-      }
-    });
-    expect(result.content).toBeDefined();
-    expect(Array.isArray(result.content)).toBe(true);
-  });
-
-  it('should handle multiple filters', async () => {
-    const result = await client.callTool({
-      name: "searchProcedures",
-      arguments: {
-        filters: [
-          { filterId: 3, filterOptionId: 3 },  // Type of operation = Export
-          { filterId: 4, filterOptionId: 1 }   // First product type
-        ]
+        query: ""
       }
     });
     expect(result.content).toBeDefined();

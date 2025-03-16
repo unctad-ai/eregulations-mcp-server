@@ -292,46 +292,6 @@ export class ERegulationsApi {
   }
 
   /**
-   * Get available filters
-   */
-  async getFilters() {
-    const cacheKey = 'filters';
-    return this.fetchWithCache(cacheKey, async () => {
-      const response = await axios.get(`${this.baseUrl}/Filters`);
-      return response.data?.data || [];
-    }, CACHE_TTL.FILTERS);
-  }
-
-  /**
-   * Get options for a specific filter
-   */
-  async getFilterOptions(filterId: number) {
-    const cacheKey = `filter_options_${filterId}`;
-    return this.fetchWithCache(cacheKey, async () => {
-      const response = await axios.get(`${this.baseUrl}/Filters/${filterId}/Options`);
-      return response.data?.data || [];
-    }, CACHE_TTL.FILTERS);
-  }
-
-  /**
-   * Search procedures by filters
-   */
-  async searchByFilters(filters: Array<{ filterId: number; filterOptionId: number }>) {
-    const cacheKey = `search_filters_${JSON.stringify(filters)}`;
-    return this.fetchWithCache(cacheKey, async () => {
-      const response = await axios.post(`${this.baseUrl}/Objectives/SearchByFilters`, filters);
-      
-      if (response.data?.exactMatchObjectives?.length > 0) {
-        return response.data.exactMatchObjectives;
-      }
-      if (response.data?.filteredMatches?.length > 0) {
-        return response.data.filteredMatches;
-      }
-      return [];
-    }, CACHE_TTL.SEARCH_RESULTS);
-  }
-
-  /**
    * Search procedures by name (client-side implementation)
    */
   async searchByName(query: string) {

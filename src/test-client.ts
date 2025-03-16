@@ -15,10 +15,9 @@ console.log(`Using ${useSSE ? 'sse' : "stdio"} transport`);
 const availableTests = {
   "prompts": "Test the standard prompts functionality",
   "list-tools": "Test the tool listing functionality",
-  "filters": "Test the filter-related tools",
   "list-procedures": "Test the listProcedures tool",
   "procedure-details": "Test the getProcedureDetails tool",
-  "search-procedures": "Test the searchProcedures tool",
+  "search-procedures": "Test the text-based search functionality",
   "all": "Run all tests sequentially"
 };
 
@@ -153,47 +152,6 @@ async function main() {
           return true;
         } catch (error: any) {
           console.error('Error listing tools:', error.message || error);
-          return false;
-        }
-      },
-      
-      // Test getFilters tool
-      "filters": async () => {
-        console.log('\n=== Testing Filter Tools ===');
-        try {
-          console.log('\nTesting getFilters:');
-          const filtersResult = await client.callTool({
-            name: "getFilters",
-            arguments: {}
-          });
-          
-          if (filtersResult.content && Array.isArray(filtersResult.content)) {
-            filtersResult.content.forEach((item: any) => {
-              if (item.type === 'text' && !item.text.startsWith('```')) {
-                console.log('\n' + item.text);
-              }
-            });
-          }
-          
-          // Test a single filter options
-          console.log('\nTesting getFilterOptions:');
-          const filterOptionsResult = await client.callTool({
-            name: "getFilterOptions",
-            arguments: {
-              filterId: 3 // Type of operation filter
-            }
-          });
-          
-          if (filterOptionsResult.content && Array.isArray(filterOptionsResult.content)) {
-            filterOptionsResult.content.forEach((item: any) => {
-              if (item.type === 'text' && !item.text.startsWith('```')) {
-                console.log('\n' + item.text);
-              }
-            });
-          }
-          return true;
-        } catch (error: any) {
-          console.error('Error testing filter tools:', error.message || error);
           return false;
         }
       },
