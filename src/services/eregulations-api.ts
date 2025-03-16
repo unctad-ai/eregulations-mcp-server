@@ -238,34 +238,16 @@ export class ERegulationsApi {
     return this.fetchWithCache(cacheKey, async () => {
       logger.log(`Fetching step ${stepId} for procedure ${procedureId}...`);
       
-      // First get the procedure to verify it exists and get its URL
-      const procedure = await this.getProcedureById(procedureId);
-      if (!procedure) {
-        throw new Error(`Could not find procedure with ID ${procedureId}`);
-      }
+      // Use the dedicated step endpoint to get complete step information
+      const response = await axios.get(`${this.baseUrl}/Procedures/${procedureId}/Steps/${stepId}`);
+      const stepData = response.data;
       
-      // Find the step within the procedure blocks
-      if (procedure.data?.blocks) {
-        for (const block of procedure.data.blocks) {
-          if (block.steps) {
-            const step = block.steps.find((s: any) => s.id === stepId);
-            if (step) {
-              // Enrich step data with additional context
-              return {
-                ...step,
-                procedureId,
-                procedureName: procedure.data.name,
-                _links: {
-                  self: step.links?.find((link: any) => link.rel === "step")?.href,
-                  procedure: procedure._links?.self
-                }
-              };
-            }
-          }
-        }
-      }
-      
-      throw new Error(`Step ${stepId} not found in procedure ${procedureId}`);
+      // Add additional context to the step data
+      return {
+        ...stepData.data,
+        procedureId,
+        _links: stepData.links
+      };
     }, CACHE_TTL.PROCEDURE_COMPONENTS);
   }
 

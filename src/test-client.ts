@@ -18,6 +18,7 @@ const availableTests = {
   "list-procedures": "Test the listProcedures tool",
   "procedure-details": "Test the getProcedureDetails tool",
   "search-procedures": "Test the text-based search functionality",
+  "procedure-step": "Test the getProcedureStep tool",
   "all": "Run all tests sequentially"
 };
 
@@ -239,6 +240,37 @@ async function main() {
           return true;
         } catch (error: any) {
           console.error('Error calling searchProcedures:', error.message || error);
+          return false;
+        }
+      },
+
+      // Test getProcedureStep tool
+      "procedure-step": async () => {
+        console.log('\n=== Testing getProcedureStep Tool ===');
+        try {
+          // Test with a known procedure step (Contract a clearing agent)
+          console.log('\nGetting details for step ID 384 in procedure 1244:');
+          const stepResult = await client.callTool({
+            name: "getProcedureStep",
+            arguments: {
+              procedureId: 1244,
+              stepId: 384
+            }
+          });
+          
+          if (stepResult.content && Array.isArray(stepResult.content)) {
+            // Print the formatted step information
+            const textContent = stepResult.content.find((item: any) => 
+              item.type === 'text' && !item.text.startsWith('```')
+            );
+            
+            if (textContent) {
+              console.log(textContent.text);
+            }
+          }
+          return true;
+        } catch (error: any) {
+          console.error('Error calling getProcedureStep:', error.message || error);
           return false;
         }
       }

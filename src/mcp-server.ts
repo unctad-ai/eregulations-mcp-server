@@ -290,38 +290,148 @@ function formatProcedureForLLM(procedure: any): string {
 function formatStepForLLM(step: any): string {
   if (!step) return "No step data available";
   
-  let result = `Step: ${step.name || 'Unnamed'} (ID: ${step.id || 'Unknown'})\n`;
+  let result = `Step: ${step.name || 'Unnamed'} (Step ID: ${step.id || 'Unknown'})\n`;
+  if (step.procedureName) {
+    result += `Part of procedure: ${step.procedureName} (ID: ${step.procedureId})\n`;
+  }
+  result += '\n';
   
-  if (step.isOnline) {
-    result += "This step can be completed online.\n";
+  // Online completion information
+  if (step.online?.url || step.isOnline) {
+    result += "✓ Can be completed online\n";
+    if (step.online?.url) {
+      result += `Online portal: ${step.online.url}\n`;
+    }
+    result += '\n';
   }
   
-  if (step.isOptional) {
-    result += "This step is optional.\n";
+  // Step metadata
+  const metadata = [];
+  if (step.isOptional) metadata.push("Optional step");
+  if (step.isCertified) metadata.push("Requires certification");
+  if (step.isParallel) metadata.push("Can be completed in parallel with other steps");
+  if (metadata.length > 0) {
+    result += "Status:\n";
+    metadata.forEach(m => result += `⚬ ${m}\n`);
+    result += '\n';
   }
   
-  if (step.isCertified) {
-    result += "This step is certified.\n";
-  }
-  
+  // Contact information
   if (step.contact) {
-    result += "\nContact Information:\n";
+    result += "Contact Information:\n";
     if (step.contact.entityInCharge) {
-      result += `Entity: ${step.contact.entityInCharge.name}\n`;
+      const entity = step.contact.entityInCharge;
+      result += `▸ Entity: ${entity.name}\n`;
+      if (entity.firstPhone || entity.secondPhone) {
+        result += `  Phone: ${[entity.firstPhone, entity.secondPhone].filter(Boolean).join(', ')}\n`;
+      }
+      if (entity.firstEmail || entity.secondEmail) {
+        result += `  Email: ${[entity.firstEmail, entity.secondEmail].filter(Boolean).join(', ')}\n`;
+      }
+      if (entity.firstWebsite || entity.secondWebsite) {
+        result += `  Website: ${[entity.firstWebsite, entity.secondWebsite].filter(Boolean).join(', ')}\n`;
+      }
+      if (entity.address) {
+        result += `  Address: ${entity.address}\n`;
+      }
+      if (entity.scheduleComments) {
+        result += `  Hours: ${entity.scheduleComments}\n`;
+      }
     }
-    if (step.contact.unitInCharge) {
-      result += `Unit: ${step.contact.unitInCharge.name}\n`;
+    if (step.contact.unitInCharge?.name) {
+      result += `▸ Unit: ${step.contact.unitInCharge.name}\n`;
     }
-    if (step.contact.personInCharge) {
-      result += `Person: ${step.contact.personInCharge.name}\n`;
+    if (step.contact.personInCharge?.name) {
+      result += `▸ Contact Person: ${step.contact.personInCharge.name}\n`;
+      if (step.contact.personInCharge.profession) {
+        result += `  Role: ${step.contact.personInCharge.profession}\n`;
+      }
     }
+    result += '\n';
   }
   
-  if (step.requirements && step.requirements.length) {
-    result += "\nRequirements:\n";
+  // Requirements
+  if (step.requirements?.length) {
+    result += "Required Documents:\n";
     step.requirements.forEach((req: any, index: number) => {
       result += `${index + 1}. ${req.name}\n`;
+      if (req.comments) {
+        result += `   Note: ${req.comments}\n`;
+      }
+      if (req.nbOriginal || req.nbCopy || req.nbAuthenticated) {
+        const copies = [];
+        if (req.nbOriginal) copies.push(`${req.nbOriginal} original(s)`);
+        if (req.nbCopy) copies.push(`${req.nbCopy} copy/copies`);
+        if (req.nbAuthenticated) copies.push(`${req.nbAuthenticated} authenticated copy/copies`);
+        result += `   Required: ${copies.join(', ')}\n`;
+      }
     });
+    result += '\n';
+  }
+  
+  // Results/outputs of this step
+  if (step.results?.length) {
+    result += "Outputs:\n";
+    step.results.forEach((res: any, index: number) => {
+      result += `${index + 1}. ${res.name}`;
+      if (res.isFinalResult) result += " (Final document)";
+      result += '\n';
+      if (res.comments) {
+        result += `   Note: ${res.comments}\n`;
+      }
+    });
+    result += '\n';
+  }
+  
+  // Timeframes
+  if (step.timeframe) {
+    result += "Time Estimates:\n";
+    const tf = step.timeframe;
+    if (tf.timeSpentAtTheCounter?.minutes?.max) {
+      result += `▸ Time at counter: up to ${tf.timeSpentAtTheCounter.minutes.max} minutes\n`;
+    }
+    if (tf.waitingTimeInLine?.minutes?.max) {
+      result += `▸ Waiting time: up to ${tf.waitingTimeInLine.minutes.max} minutes\n`;
+    }
+    if (tf.waitingTimeUntilNextStep?.days?.max) {
+      result += `▸ Processing time: up to ${tf.waitingTimeUntilNextStep.days.max} days\n`;
+    }
+    if (tf.comments) {
+      result += `▸ Note: ${tf.comments}\n`;
+    }
+    result += '\n';
+  }
+  
+  // Costs
+  if (step.costs?.length) {
+    result += "Costs:\n";
+    step.costs.forEach((cost: any) => {
+      if (cost.value) {
+        if (cost.operator === 'percentage') {
+          result += `▸ ${cost.comments}: ${cost.value}% ${cost.parameter || ''}\n`;
+        } else {
+          result += `▸ ${cost.comments}: ${cost.value} ${cost.unit}\n`;
+        }
+        if (cost.paymentDetails) {
+          result += `  Payment details: ${cost.paymentDetails}\n`;
+        }
+      }
+    });
+    result += '\n';
+  }
+  
+  // Laws and regulations
+  if (step.laws?.length) {
+    result += "Legal References:\n";
+    step.laws.forEach((law: any) => {
+      result += `▸ ${law.name}\n`;
+    });
+    result += '\n';
+  }
+  
+  // Additional information
+  if (step.additionalInfo?.text) {
+    result += `Additional Information:\n${step.additionalInfo.text}\n`;
   }
   
   return result;
