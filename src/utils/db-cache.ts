@@ -1,7 +1,8 @@
+// Import better-sqlite3 correctly for usage as a constructor
 import Database from 'better-sqlite3';
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
 import { logger } from './logger.js';
 
 /**
@@ -106,20 +107,26 @@ export class SqliteCache<T = any> {
   /**
    * Get a value from the cache
    * @param key Cache key
+   * @param allowExpired Whether to return expired entries
    * @returns The cached value or null if not found or expired
    */
-  get(key: string): T | null {
+  get(key: string, allowExpired: boolean = false): T | null {
     try {
-      // First clean expired entries for the specific key
-      this.cleanExpiredKey(key);
+      if (!allowExpired) {
+        // Clean expired entries for the specific key if not allowing expired entries
+        this.cleanExpiredKey(key);
+      }
       
       // Then try to get the value
       const stmt = this.db.prepare(`
         SELECT data FROM ${this.tableName}
-        WHERE key = ? AND expiry > ?
+        WHERE key = ? ${!allowExpired ? 'AND expiry > ?' : ''}
       `);
       
-      const row = stmt.get(key, Date.now()) as Pick<CacheRow, 'data'> | undefined;
+      const row = !allowExpired 
+        ? stmt.get(key, Date.now()) as Pick<CacheRow, 'data'> | undefined
+        : stmt.get(key) as Pick<CacheRow, 'data'> | undefined;
+        
       if (!row) return null;
       
       return JSON.parse(row.data);
