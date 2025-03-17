@@ -115,24 +115,13 @@ Search for procedures by text.
 };
 
 /**
- * Format procedure data in a way that's more suitable for LLMs to process
+ * Format procedure data in a way that's optimized for LLMs with context length constraints
+ * Focuses on essential information and uses a compact representation
  */
 function formatProcedureForLLM(procedure: any): string {
   if (!procedure) return "No procedure data available";
   
-  let result = '';
-  let stepNumber = 1;
-  
-  // Get name and ID from full procedure data structure
-  const name = procedure.fullName || procedure.name || (procedure.data && procedure.data.name) || 'Unknown';
-  const id = procedure.data?.id || procedure.id || 'Unknown';
-  result += `Procedure: ${name} (ID: ${id})\n\n`;
-  
-  if (procedure.data?.url) {
-    result += `Information Portal: ${procedure.data.url}\n\n`;
-  }
-
-  // For tracking totals
+  // Sets for tracking unique entities to avoid repetition
   const institutions = new Set<string>();
   const requirements = new Set<string>();
   let totalTimeAtCounter = 0;
@@ -141,297 +130,306 @@ function formatProcedureForLLM(procedure: any): string {
   let totalCost = 0;
   let percentageCosts: {name: string, value: number, unit: string}[] = [];
   
+  // Get name and ID from full procedure data structure
+  const name = procedure.fullName || procedure.name || (procedure.data && procedure.data.name) || 'Unknown';
+  const id = procedure.data?.id || procedure.id || 'Unknown';
+  
+  // Start with compact header
+  let result = `PROCEDURE: ${name} (ID:${id})\n`;
+  
+  // Add URL only if available (save context space)
+  if (procedure.data?.url) {
+    result += `URL: ${procedure.data.url}\n`;
+  }
+  
+  // Add explanatory text if available, with length limit
+  if (procedure.explanatoryText) {
+    // Truncate long descriptions to save context space
+    const maxLength = 200;
+    const description = procedure.explanatoryText.length > maxLength ? 
+      procedure.explanatoryText.substring(0, maxLength) + "..." : 
+      procedure.explanatoryText;
+    result += `DESC: ${description}\n`;
+  }
+  
+  result += "\nSTEPS:\n";
+  let stepNumber = 1;
+  
   // Handle blocks section which contains the steps
   if (procedure.data?.blocks && procedure.data.blocks.length) {
-    result += 'Steps:\n';
-
     procedure.data.blocks.forEach((block: any) => {
       if (block.steps && block.steps.length) {
         block.steps.forEach((step: any) => {
-          result += `${stepNumber++}. ${step.name} (Step ID: ${step.id})\n`;
+          // Compact step header
+          result += `${stepNumber}. ${step.name} (ID:${step.id})`;
           
-          // Check if step can be completed online
+          // Add online indicator with minimal text
           if (step.online?.url || step.isOnline) {
-            const onlineUrl = step.online?.url || 
-                            (step.name.toLowerCase().includes('tra') ? 'https://www.tra.go.tz/' :
-                             step.name.toLowerCase().includes('tbs') ? 'https://oas.tbs.go.tz/register' :
-                             step.name.toLowerCase().includes('payment') ? 'http://tanzania.tradeportal.org/menu/284' : '');
-            if (onlineUrl) {
-              result += `   - Can be completed online: ${onlineUrl}\n`;
+            result += " [ONLINE]";
+            // Only add URL if it's specifically provided
+            if (step.online?.url) {
+              result += ` ${step.online.url}`;
             }
           }
-
-          // Add entity information if available
+          result += "\n";
+          
+          // Add entity information in compact format
           if (step.contact?.entityInCharge) {
             const entity = step.contact.entityInCharge;
-            result += `   - Entity: ${entity.name} \n`;
             institutions.add(entity.name);
-            
-            if (entity.firstPhone) {
-              result += `   - Phone: ${entity.firstPhone} \n`;
-            }
-            if (entity.firstEmail) {
-              result += `   - Email: ${entity.firstEmail}\n`;
-            }
+            result += `   Entity: ${entity.name}\n`;
           }
-
-          // Add requirements if any
+          
+          // Add requirements with minimal formatting
           if (step.requirements && step.requirements.length > 0) {
-            result += '   Requirements:\n';
+            result += '   Req:';
+            // Use inline format for requirements to save space
             step.requirements.forEach((req: any) => {
-              // Only add unique requirements
               if (!requirements.has(req.name)) {
                 requirements.add(req.name);
-                result += `   - ${req.name}\n`;
-                if (req.comments) {
-                  result += `     Note: ${req.comments}\n`;
-                }
+                result += ` ${req.name};`;
               }
             });
+            result += '\n';
           }
-
-          // Add timeframes if available
+          
+          // Add timeframes in compact format
           if (step.timeframe) {
             const tf = step.timeframe;
-            if (tf.timeSpentAtTheCounter?.minutes?.max) {
-              const minutes = tf.timeSpentAtTheCounter.minutes.max;
-              result += `   - Time at counter: up to ${minutes} minutes\n`;
-              totalTimeAtCounter += minutes;
-            }
-            if (tf.waitingTimeInLine?.minutes?.max) {
-              const minutes = tf.waitingTimeInLine.minutes.max;
-              result += `   - Waiting time: up to ${minutes} minutes\n`;
-              totalWaitingTime += minutes;
-            }
             if (tf.waitingTimeUntilNextStep?.days?.max) {
               const days = tf.waitingTimeUntilNextStep.days.max;
-              result += `   - Processing time: up to ${days} days\n`;
+              result += `   Time: ~${days} days\n`;
               totalProcessingDays += days;
             }
+            
+            // Accumulate counter time without adding to output
+            if (tf.timeSpentAtTheCounter?.minutes?.max) {
+              totalTimeAtCounter += tf.timeSpentAtTheCounter.minutes.max;
+            }
+            if (tf.waitingTimeInLine?.minutes?.max) {
+              totalWaitingTime += tf.waitingTimeInLine.minutes.max;
+            }
           }
-
-          // Add costs if any
+          
+          // Add costs in compact format
           if (step.costs && step.costs.length > 0) {
-            result += '   Costs:\n';
+            result += '   Cost:';
             step.costs.forEach((cost: any) => {
               if (cost.value) {
                 if (cost.operator === 'percentage') {
-                  result += `   - ${cost.comments}: ${cost.value}% ${cost.parameter}\n`;
+                  result += ` ${cost.value}% ${cost.parameter || ''};`;
                   percentageCosts.push({
-                    name: cost.comments,
+                    name: cost.comments || 'Fee',
                     value: cost.value,
-                    unit: cost.unit
+                    unit: cost.unit || ''
                   });
                 } else {
-                  result += `   - ${cost.comments}: ${cost.value} ${cost.unit}\n`;
+                  result += ` ${cost.value} ${cost.unit};`;
                   if (cost.unit === 'TZS') {
                     totalCost += parseFloat(cost.value);
                   }
                 }
               }
             });
+            result += '\n';
           }
-
-          if (step.additionalInfo?.text) {
-            result += `   Note: ${step.additionalInfo.text}\n`;
-          }
-
-          result += '\n';
+          
+          stepNumber++;
         });
       }
     });
   }
-
-  // Add final documents section if available
+  
+  // Add final documents section if available - compact format
   const finalResults = procedure.data?.blocks?.[0]?.steps?.flatMap((step: any) => 
     step.results?.filter((result: any) => result.isFinalResult) || []
   ) || [];
-
+  
   if (finalResults.length > 0) {
-    result += '\nFinal Documents:\n';
+    result += '\nFINAL DOCUMENTS:';
     finalResults.forEach((doc: any) => {
-      result += `- ${doc.name}\n`;
+      result += ` ${doc.name};`;
     });
     result += '\n';
   }
-
-  // Add summary section with totals
-  result += 'Summary:\n';
-  result += `Total steps: ${stepNumber - 1}\n`;
-  result += `Total institutions: ${institutions.size}\n`;
-  result += `Total requirements: ${requirements.size}\n\n`;
-
+  
+  // Add summary section with totals in compact format
+  result += '\nSUMMARY:\n';
+  result += `Steps: ${stepNumber - 1} | Institutions: ${institutions.size} | Requirements: ${requirements.size}\n`;
+  
   // Calculate overall totals
-  result += 'Totals:\n';
-  const totalTime = (totalProcessingDays + 
-    (totalTimeAtCounter + totalWaitingTime) / (60 * 24));  // Convert minutes to days
+  const totalMinutes = totalTimeAtCounter + totalWaitingTime;
+  const totalTime = totalProcessingDays + (totalMinutes / (60 * 24));  // Convert minutes to days
   
   if (totalTime > 0) {
-    result += `Time: ${totalTime.toFixed(2)} days\n`;
+    // Round to 1 decimal place for cleaner output
+    result += `Est. time: ${totalTime.toFixed(1)} days`;
+    if (totalMinutes > 0) {
+      result += ` (includes ${totalMinutes} minutes at counters)`;
+    }
+    result += '\n';
   }
   
   if (totalCost > 0) {
+    // Use compact number formatting
     result += `Fixed costs: ${totalCost.toLocaleString()} TZS\n`;
   }
-
+  
   if (percentageCosts.length > 0) {
-    result += 'Variable costs:\n';
+    result += 'Variable costs:';
     percentageCosts.forEach(cost => {
-      result += `- ${cost.name}: ${cost.value}% (${cost.unit})\n`;
+      result += ` ${cost.name}: ${cost.value}%${cost.unit ? ' ' + cost.unit : ''};`;
     });
+    result += '\n';
   }
-
+  
   return result;
 }
 
 /**
- * Format step data in a way that's more suitable for LLMs to process
+ * Format step data in a way that's optimized for LLMs with context length constraints
  */
 function formatStepForLLM(step: any): string {
   if (!step) return "No step data available";
   
-  let result = `Step: ${step.name || 'Unnamed'} (Step ID: ${step.id || 'Unknown'})\n`;
+  // Start with compact header
+  let result = `STEP: ${step.name || 'Unnamed'} (ID:${step.id || 'Unknown'})\n`;
   if (step.procedureName) {
-    result += `Part of procedure: ${step.procedureName} (ID: ${step.procedureId})\n`;
+    result += `PROCEDURE: ${step.procedureName} (ID:${step.procedureId})\n`;
   }
-  result += '\n';
   
-  // Online completion information
+  // Online completion indicator
   if (step.online?.url || step.isOnline) {
-    result += "✓ Can be completed online\n";
+    result += "ONLINE: Yes";
     if (step.online?.url) {
-      result += `Online portal: ${step.online.url}\n`;
+      result += ` (${step.online.url})`;
     }
     result += '\n';
   }
   
-  // Step metadata
+  // Step metadata in compact format
   const metadata = [];
-  if (step.isOptional) metadata.push("Optional step");
-  if (step.isCertified) metadata.push("Requires certification");
-  if (step.isParallel) metadata.push("Can be completed in parallel with other steps");
+  if (step.isOptional) metadata.push("Optional");
+  if (step.isCertified) metadata.push("Certified");
+  if (step.isParallel) metadata.push("Parallel");
   if (metadata.length > 0) {
-    result += "Status:\n";
-    metadata.forEach(m => result += `⚬ ${m}\n`);
-    result += '\n';
+    result += `STATUS: ${metadata.join(', ')}\n`;
   }
   
-  // Contact information
+  // Contact information in compact format
   if (step.contact) {
-    result += "Contact Information:\n";
+    result += "CONTACT:\n";
     if (step.contact.entityInCharge) {
       const entity = step.contact.entityInCharge;
-      result += `▸ Entity: ${entity.name}\n`;
-      if (entity.firstPhone || entity.secondPhone) {
-        result += `  Phone: ${[entity.firstPhone, entity.secondPhone].filter(Boolean).join(', ')}\n`;
+      result += `Entity: ${entity.name}\n`;
+      
+      // Combine contact details to save space
+      const contactDetails = [];
+      if (entity.firstPhone) contactDetails.push(`Phone: ${entity.firstPhone}`);
+      if (entity.firstEmail) contactDetails.push(`Email: ${entity.firstEmail}`);
+      if (entity.firstWebsite) contactDetails.push(`Web: ${entity.firstWebsite}`);
+      
+      if (contactDetails.length > 0) {
+        result += `${contactDetails.join(' | ')}\n`;
       }
-      if (entity.firstEmail || entity.secondEmail) {
-        result += `  Email: ${[entity.firstEmail, entity.secondEmail].filter(Boolean).join(', ')}\n`;
-      }
-      if (entity.firstWebsite || entity.secondWebsite) {
-        result += `  Website: ${[entity.firstWebsite, entity.secondWebsite].filter(Boolean).join(', ')}\n`;
-      }
+      
+      // Only include address if available
       if (entity.address) {
-        result += `  Address: ${entity.address}\n`;
-      }
-      if (entity.scheduleComments) {
-        result += `  Hours: ${entity.scheduleComments}\n`;
+        result += `Address: ${entity.address}\n`;
       }
     }
+    
+    // Add unit/person info only if name is provided (save space)
     if (step.contact.unitInCharge?.name) {
-      result += `▸ Unit: ${step.contact.unitInCharge.name}\n`;
+      result += `Unit: ${step.contact.unitInCharge.name}\n`;
     }
     if (step.contact.personInCharge?.name) {
-      result += `▸ Contact Person: ${step.contact.personInCharge.name}\n`;
+      result += `Contact: ${step.contact.personInCharge.name}`;
       if (step.contact.personInCharge.profession) {
-        result += `  Role: ${step.contact.personInCharge.profession}\n`;
+        result += ` (${step.contact.personInCharge.profession})`;
       }
+      result += '\n';
     }
-    result += '\n';
   }
   
-  // Requirements
+  // Requirements in compact format
   if (step.requirements?.length) {
-    result += "Required Documents:\n";
-    step.requirements.forEach((req: any, index: number) => {
-      result += `${index + 1}. ${req.name}\n`;
-      if (req.comments) {
-        result += `   Note: ${req.comments}\n`;
-      }
+    result += "REQUIREMENTS:\n";
+    step.requirements.forEach((req: any) => {
+      // Combine all requirement details in one line
+      let reqLine = `- ${req.name}`;
+      
       if (req.nbOriginal || req.nbCopy || req.nbAuthenticated) {
         const copies = [];
-        if (req.nbOriginal) copies.push(`${req.nbOriginal} original(s)`);
-        if (req.nbCopy) copies.push(`${req.nbCopy} copy/copies`);
-        if (req.nbAuthenticated) copies.push(`${req.nbAuthenticated} authenticated copy/copies`);
-        result += `   Required: ${copies.join(', ')}\n`;
+        if (req.nbOriginal) copies.push(`${req.nbOriginal} orig`);
+        if (req.nbCopy) copies.push(`${req.nbCopy} copy`);
+        if (req.nbAuthenticated) copies.push(`${req.nbAuthenticated} auth`);
+        reqLine += ` (${copies.join(', ')})`;
+      }
+      
+      result += reqLine + '\n';
+      
+      // Only add comments if they provide valuable information
+      if (req.comments) {
+        result += `  Note: ${req.comments}\n`;
       }
     });
-    result += '\n';
   }
   
-  // Results/outputs of this step
+  // Results/outputs in compact format
   if (step.results?.length) {
-    result += "Outputs:\n";
-    step.results.forEach((res: any, index: number) => {
-      result += `${index + 1}. ${res.name}`;
-      if (res.isFinalResult) result += " (Final document)";
-      result += '\n';
-      if (res.comments) {
-        result += `   Note: ${res.comments}\n`;
-      }
+    result += "OUTPUTS:\n";
+    step.results.forEach((res: any) => {
+      result += `- ${res.name}${res.isFinalResult ? " [FINAL]" : ""}\n`;
     });
-    result += '\n';
   }
   
-  // Timeframes
+  // Timeframes in compact format
   if (step.timeframe) {
-    result += "Time Estimates:\n";
+    result += "TIMEFRAME: ";
     const tf = step.timeframe;
+    const times = [];
+    
     if (tf.timeSpentAtTheCounter?.minutes?.max) {
-      result += `▸ Time at counter: up to ${tf.timeSpentAtTheCounter.minutes.max} minutes\n`;
+      times.push(`${tf.timeSpentAtTheCounter.minutes.max}min at counter`);
     }
     if (tf.waitingTimeInLine?.minutes?.max) {
-      result += `▸ Waiting time: up to ${tf.waitingTimeInLine.minutes.max} minutes\n`;
+      times.push(`${tf.waitingTimeInLine.minutes.max}min wait`);
     }
     if (tf.waitingTimeUntilNextStep?.days?.max) {
-      result += `▸ Processing time: up to ${tf.waitingTimeUntilNextStep.days.max} days\n`;
+      times.push(`${tf.waitingTimeUntilNextStep.days.max} days processing`);
     }
-    if (tf.comments) {
-      result += `▸ Note: ${tf.comments}\n`;
+    
+    if (times.length > 0) {
+      result += times.join(' + ') + '\n';
+    } else {
+      result += "Not specified\n";
     }
-    result += '\n';
   }
   
-  // Costs
+  // Costs in compact format
   if (step.costs?.length) {
-    result += "Costs:\n";
+    result += "COSTS:\n";
     step.costs.forEach((cost: any) => {
       if (cost.value) {
         if (cost.operator === 'percentage') {
-          result += `▸ ${cost.comments}: ${cost.value}% ${cost.parameter || ''}\n`;
+          result += `- ${cost.value}% ${cost.parameter || ''}`;
         } else {
-          result += `▸ ${cost.comments}: ${cost.value} ${cost.unit}\n`;
+          result += `- ${cost.value} ${cost.unit}`;
         }
-        if (cost.paymentDetails) {
-          result += `  Payment details: ${cost.paymentDetails}\n`;
+        
+        if (cost.comments) {
+          result += ` (${cost.comments})`;
         }
+        result += '\n';
       }
     });
-    result += '\n';
   }
   
-  // Laws and regulations
+  // Only include legal references if present
   if (step.laws?.length) {
-    result += "Legal References:\n";
-    step.laws.forEach((law: any) => {
-      result += `▸ ${law.name}\n`;
-    });
-    result += '\n';
-  }
-  
-  // Additional information
-  if (step.additionalInfo?.text) {
-    result += `Additional Information:\n${step.additionalInfo.text}\n`;
+    result += "LEGAL REFS: ";
+    result += step.laws.map((law: any) => law.name).join(' | ') + '\n';
   }
   
   return result;
@@ -480,25 +478,46 @@ export const createServer = (baseUrl: string) => {
           // Ensure procedures is an array
           const proceduresArray = Array.isArray(procedures) ? procedures : [];
           
-          // Format a summary of procedures for the text response
+          // Format a summary of procedures for the text response - more compact format
           let proceduresSummary = `Found ${proceduresArray.length} procedures:\n\n`;
           
           if (proceduresArray.length > 0) {
-            proceduresArray.forEach((proc: any, index: number) => {
+            proceduresArray.slice(0, 20).forEach((proc: any, index: number) => {
               const id = proc.id || 'N/A';
               const name = proc.fullName || proc.name || 'Unknown';
-              const description = proc.explanatoryText ? `\n   Description: ${proc.explanatoryText}` : '';
-              const online = proc.isOnline ? ' (Online)' : '';
+              // Use online indicator instead of text to save space
+              const online = proc.isOnline ? ' [ONLINE]' : '';
               
-              proceduresSummary += `${index + 1}. ${name}${online} (ID: ${id})${description}\n`;
+              // Only include abbreviated description if available
+              let description = '';
+              if (proc.explanatoryText) {
+                const maxLength = 80; // Much shorter description to save context
+                description = proc.explanatoryText.length > maxLength ? 
+                  `\n   ${proc.explanatoryText.substring(0, maxLength)}...` : 
+                  `\n   ${proc.explanatoryText}`;
+              }
+              
+              proceduresSummary += `${index + 1}. ${name}${online} (ID:${id})${description}\n`;
             });
+            
+            // Add note about truncated results
+            if (proceduresArray.length > 20) {
+              proceduresSummary += `\n... and ${proceduresArray.length - 20} more. Use searchProcedures to narrow results.`;
+            }
           } else {
             proceduresSummary += "No procedures found.";
           }
           
           logger.log(`LIST_PROCEDURES returning ${proceduresArray.length} procedures`);
           
-          // Return both human-readable text and structured data
+          // Send only essential fields to save context space
+          const essentialProcedures = proceduresArray.map(proc => ({
+            id: proc.id,
+            name: proc.fullName || proc.name,
+            isOnline: proc.isOnline || false,
+            ...(proc.parentName ? { parentName: proc.parentName } : {})
+          }));
+          
           return {
             content: [
               { 
@@ -507,7 +526,7 @@ export const createServer = (baseUrl: string) => {
               },
               {
                 type: "text",
-                text: "```json\n" + JSON.stringify(proceduresArray, null, 2) + "\n```",
+                text: "```json\n" + JSON.stringify(essentialProcedures, null, 2) + "\n```",
                 annotations: {
                   role: "data"
                 }
@@ -550,7 +569,8 @@ export const createServer = (baseUrl: string) => {
               return null;
             })
           ]);
-          // Format procedure data for LLM consumption
+          
+          // Format procedure data for LLM consumption with context optimization
           let formattedProcedure = formatProcedureForLLM({
             ...procedure,
             resume,
@@ -558,6 +578,18 @@ export const createServer = (baseUrl: string) => {
           });
           
           logger.log(`Successfully retrieved details for procedure ID ${procedureId}`);
+          
+          // Return only essential structured data to save context space
+          const essentialData = {
+            id: procedure.id,
+            name: procedure.name,
+            steps: procedure.data?.blocks?.[0]?.steps?.map((step: any) => ({
+              id: step.id,
+              name: step.name,
+              isOnline: step.isOnline || false,
+              entityName: step.contact?.entityInCharge?.name
+            })) || []
+          };
           
           return {
             content: [
@@ -567,7 +599,7 @@ export const createServer = (baseUrl: string) => {
               },
               {
                 type: "text",
-                text: "```json\n" + JSON.stringify({procedure, resume, totals}, null, 2) + "\n```",
+                text: "```json\n" + JSON.stringify(essentialData, null, 2) + "\n```",
                 annotations: {
                   role: "data"
                 }
@@ -598,8 +630,27 @@ export const createServer = (baseUrl: string) => {
           const { procedureId, stepId } = args;
           const step = await api.getProcedureStep(procedureId, stepId);
           
-          // Format step data for LLM consumption
+          // Format step data for LLM consumption using context-optimized formatter
           const formattedStep = formatStepForLLM(step);
+          
+          // Create essential data object with only the necessary fields
+          const essentialStepData = {
+            id: step.id,
+            name: step.name,
+            procedureId,
+            isOnline: step.isOnline || (step.online && !!step.online.url) || false,
+            entityName: step.contact?.entityInCharge?.name,
+            // Only include these if present
+            ...(step.online?.url ? { onlineUrl: step.online.url } : {}),
+            ...(step.requirements ? { 
+              requirementCount: step.requirements.length,
+              requirements: step.requirements.map(r => r.name)
+            } : {}),
+            ...(step.costs ? {
+              costCount: step.costs.length,
+              hasCosts: step.costs.length > 0
+            } : {})
+          };
           
           return {
             content: [
@@ -609,7 +660,7 @@ export const createServer = (baseUrl: string) => {
               },
               {
                 type: "text",
-                text: "```json\n" + JSON.stringify(step, null, 2) + "\n```",
+                text: "```json\n" + JSON.stringify(essentialStepData, null, 2) + "\n```",
                 annotations: {
                   role: "data"
                 }
@@ -637,14 +688,19 @@ export const createServer = (baseUrl: string) => {
           const { query } = args;
           const apiResults = await api.searchByName(query || '');
 
-          // Format results for display
+          // Format results for display - compact format with essential info
           let searchResults = `Found ${apiResults.length} procedures`;
           if (query) searchResults += ` matching "${query}"`;
           searchResults += ':\n\n';
           
           if (apiResults.length > 0) {
+            // Show first 10 results in compact format
             apiResults.slice(0, 10).forEach((proc: any, index: number) => {
-              searchResults += `${index + 1}. ${proc.name || 'Unknown'} (ID: ${proc.id || 'N/A'})\n`;
+              const id = proc.id || 'N/A';
+              const name = proc.fullName || proc.name || 'Unknown';
+              const online = proc.isOnline ? ' [ONLINE]' : '';
+              
+              searchResults += `${index + 1}. ${name}${online} (ID:${id})\n`;
             });
             
             if (apiResults.length > 10) {
@@ -654,6 +710,15 @@ export const createServer = (baseUrl: string) => {
             searchResults += "No matching procedures found.";
           }
           
+          // Only pass essential data in the JSON response to save context
+          const essentialResults = apiResults.map((proc: any) => ({
+            id: proc.id,
+            name: proc.fullName || proc.name,
+            isOnline: proc.isOnline || false,
+            // Include parent name only if it exists and differs from the name
+            ...(proc.parentName && proc.parentName !== proc.name ? { parentName: proc.parentName } : {})
+          }));
+          
           return {
             content: [
               { 
@@ -662,7 +727,7 @@ export const createServer = (baseUrl: string) => {
               },
               {
                 type: "text",
-                text: "```json\n" + JSON.stringify(apiResults, null, 2) + "\n```",
+                text: "```json\n" + JSON.stringify(essentialResults, null, 2) + "\n```",
                 annotations: {
                   role: "data"
                 }
