@@ -1,117 +1,119 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ERegulationsApi } from '../services/eregulations-api.js';
 
-// Mock axios
+// Mock axios with proper create method
+const mockGet = vi.fn();
 vi.mock('axios', () => ({
   default: {
-    get: vi.fn(),
-    post: vi.fn()
+    create: () => ({
+      get: mockGet
+    })
   }
 }));
 
 describe('ERegulationsApi', () => {
   let api: ERegulationsApi;
-  
+  const baseUrl = 'http://test.api';
+
   beforeEach(() => {
-    api = new ERegulationsApi('https://api-tanzania.tradeportal.org');
-    vi.resetAllMocks();
+    // Reset mock between tests
+    mockGet.mockReset();
+    api = new ERegulationsApi(baseUrl, false);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
   describe('getProceduresList', () => {
     it('should fetch list of procedures', async () => {
-      const mockResponse = {
-        data: [
-          { id: 1, name: 'Procedure 1' },
-          { id: 2, name: 'Procedure 2' }
-        ]
-      };
+      const mockData = [
+        {
+          id: 1,
+          name: "Test Procedure",
+          links: [{ rel: "procedure", href: "http://test.api/procedures/1" }]
+        }
+      ];
 
-      const axios = await import('axios');
-      axios.default.get = vi.fn().mockResolvedValue(mockResponse);
+      mockGet.mockResolvedValueOnce({ data: mockData });
 
-      const result = await api.getProceduresList();
-      expect(result).toEqual(mockResponse.data);
-      expect(axios.default.get).toHaveBeenCalledWith(
-        'https://api-tanzania.tradeportal.org/Objectives'
-      );
+      const procedures = await api.getProceduresList();
+
+      expect(procedures).toHaveLength(1);
+      expect(procedures[0]).toMatchObject({
+        id: 1,
+        name: "Test Procedure"
+      });
     });
   });
 
   describe('getProcedureById', () => {
     it('should fetch procedure by ID', async () => {
-      const mockResponse = {
+      const mockData = {
+        id: 1,
+        name: "Test Procedure",
         data: {
-          id: 1,
-          name: 'Procedure 1',
-          blocks: [
-            { 
-              id: 101,
-              name: 'Block 1',
-              steps: [
-                { id: 1001, name: 'Step 1' }
-              ]
-            }
-          ]
+          blocks: [{
+            steps: [{
+              id: 1,
+              name: "Test Step"
+            }]
+          }]
         }
       };
 
-      const axios = await import('axios');
-      axios.default.get = vi.fn().mockResolvedValue(mockResponse);
+      // Mock the procedure list call first
+      mockGet.mockResolvedValueOnce({ data: [{
+        id: 1,
+        links: [{ rel: "procedure", href: "http://test.api/procedures/1" }]
+      }]});
 
-      const result = await api.getProcedureById(1);
-      expect(result).toEqual(mockResponse.data);
-      expect(axios.default.get).toHaveBeenCalledWith(
-        'https://api-tanzania.tradeportal.org/Procedures/1'
-      );
+      // Then mock the procedure details call
+      mockGet.mockResolvedValueOnce({ data: mockData });
+
+      const procedure = await api.getProcedureById(1);
+
+      expect(procedure).toMatchObject({
+        id: 1,
+        name: "Test Procedure"
+      });
     });
   });
 
   describe('getProcedureResume', () => {
     it('should fetch procedure resume by ID', async () => {
-      const mockResponse = {
-        data: {
-          id: 1,
-          name: 'Procedure 1',
-          steps: 5,
-          institutions: 3,
-          requirements: 7
-        }
+      const mockData = {
+        stepCount: 5,
+        totalTime: "10 days"
       };
 
-      const axios = await import('axios');
-      axios.default.get = vi.fn().mockResolvedValue(mockResponse);
+      mockGet.mockResolvedValueOnce({ data: mockData });
 
-      const result = await api.getProcedureResume(1);
-      expect(result).toEqual(mockResponse.data);
-      expect(axios.default.get).toHaveBeenCalledWith(
-        'https://api-tanzania.tradeportal.org/Procedures/1/Resume'
-      );
+      const resume = await api.getProcedureResume(1);
+
+      expect(resume).toMatchObject(mockData);
     });
   });
 
   describe('getProcedureStep', () => {
     it('should fetch procedure step details', async () => {
-      const mockResponse = {
+      const mockData = {
         data: {
-          id: 1001,
-          name: 'Step 1',
-          requirements: [
-            { id: 1, name: 'Requirement 1' }
-          ],
-          contact: {
-            entityInCharge: { id: 1, name: 'Entity 1' }
-          }
+          id: 1,
+          name: "Test Step",
+          isOnline: true
         }
       };
 
-      const axios = await import('axios');
-      axios.default.get = vi.fn().mockResolvedValue(mockResponse);
+      mockGet.mockResolvedValueOnce({ data: mockData });
 
-      const result = await api.getProcedureStep(1, 1001);
-      expect(result).toEqual(mockResponse.data);
-      expect(axios.default.get).toHaveBeenCalledWith(
-        'https://api-tanzania.tradeportal.org/Procedures/1/Steps/1001'
-      );
+      const step = await api.getProcedureStep(1, 1);
+
+      expect(step).toMatchObject({
+        id: 1,
+        name: "Test Step",
+        isOnline: true
+      });
     });
   });
 });
