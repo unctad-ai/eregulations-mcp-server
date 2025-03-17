@@ -8,6 +8,7 @@ services:
       - EREGULATIONS_API_URL=https://api-tanzania.tradeportal.org
       - PORT=7000
       - NODE_ENV=production
+      - DISABLE_CORS=false
     restart: unless-stopped
 
   # Other MCP servers can be added here

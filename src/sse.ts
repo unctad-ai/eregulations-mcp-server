@@ -2,82 +2,51 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import express from "express";
 import { createServer } from "./mcp-server.js";
 import { logger } from "./utils/logger.js";
-import { v4 as uuidv4 } from "uuid";
+import bodyParser from "body-parser";
 import cors from "cors";
 
-// Default API URL
+// Default configuration
 const API_URL = process.env.EREGULATIONS_API_URL || "https://api-tanzania.tradeportal.org";
-const PORT = process.env.PORT || 7000;
-const app = express();
+const PORT = parseInt(process.env.PORT || '7000', 10);
+const SSE_PATH = '/sse';
+const MESSAGE_PATH = '/message';
+const ENABLE_CORS = process.env.DISABLE_CORS !== 'true';
+
+// Create server and Express app
 const { server, cleanup } = createServer(API_URL);
+const app = express();
 
-// Map to store sessions with their transports and responses
-const sessions = new Map<string, { 
-  transport: SSEServerTransport, 
-  response: express.Response,
-  heartbeat?: NodeJS.Timeout 
-}>();
+// Session storage as a simple record
+const sessions: Record<string, { transport: SSEServerTransport; response: express.Response }> = {};
 
-// Use cors middleware for handling CORS properly
-app.use(cors());
+logger.info('Starting eRegulations MCP server...');
+logger.info(`  - port: ${PORT}`);
+logger.info(`  - API URL: ${API_URL}`);
+logger.info(`  - ssePath: ${SSE_PATH}`);
+logger.info(`  - messagePath: ${MESSAGE_PATH}`);
+logger.info(`  - CORS enabled: ${ENABLE_CORS}`);
 
-// Configure additional CORS headers for SSE connections if needed
-app.use((req, res, next) => {
-  res.setHeader('Cache-Control', 'no-cache, no-transform');
-  res.setHeader('Connection', 'keep-alive');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-// Helper function to cleanly remove a session
-const cleanupSession = (sessionId: string, reason?: string) => {
-  if (sessions.has(sessionId)) {
-    const session = sessions.get(sessionId);
-    
-    // Clear the heartbeat if it exists
-    if (session?.heartbeat) {
-      clearInterval(session.heartbeat);
-    }
-    
-    sessions.delete(sessionId);
-    logger.info(`Client session ended: ${sessionId}${reason ? ` (${reason})` : ''}. Remaining sessions: ${sessions.size}`);
-  }
-};
-
-// Set up a global server close handler
-server.onclose = async () => {
-  logger.info(`Server shutting down, closing all active sessions...`);
-  
-  // Clean up all active sessions
-  for (const [sessionId, session] of sessions.entries()) {
-    if (session.heartbeat) {
-      clearInterval(session.heartbeat);
-    }
-    sessions.delete(sessionId);
-  }
-  
-  // Clean up server resources
-  await cleanup();
-  await server.close();
-  
-  logger.info(`All connections closed, server shutdown complete`);
-};
-
-// Handle process signals for graceful shutdown
+// Set up signal handlers
 const onSignals = () => {
   ['SIGINT', 'SIGTERM', 'SIGHUP'].forEach(signal => {
     process.on(signal, () => {
-      logger.info(`${signal} received, initiating graceful shutdown`);
-      server.onclose?.();
+      logger.info(`${signal} received. Exiting...`);
+      // Clean up all sessions
+      for (const sessionId of Object.keys(sessions)) {
+        try {
+          delete sessions[sessionId];
+        } catch (err) {
+          logger.error(`Error cleaning up session ${sessionId}:`, err);
+        }
+      }
+      cleanup();
       process.exit(0);
     });
   });
 
   process.stdin.on('close', () => {
-    logger.info('stdin closed. Initiating graceful shutdown');
-    server.onclose?.();
+    logger.info('stdin closed. Exiting...');
+    cleanup();
     process.exit(0);
   });
 };
@@ -85,123 +54,88 @@ const onSignals = () => {
 // Initialize signal handlers
 onSignals();
 
-// Debug endpoint to see active connections
-app.get("/debug/connections", (req, res) => {
-  const activeConnections = Array.from(sessions.keys());
-  res.json({
-    activeConnections,
-    count: activeConnections.length
-  });
+// Set up Express middleware
+if (ENABLE_CORS) {
+  app.use(cors());
+}
+
+app.use((req, res, next) => {
+  if (req.path === MESSAGE_PATH) return next();
+  return bodyParser.json()(req, res, next);
 });
 
 // SSE endpoint
-app.get("/sse", async (req, res) => {
-  // Use existing session ID if provided, otherwise create new one
-  const sessionId = req.query.sessionId?.toString() || uuidv4();
-  
-  logger.info(`Received SSE connection for session: ${sessionId}`);
+app.get(SSE_PATH, async (req, res) => {
+  logger.info(`New SSE connection from ${req.ip}`);
 
   // Set SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
-  
+
   try {
-    // Check if there's an existing transport for this session and clean it up
-    if (sessions.has(sessionId)) {
-      logger.info(`Cleaning up existing transport for session: ${sessionId}`);
-      cleanupSession(sessionId, "reconnection");
-    }
-    
-    // Create a new transport
-    const transport = new SSEServerTransport("/message", res);
-    
-    // Set up a connection timeout
-    const connectionTimeout = setTimeout(() => {
-      logger.warn(`Connection timeout for session ${sessionId}`);
-      cleanupSession(sessionId, "timeout");
-      try {
-        res.write(`data: ${JSON.stringify({ error: "Connection timeout" })}\n\n`);
-        res.end();
-      } catch (err) {
-        logger.error(`Error sending timeout message: ${err}`);
-      }
-    }, 30000);
+    // Create transport with the message path
+    const transportPath = MESSAGE_PATH;
+    const sseTransport = new SSEServerTransport(transportPath, res);
     
     // Connect the server to this transport
-    await server.connect(transport);
-    
-    // Clear the connection timeout since we're connected
-    clearTimeout(connectionTimeout);
-    
-    // Set up heartbeat
-    const heartbeat = setInterval(() => {
-      try {
-        res.write(": heartbeat\n\n");
-      } catch (err) {
-        logger.error(`Heartbeat failed for session ${sessionId}: ${err}`);
-        cleanupSession(sessionId, "failed heartbeat");
-      }
-    }, 30000);
-    
-    // Store transport and response
-    sessions.set(sessionId, { transport, response: res, heartbeat });
-    
-    // Set up transport event handlers
-    transport.onmessage = (msg) => {
-      logger.info(`Message received from client (session ${sessionId}): ${JSON.stringify(msg)}`);
-    };
+    await server.connect(sseTransport);
 
-    transport.onclose = () => {
-      logger.info(`SSE connection closed (session ${sessionId})`);
-      cleanupSession(sessionId);
-    };
+    // Get session ID from transport and store session
+    const sessionId = sseTransport.sessionId;
+    if (sessionId) {
+      // Store session
+      sessions[sessionId] = { transport: sseTransport, response: res };
+      logger.info(`Session established: ${sessionId}`);
 
-    transport.onerror = (err) => {
-      logger.error(`SSE error (session ${sessionId}):`, err);
-      cleanupSession(sessionId, "transport error");
-    };
-    
-    logger.info(`Created transport for session: ${sessionId}. Active sessions: ${sessions.size}`);
-    
-    // Send the session ID to the client after transport is connected
-    try {
+      // Set up heartbeat
+      const heartbeat = setInterval(() => {
+        try {
+          res.write(": heartbeat\n\n");
+        } catch (err) {
+          logger.error(`Heartbeat failed for session ${sessionId}:`, err);
+          clearInterval(heartbeat);
+          delete sessions[sessionId];
+        }
+      }, 30000);
+
+      // Clean up on close
+      res.on('close', () => {
+        clearInterval(heartbeat);
+      });
+
+      // Set up transport event handlers
+      sseTransport.onmessage = (msg) => {
+        logger.info(`Message from client (session ${sessionId}): ${JSON.stringify(msg)}`);
+      };
+
+      sseTransport.onclose = () => {
+        logger.info(`SSE connection closed (session ${sessionId})`);
+        delete sessions[sessionId];
+      };
+
+      sseTransport.onerror = (err) => {
+        logger.error(`SSE error (session ${sessionId}):`, err);
+        delete sessions[sessionId];
+      };
+
+      // Handle client disconnect
+      req.on('close', () => {
+        logger.info(`Client disconnected (session ${sessionId})`);
+        delete sessions[sessionId];
+      });
+
+      // Send initialization message to client
       res.write(`data: ${JSON.stringify({ sessionId, status: "connected" })}\n\n`);
-    } catch (err) {
-      logger.error(`Failed to send initial data: ${err}`);
-      cleanupSession(sessionId, "failed to send initial data");
-      return;
-    }
-    
-    // Handle client disconnect
-    req.on('close', () => {
-      cleanupSession(sessionId, "client closed connection");
-    });
-    
-    req.on('error', (err) => {
-      // Check if this is just a normal client disconnect
-      const isClientDisconnect = 
-        err.message === 'aborted' || 
-        err.message.includes('aborted') ||
-        err.message.includes('socket hang up');
-      
-      if (isClientDisconnect) {
-        logger.info(`Client disconnected for session ${sessionId}`);
-      } else {
-        logger.error(`Error in SSE connection for session ${sessionId}: ${err}`);
-      }
-      
-      cleanupSession(sessionId, isClientDisconnect ? "client disconnected" : "connection error");
-    });
-    
-  } catch (error) {
-    cleanupSession(sessionId, "connection error");
-    
-    logger.error(`Error setting up SSE transport for session ${sessionId}:`, error);
-    if (!res.headersSent) {
-      res.status(500).end(`Error setting up SSE transport: ${error instanceof Error ? error.message : String(error)}`);
     } else {
-      // Try to end the response with an error message if headers are already sent
+      logger.error('No session ID generated by SSE transport');
+      res.status(500).send('Failed to create session');
+    }
+  } catch (error) {
+    logger.error(`Error setting up SSE transport:`, error);
+    if (!res.headersSent) {
+      res.status(500).send(`Error setting up SSE transport: ${error instanceof Error ? error.message : String(error)}`);
+    } else {
       try {
         res.write(`data: ${JSON.stringify({ error: "Connection error", message: String(error) })}\n\n`);
         res.end();
@@ -213,56 +147,39 @@ app.get("/sse", async (req, res) => {
 });
 
 // Message endpoint for client to post messages to the server
-app.post("/message", async (req, res) => {
-  // Get session ID from query parameter or header
-  const sessionId = req.query.sessionId?.toString() || req.headers['x-session-id']?.toString();
-  
+app.post(MESSAGE_PATH, async (req, res) => {
+  const sessionId = req.query.sessionId as string;
   if (!sessionId) {
-    logger.warn("No session ID provided for message");
-    return res.status(400).json({ error: "No session ID provided" });
+    logger.warn("Missing sessionId parameter");
+    return res.status(400).send('Missing sessionId parameter');
   }
-  
-  logger.info(`Received message from client for session: ${sessionId}`);
-  
-  const session = sessions.get(sessionId);
-  if (!session || !session.transport) {
-    logger.warn(`No active connection found for session ${sessionId}`);
-    return res.status(404).json({ error: "No active connection for this session" });
-  }
-  
-  try {
-    await session.transport.handlePostMessage(req, res);
-    logger.info(`Successfully handled post message for session: ${sessionId}`);
-  } catch (error) {
-    logger.error(`Error handling post message for session ${sessionId}:`, error);
-    if (!res.headersSent) {
-      res.status(500).json({ 
-        error: "Error handling message", 
-        details: error instanceof Error ? error.message : String(error)
-      });
-    }
-  }
-});
 
-// Health check endpoint
-app.get("/health", (req, res) => {
-  const status = {
-    status: "ok",
-    activeSessions: sessions.size,
-    serverReady: !!server,
-    uptime: process.uptime()
-  };
-  logger.info(`Health check: ${sessions.size} active sessions`);
-  res.status(200).json(status);
+  const session = sessions[sessionId];
+  if (session?.transport?.handlePostMessage) {
+    logger.info(`POST to SSE transport (session ${sessionId})`);
+    try {
+      await session.transport.handlePostMessage(req, res);
+    } catch (error) {
+      logger.error(`Error handling message for session ${sessionId}:`, error);
+      if (!res.headersSent) {
+        res.status(500).send(`Error handling message: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  } else {
+    logger.warn(`No active SSE connection for session ${sessionId}`);
+    res.status(503).send(`No active SSE connection for session ${sessionId}`);
+  }
 });
 
 // Start the server
 const httpServer = app.listen(PORT, () => {
   logger.info(`eRegulations MCP server running on port ${PORT}`);
-  logger.info(`Connect via SSE at http://localhost:${PORT}/sse`);
+  logger.info(`SSE endpoint: http://localhost:${PORT}${SSE_PATH}`);
+  logger.info(`POST messages: http://localhost:${PORT}${MESSAGE_PATH}`);
 });
 
-// Add more graceful shutdown handling for the HTTP server
+// Graceful shutdown handling for the HTTP server
 httpServer.on('close', () => {
   logger.info('HTTP server closed.');
+  cleanup();
 });
