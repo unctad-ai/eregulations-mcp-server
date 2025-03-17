@@ -5,10 +5,16 @@ services:
     ports:
       - "127.0.0.1:7000:7000"
     environment:
-      - EREGULATIONS_API_URL=https://api-tanzania.tradeportal.org
-      - PORT=7000
       - NODE_ENV=production
-      - DISABLE_CORS=false
+      - EREGULATIONS_API_URL=https://api-tanzania.tradeportal.org
+      - BASE_URL=https://mcp.eregistrations.dev
+      - PORT=7000
+      - STDIO_CMD="node dist/index.js"
+      - SSE_PATH=/sse
+      - MESSAGE_PATH=/message
+      - HEALTH_ENDPOINT=/health
+      - LOG_LEVEL=info
+      - CORS_ENABLED=true
     restart: unless-stopped
 
   # Other MCP servers can be added here

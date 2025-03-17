@@ -31,12 +31,17 @@ RUN mkdir -p /app/data/cache
 # Install production dependencies only
 RUN npm ci --omit=dev
 
-# Environment variables
-ENV NODE_ENV=production
-ENV PORT=7000
+ENV PORT=${PORT}
+ENV STDIO_CMD=${STDIO_CMD}
+ENV BASE_URL=${BASE_URL}
+ENV SSE_PATH=${SSE_PATH}
+ENV MESSAGE_PATH=${MESSAGE_PATH}
+ENV HEALTH_ENDPOINT=${HEALTH_ENDPOINT}
+ENV LOG_LEVEL=${LOG_LEVEL}
+ENV CORS_ENABLED=${CORS_ENABLED}
 
 # Expose the port
 EXPOSE ${PORT}
 
-# Command to run the server
-CMD ["node", "dist/sse.js"]
+# Command to run the server - use shell form to allow variable interpolation
+CMD node dist/sse.js --stdio="$STDIO_CMD" --port="$PORT" --baseUrl="$BASE_URL" --ssePath="$SSE_PATH" --messagePath="$MESSAGE_PATH" --healthEndpoint="$HEALTH_ENDPOINT" --logLevel="$LOG_LEVEL" --corsEnabled="$CORS_ENABLED"
