@@ -10,7 +10,10 @@ const app = express();
 const { server, cleanup } = createServer(API_URL);
 
 // Map to store transports by session ID
-const transports = new Map<string, SSEServerTransport>();
+const transports = new Map<string, { 
+  transport: SSEServerTransport, 
+  heartbeat?: NodeJS.Timeout 
+}>();
 
 // Configure CORS headers for SSE connections
 app.use((req, res, next) => {
@@ -23,55 +26,146 @@ app.use((req, res, next) => {
   next();
 });
 
+// Helper function to cleanly remove a session
+const cleanupSession = (sessionId: string, reason?: string) => {
+  if (transports.has(sessionId)) {
+    const session = transports.get(sessionId);
+    
+    // Clear the heartbeat if it exists
+    if (session?.heartbeat) {
+      clearInterval(session.heartbeat);
+    }
+    
+    transports.delete(sessionId);
+    logger.info(`Client session ended: ${sessionId}${reason ? ` (${reason})` : ''}. Remaining sessions: ${transports.size}`);
+  }
+};
+
+// Set up a global server close handler - only needs to be defined once
+server.onclose = async () => {
+  logger.info(`Server shutting down, closing all active transports...`);
+  
+  // Clean up all active sessions
+  for (const [sessionId, session] of transports.entries()) {
+    if (session.heartbeat) {
+      clearInterval(session.heartbeat);
+    }
+    transports.delete(sessionId);
+  }
+  
+  // Clean up server resources
+  await cleanup();
+  await server.close();
+  
+  logger.info(`All connections closed, server shutdown complete`);
+};
+
+// Handle process signals for graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, initiating graceful shutdown');
+  server.onclose?.();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, initiating graceful shutdown');
+  server.onclose?.();
+  process.exit(0);
+});
+
+// Debug endpoint to see active connections
+app.get("/debug/connections", (req, res) => {
+  const activeConnections = Array.from(transports.keys());
+  res.json({
+    activeConnections,
+    count: activeConnections.length
+  });
+});
+
 // SSE endpoint
 app.get("/sse", async (req, res) => {
+  // Use existing session ID if provided, otherwise create new one
   const sessionId = req.query.sessionId?.toString() || uuidv4();
+  
   logger.info(`Received SSE connection for session: ${sessionId}`);
   
   try {
-    // Create a new transport - this will set headers internally when start() is called
+    // Check if there's an existing transport for this session and clean it up
+    if (transports.has(sessionId)) {
+      logger.info(`Cleaning up existing transport for session: ${sessionId}`);
+      cleanupSession(sessionId, "reconnection");
+    }
+    
+    // Create a new transport
     const transport = new SSEServerTransport("/message", res);
     
-    // Store the transport with the session ID
-    transports.set(sessionId, transport);
-    logger.info(`Created transport for session: ${sessionId}. Active sessions: ${transports.size}`);
+    // Set up a connection timeout
+    const connectionTimeout = setTimeout(() => {
+      logger.warn(`Connection timeout for session ${sessionId}`);
+      cleanupSession(sessionId, "timeout");
+      try {
+        res.write(`data: ${JSON.stringify({ error: "Connection timeout" })}\n\n`);
+        res.end();
+      } catch (err) {
+        logger.error(`Error sending timeout message: ${err}`);
+      }
+    }, 30000);
     
     // Connect the server to this transport
-    // This will call transport.start() internally, which sets the SSE headers
     await server.connect(transport);
     
-    // Set up heartbeat AFTER headers have been set by the transport
+    // Clear the connection timeout since we're connected
+    clearTimeout(connectionTimeout);
+    
+    // Set up heartbeat
     const heartbeat = setInterval(() => {
       try {
         res.write(": heartbeat\n\n");
       } catch (err) {
-        clearInterval(heartbeat);
-        logger.warn(`Failed to send heartbeat to session ${sessionId}, connection may be closed`);
+        cleanupSession(sessionId, "failed heartbeat");
       }
     }, 30000);
     
+    // Store transport and heartbeat
+    transports.set(sessionId, { transport, heartbeat });
+    
+    logger.info(`Created transport for session: ${sessionId}. Active sessions: ${transports.size}`);
+    
     // Send the session ID to the client after transport is connected
-    res.write(`data: ${JSON.stringify({ sessionId })}\n\n`);
+    try {
+      res.write(`data: ${JSON.stringify({ sessionId, status: "connected" })}\n\n`);
+    } catch (err) {
+      logger.error(`Failed to send initial data: ${err}`);
+      cleanupSession(sessionId, "failed to send initial data");
+      return;
+    }
     
     // Handle client disconnect
     req.on('close', () => {
-      clearInterval(heartbeat);
-      transports.delete(sessionId);
-      logger.info(`Client disconnected: ${sessionId}. Remaining sessions: ${transports.size}`);
+      cleanupSession(sessionId, "client closed connection");
     });
     
-    // Set up close handler
-    server.onclose = async () => {
-      logger.info(`Closing transport for session: ${sessionId}`);
-      clearInterval(heartbeat);
-      transports.delete(sessionId);
-      await cleanup();
-      await server.close();
-      process.exit(0);
-    };
+    req.on('error', (err) => {
+      // Check if this is just a normal client disconnect
+      const isClientDisconnect = 
+        err.message === 'aborted' || 
+        err.message.includes('aborted') ||
+        err.message.includes('socket hang up');
+      
+      if (isClientDisconnect) {
+        // This is a normal client disconnect, log at info level
+        logger.info(`Client disconnected for session ${sessionId}`);
+      } else {
+        // This is an actual error, log as error
+        logger.error(`Error in SSE connection for session ${sessionId}: ${err}`);
+      }
+      
+      cleanupSession(sessionId, isClientDisconnect ? "client disconnected" : "connection error");
+    });
     
   } catch (error) {
-    transports.delete(sessionId);
+    cleanupSession(sessionId, "connection error");
+    
     logger.error(`Error setting up SSE transport for session ${sessionId}:`, error);
     if (!res.headersSent) {
       res.status(500).end(`Error setting up SSE transport: ${error instanceof Error ? error.message : String(error)}`);
@@ -93,20 +187,20 @@ app.post("/message", async (req, res) => {
   const sessionId = req.query.sessionId?.toString() || req.headers['x-session-id']?.toString();
   
   if (!sessionId) {
-    logger.warn("No session ID provided");
+    logger.warn("No session ID provided for message");
     return res.status(400).json({ error: "No session ID provided" });
   }
   
   logger.info(`Received message from client for session: ${sessionId}`);
   
-  const transport = transports.get(sessionId);
-  if (!transport) {
+  const sessionData = transports.get(sessionId);
+  if (!sessionData || !sessionData.transport) {
     logger.warn(`No transport found for session ${sessionId}`);
     return res.status(404).json({ error: "No active connection for this session" });
   }
   
   try {
-    await transport.handlePostMessage(req, res);
+    await sessionData.transport.handlePostMessage(req, res);
     logger.info(`Successfully handled post message for session: ${sessionId}`);
   } catch (error) {
     logger.error(`Error handling post message for session ${sessionId}:`, error);
@@ -133,7 +227,18 @@ app.get("/health", (req, res) => {
 
 // Start the server
 const PORT = process.env.PORT || 7000;
-app.listen(PORT, () => {
+const httpServer = app.listen(PORT, () => {
   logger.info(`eRegulations MCP server running on port ${PORT}`);
   logger.info(`Connect via SSE at http://localhost:${PORT}/sse`);
+});
+
+// Add more graceful shutdown handling for the HTTP server
+['SIGINT', 'SIGTERM'].forEach(signal => {
+  process.on(signal, () => {
+    logger.info(`${signal} received, shutting down HTTP server...`);
+    httpServer.close(() => {
+      logger.info('HTTP server closed.');
+    });
+    // The onclose handler will take care of the rest
+  });
 });
