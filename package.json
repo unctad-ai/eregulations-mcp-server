@@ -13,9 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "mcp-inspector": "npx @modelcontextprotocol/inspector -e EREGULATIONS_API_URL=https://api-tanzania.tradeportal.org -e DEBUG=true node dist/index.js",
-    "test-client": "node dist/test-client.js",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "test-client": "node dist/test-client.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.1",
@@ -39,9 +37,6 @@
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.14",
     "@types/yargs": "^17.0.33",
-    "@typescript-eslint/eslint-plugin": "^8.26.1",
-    "@typescript-eslint/parser": "^8.26.1",
-    "eslint": "^9.22.0",
     "ts-node": "^10.9.1",
     "tsx": "^4.19.2",
     "typescript": "^5.3.2",
