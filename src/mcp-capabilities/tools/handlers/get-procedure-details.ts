@@ -15,9 +15,12 @@ export function createGetProcedureDetailsHandler(api: ERegulationsApi): ToolHand
         const { procedureId } = args;
         logger.log(`Handling GET_PROCEDURE_DETAILS request for procedure ID ${procedureId}`);
         
-        // Get the basic procedure details first
+        // Get the basic procedure details
         const procedure = await api.getProcedureById(procedureId);
         
+        // The following API calls are not currently used in the formatter but may be used in the future
+        // Uncomment if needed:
+        /*
         // Try to get additional information in parallel
         const [resume, totals] = await Promise.all([
           api.getProcedureResume(procedureId).catch(err => {
@@ -29,12 +32,13 @@ export function createGetProcedureDetailsHandler(api: ERegulationsApi): ToolHand
             return null;
           })
         ]);
+        */
         
         // Use the procedure formatter to format the data for LLM consumption
         const formattedResult = formatters.procedure.format({
           ...procedure,
-          resume,
-          totals
+          // resume,
+          // totals
         });
         
         logger.log(`Successfully retrieved details for procedure ID ${procedureId}`);
