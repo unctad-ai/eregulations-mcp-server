@@ -4,8 +4,17 @@
   "description": "Model Context Protocol (MCP) server for eRegulations API",
   "main": "dist/index.js",
   "type": "module",
+  "bin": {
+    "eregulations-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist/**/*",
+    "!dist/**/*.test.*",
+    "!dist/test/**"
+  ],
   "scripts": {
     "build": "tsc",
+    "postbuild": "chmod +x dist/index.js",
     "start": "node dist/index.js",
     "stdio": "tsc && node dist/index.js",
     "sse": "tsc && node dist/sse.js",
@@ -67,6 +76,6 @@
     "ts-node": "^10.9.1",
     "tsx": "^4.19.2",
     "typescript": "^5.3.2",
-    "vitest": "^0.34.6"
+    "vitest": "^3.0.9"
   }
 }
