@@ -10,6 +10,7 @@ events.setMaxListeners(20);
 const API_URL = process.env.EREGULATIONS_API_URL;
 
 async function main() {
+  logger.info("Starting MCP server...");
   if (!API_URL) {
     logger.error("No EREGULATIONS_API_URL set. Please set the EREGULATIONS_API_URL environment variable.");
     process.exit(1);
