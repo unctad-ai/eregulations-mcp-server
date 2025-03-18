@@ -35,6 +35,7 @@
     "url": "https://github.com/unctad-ai/eregulations-mcp-server/issues"
   },
   "homepage": "https://github.com/unctad-ai/eregulations-mcp-server#readme",
+  "npm": "https://www.npmjs.com/package/@unctad-ai/eregulations-mcp-server",
   "keywords": [
     "eregulations",
     "mcp",
