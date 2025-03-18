@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.8](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.7...v0.1.8) (2025-03-18)
+
+
+### Bug Fixes
+
+* add validation for procedure and step IDs in API methods ([f388c9b](https://github.com/unctad-ai/eregulations-mcp-server/commit/f388c9b563c09a13924c2ef46491903cf4b0c545))
+* update mcp-inspector script to use latest version ([f926f30](https://github.com/unctad-ai/eregulations-mcp-server/commit/f926f301e7a1baadf207318ee6562156f3be681a))
+
+
+### Code Refactoring
+
+* remove unused API calls ([3ebacea](https://github.com/unctad-ai/eregulations-mcp-server/commit/3ebacea1bc008afa06541931283cf1c201d8ed6c))
+
 ### [0.1.7](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.6...v0.1.7) (2025-03-18)
 
 
