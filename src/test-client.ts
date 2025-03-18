@@ -17,7 +17,6 @@ const availableTests = {
   "list-tools": "Test the tool listing functionality",
   "list-procedures": "Test the listProcedures tool",
   "procedure-details": "Test the getProcedureDetails tool",
-  "search-procedures": "Test the text-based search functionality",
   "procedure-step": "Test the getProcedureStep tool",
   "all": "Run all tests sequentially"
 };
@@ -210,36 +209,6 @@ async function main() {
           return true;
         } catch (error: any) {
           console.error('Error calling getProcedureDetails:', error.message || error);
-          return false;
-        }
-      },
-      
-      // Test searchProcedures tool
-      "search-procedures": async () => {
-        console.log('\n=== Testing searchProcedures Tool ===');
-        try {
-          console.log('\nSearching for "import":');
-          const searchResult = await client.callTool({
-            name: "searchProcedures",
-            arguments: {
-              query: "import"
-            }
-          });
-          
-          if (searchResult.content && Array.isArray(searchResult.content)) {
-            // Print first few lines of results
-            const textContent = searchResult.content.find((item: any) => 
-              item.type === 'text' && !item.text.startsWith('```')
-            );
-            
-            if (textContent) {
-              const lines = textContent.text.split('\n');
-              console.log(lines.slice(0, 10).join('\n') + '\n...');
-            }
-          }
-          return true;
-        } catch (error: any) {
-          console.error('Error calling searchProcedures:', error.message || error);
           return false;
         }
       },

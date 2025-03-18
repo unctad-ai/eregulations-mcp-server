@@ -113,13 +113,6 @@ Parameters:
 - `procedureId`: ID of the procedure
 - `stepId`: ID of the step within the procedure
 
-### `searchProcedures`
-
-Searches for procedures by text.
-
-Parameters:
-- `query`: Optional text search query
-
 ## Prompt Templates
 
 The server provides prompt templates to guide LLMs in using the available tools correctly. These templates explain the proper format and parameters for each tool. LLM clients that support the MCP prompt templates capability will automatically receive these templates to improve their ability to work with the API.

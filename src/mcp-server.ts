@@ -27,7 +27,6 @@ export const createServer = (baseUrl: string) => {
           listProcedures: true,
           getProcedureDetails: true,
           getProcedureStep: true,
-          searchProcedures: true
         },
         prompts: {},
       },
@@ -108,17 +107,6 @@ export const createServer = (baseUrl: string) => {
             },
           ],
         },
-        {
-          name: PromptName.SEARCH_PROCEDURES,
-          description: "Search for procedures by text",
-          arguments: [
-            {
-              name: "query",
-              description: "Text search query",
-              required: false,
-            }
-          ],
-        }
       ],
     };
   });

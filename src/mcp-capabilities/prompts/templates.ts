@@ -2,7 +2,6 @@ export enum PromptName {
   LIST_PROCEDURES = "listProcedures",
   GET_PROCEDURE_DETAILS = "getProcedureDetails",
   GET_PROCEDURE_STEP = "getProcedureStep",
-  SEARCH_PROCEDURES = "searchProcedures"
 }
 
 export const PROMPT_TEMPLATES = {
@@ -53,21 +52,4 @@ Get information about a specific step within a procedure.
 ## Notes
 - Use getProcedureDetails first to find valid step IDs within a procedure
 - Returns detailed information about a specific step including requirements and contact information`,
-
-  [PromptName.SEARCH_PROCEDURES]: `# Search Procedures
-Search for procedures by text.
-
-## Usage
-\`\`\`json
-{
-  "name": "searchProcedures",
-  "arguments": {
-    "query": "import"  // Optional text to search for
-  }
-}
-\`\`\`
-
-## Notes
-- Returns procedures whose names match the search query
-- If no query is provided, returns all procedures`
 };

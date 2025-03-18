@@ -345,36 +345,6 @@ export class ERegulationsApi {
     }, CACHE_TTL.PROCEDURES_LIST);
   }
 
-  private async getUrlFromLinks(id: number, procedures?: Procedure[]): Promise<string> {
-    try {
-      // If procedures list is not provided, fetch it
-      if (!procedures) {
-        procedures = await this.getProceduresList();
-      }
-      
-      // Find the procedure by ID
-      const procedure = procedures.find((p: Procedure) => p.id === id);
-      if (!procedure) {
-        logger.log(`No procedure found with ID ${id}`);
-        // If we can't find the procedure in the list, construct the URL directly
-        return `${this.baseUrl}/Procedures/${id}`;
-      }
-      
-      // Find the procedure link
-      const procedureLink = procedure.links?.find((link: ApiLink) => link.rel === "procedure");
-      if (!procedureLink || !procedureLink.href) {
-        logger.log(`No procedure link found in procedure ${id}, using direct URL`);
-        return `${this.baseUrl}/Procedures/${id}`;
-      }
-      
-      return procedureLink.href;
-    } catch (error) {
-      logger.error('Error getting URL from links:', error);
-      // Fallback to direct URL construction
-      return `${this.baseUrl}/Procedures/${id}`;
-    }
-  }
-
   /**
    * Get detailed information about a specific procedure
    */
@@ -384,8 +354,7 @@ export class ERegulationsApi {
       logger.log(`Fetching procedure details for ID ${id}...`);
       
       // First try to get the correct URL from the procedure's links
-      const url = await this.getUrlFromLinks(id);
-      
+      const url = `${this.baseUrl}/Procedures/${id}`;
       logger.log(`Making API request to: ${url}`);
       
       // Use our robust request method
@@ -505,28 +474,6 @@ export class ERegulationsApi {
       }
       return response.data;
     }, CACHE_TTL.PROCEDURE_COMPONENTS);
-  }
-
-  /**
-   * Search procedures by name (client-side implementation)
-   */
-  async searchByName(query: string): Promise<Procedure[]> {
-    if (!query) {
-      return this.getProceduresList();
-    }
-    
-    const cacheKey = `search_name_${query.toLowerCase()}`;
-    return this.fetchWithCache<Procedure[]>(cacheKey, async () => {
-      // Get all procedures and filter client-side
-      const procedures = await this.getProceduresList();
-      
-      return procedures.filter((proc: Procedure) => {
-        if (typeof proc.name === 'string') {
-          return proc.name.toLowerCase().includes(query.toLowerCase());
-        }
-        return false;
-      });
-    }, CACHE_TTL.SEARCH_RESULTS);
   }
 
   /**

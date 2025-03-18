@@ -77,7 +77,7 @@ export class ProcedureListFormatter implements DataFormatter<ProcedureData[], Fo
       
       // Add note about truncated results only if we actually limited the results
       if (maxItems && procedures.length > maxItems) {
-        proceduresSummary += `\n... and ${procedures.length - maxItems} more. Use searchProcedures to narrow results.`;
+        proceduresSummary += `\n... and ${procedures.length - maxItems} more.`;
       }
     } else {
       proceduresSummary += "No procedures found.";

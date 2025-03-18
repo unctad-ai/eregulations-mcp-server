@@ -59,11 +59,5 @@ describe('MCP Server', () => {
       expect(getProcedureDetailsHandler?.description).toContain('Get detailed information');
     });
 
-    it('should define the searchProcedures tool', () => {
-      const { handlers } = createServer('https://api-tanzania.tradeportal.org');
-      const searchProceduresHandler = handlers.find((h: ToolHandler) => h.name === 'searchProcedures');
-      expect(searchProceduresHandler).toBeDefined();
-      expect(searchProceduresHandler?.description).toContain('Search for procedures');
-    });
   });
 });
