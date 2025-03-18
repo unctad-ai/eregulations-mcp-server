@@ -24,7 +24,10 @@ vi.mock('../utils/db-cache.js', () => ({
 }));
 
 describe('ERegulationsApi', () => {
-  const baseUrl = 'https://api-tanzania.tradeportal.org';
+  const baseUrl = process.env.EREGULATIONS_API_URL;
+  if (!baseUrl) {
+    process.exit(1);
+  }
   let api: ERegulationsApi;
   let mockCache: any;
   

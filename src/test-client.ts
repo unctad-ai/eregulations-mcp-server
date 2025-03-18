@@ -1,12 +1,10 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import { ERegulationsApi } from "./services/eregulations-api.js";
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const api = new ERegulationsApi('https://api-tanzania.tradeportal.org');
 
 const useSSE = process.env.TRANSPORT === 'sse';
 console.log(`Using ${useSSE ? 'sse' : "stdio"} transport`);

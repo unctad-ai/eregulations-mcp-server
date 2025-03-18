@@ -136,11 +136,3 @@ export interface FormattedProcedureStep {
   text: string;
   data: any;
 }
-
-/**
- * Interface for procedure search results
- */
-export interface FormattedProcedureSearchResults {
-  text: string;
-  data: any[];
-}

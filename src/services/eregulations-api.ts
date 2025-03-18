@@ -9,7 +9,6 @@ const CACHE_TTL = {
   PROCEDURES_LIST: 30 * 24 * 60 * 60 * 1000, // 30 days
   PROCEDURE_DETAILS: 24 * 60 * 60 * 1000, // 24 hours
   PROCEDURE_COMPONENTS: 8 * 60 * 60 * 1000, // 8 hours
-  SEARCH_RESULTS: 4 * 60 * 60 * 1000, // 4 hours
 };
 
 /**

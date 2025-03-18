@@ -7,10 +7,14 @@ import events from 'events';
 // Increase default max listeners to prevent memory leak warnings
 events.setMaxListeners(20);
 
-// Default API URL
-const API_URL = process.env.EREGULATIONS_API_URL || "https://api-tanzania.tradeportal.org";
+const API_URL = process.env.EREGULATIONS_API_URL;
 
 async function main() {
+  if (!API_URL) {
+    logger.error("No EREGULATIONS_API_URL set. Please set the EREGULATIONS_API_URL environment variable.");
+    process.exit(1);
+  }
+
   const transport = new StdioServerTransport();
   const { server, cleanup } = createServer(API_URL);
   

@@ -1,10 +1,10 @@
 # eRegulations API Notes
 
 ## Overview
-The eRegulations platform provides a comprehensive API for accessing information about administrative procedures, requirements, costs, and regulatory information. This document captures the key endpoints and data structures observed in the Tanzania instance of the eRegulations API.
+The eRegulations platform provides a comprehensive API for accessing information about administrative procedures, requirements, costs, and regulatory information. This document captures the key endpoints and data structures observed in the eRegulations API.
 
 ## API Base URL
-- Base URL: https://api-tanzania.tradeportal.org/
+- Base URL: https://api...
 - API Version: v1
 
 ## Key Endpoints

@@ -6,7 +6,6 @@ A Model Context Protocol (MCP) server implementation for accessing eRegulations 
 
 - Access eRegulations data through a standardized protocol
 - Query procedures, steps, requirements, and costs
-- Search for procedures by name
 - MCP prompt templates to guide LLM tool usage
 - Support for both standard I/O and HTTP connections
 
@@ -28,7 +27,7 @@ npm run build
 
 The server can be configured using environment variables:
 
-- `EREGULATIONS_API_URL`: URL of the eRegulations API to connect to (default: `https://api-tanzania.tradeportal.org`)
+- `EREGULATIONS_API_URL`: URL of the eRegulations API to connect to
 - `PORT`: Port for the HTTP server when using SSE transport (default: `7000`)
 
 ## Usage
