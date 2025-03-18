@@ -18,7 +18,7 @@
     "sse": "tsc && node dist/sse.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "mcp-inspector": "npx @modelcontextprotocol/inspector npx -y @unctad-ai/eregulations-mcp-server",
+    "mcp-inspector": "npx @modelcontextprotocol/inspector npx -y @unctad-ai/eregulations-mcp-server@latest",
     "test-client": "node dist/test-client.js",
     "prepublishOnly": "npm run build && npm run test",
     "postbump": "git push && git push --tags",
