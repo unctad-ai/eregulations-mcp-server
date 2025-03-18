@@ -1,7 +1,7 @@
 {
-  "name": "eregulations-mcp-server",
-  "version": "1.0.0",
-  "description": "Model Context Protocol server for eRegulations API",
+  "name": "@unctad-ai/eregulations-mcp-server",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) server for eRegulations API",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -12,8 +12,29 @@
     "dev": "ts-node-esm src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "mcp-inspector": "npx @modelcontextprotocol/inspector -e EREGULATIONS_API_URL=https://api-tanzania.tradeportal.org -e DEBUG=true node dist/index.js",
-    "test-client": "node dist/test-client.js"
+    "mcp-inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
+    "test-client": "node dist/test-client.js",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unctad-ai/eregulations-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/unctad-ai/eregulations-mcp-server/issues"
+  },
+  "homepage": "https://github.com/unctad-ai/eregulations-mcp-server#readme",
+  "keywords": [
+    "eregulations",
+    "mcp",
+    "model-context-protocol",
+    "llm",
+    "api"
+  ],
+  "author": "benmoumen@gmail.com",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.1",
