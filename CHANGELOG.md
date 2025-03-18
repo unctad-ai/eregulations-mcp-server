@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.9](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.8...v0.1.9) (2025-03-18)
+
+
+### Bug Fixes
+
+* add npm link to package.json ([a9f9e9c](https://github.com/unctad-ai/eregulations-mcp-server/commit/a9f9e9ce90c01ac6ee11d939e86a6c8397a4c33e))
+
 ### [0.1.8](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.7...v0.1.8) (2025-03-18)
 
 
