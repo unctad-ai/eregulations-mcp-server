@@ -348,10 +348,13 @@ export class ERegulationsApi {
    * Get detailed information about a specific procedure
    */
   async getProcedureById(id: number): Promise<Procedure> {
+    if (!id || id <= 0) {
+      throw new Error('Procedure ID is required');
+    }
     const cacheKey = `procedure_${id}`;
     return this.fetchWithCache<Procedure>(cacheKey, async () => {
       logger.log(`Fetching procedure details for ID ${id}...`);
-      
+
       // First try to get the correct URL from the procedure's links
       const url = `${this.baseUrl}/Procedures/${id}`;
       logger.log(`Making API request to: ${url}`);
@@ -389,6 +392,9 @@ export class ERegulationsApi {
    * Get a summary of a procedure (number of steps, institutions, requirements)
    */
   async getProcedureResume(id: number): Promise<unknown> {
+    if (!id || id <= 0) {
+      throw new Error('Procedure ID is required');
+    }
     const cacheKey = `procedure_resume_${id}`;
     return this.fetchWithCache<unknown>(cacheKey, async () => {
       logger.log(`Fetching procedure resume for ID ${id}...`);
@@ -404,6 +410,9 @@ export class ERegulationsApi {
    * Get a detailed procedure resume
    */
   async getProcedureDetailedResume(id: number): Promise<unknown> {
+    if (!id || id <= 0) {
+      throw new Error('Procedure ID is required');
+    }
     const cacheKey = `procedure_detailed_resume_${id}`;
     return this.fetchWithCache<unknown>(cacheKey, async () => {
       const response = await this.makeRequest<unknown>(`${this.baseUrl}/Procedures/${id}/ResumeDetail`);
@@ -418,6 +427,12 @@ export class ERegulationsApi {
    * Get information about a specific step within a procedure
    */
   async getProcedureStep(procedureId: number, stepId: number): Promise<Step> {
+    if (!procedureId || procedureId <= 0) {
+      throw new Error('Procedure ID is required');
+    }
+    if (!stepId || stepId <= 0) {
+      throw new Error('Step ID is required');
+    }
     const cacheKey = `procedure_${procedureId}_step_${stepId}`;
     return this.fetchWithCache<Step>(cacheKey, async () => {
       logger.log(`Fetching step ${stepId} for procedure ${procedureId}...`);
@@ -451,23 +466,12 @@ export class ERegulationsApi {
    * Get procedure totals (costs and time)
    */
   async getProcedureTotals(id: number): Promise<unknown> {
+    if (!id || id <= 0) {
+      throw new Error('Procedure ID is required');
+    }
     const cacheKey = `procedure_totals_${id}`;
     return this.fetchWithCache<unknown>(cacheKey, async () => {
       const response = await this.makeRequest<unknown>(`${this.baseUrl}/Procedures/${id}/Totals`);
-      if (!response) {
-        return null;
-      }
-      return response.data;
-    }, CACHE_TTL.PROCEDURE_COMPONENTS);
-  }
-
-  /**
-   * Get the administrative burden calculation of a procedure
-   */
-  async getProcedureABC(id: number): Promise<unknown> {
-    const cacheKey = `procedure_abc_${id}`;
-    return this.fetchWithCache<unknown>(cacheKey, async () => {
-      const response = await this.makeRequest<unknown>(`${this.baseUrl}/Procedures/${id}/ABC`);
       if (!response) {
         return null;
       }

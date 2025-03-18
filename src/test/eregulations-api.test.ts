@@ -478,13 +478,6 @@ describe('ERegulationsApi', () => {
       expect(result).toEqual(totalsData);
     });
     
-    it('handles null response data gracefully', async () => {
-      (api as any).makeRequest = vi.fn().mockResolvedValue({ data: null });
-      
-      const result = await api.getProcedureABC(1244);
-      
-      expect(result).toBeNull();
-    });
   });
 
   describe('dispose', () => {
