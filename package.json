@@ -17,10 +17,10 @@
     "prepublishOnly": "npm run build && npm run test",
     "version": "git add -A",
     "postversion": "git push && git push --tags",
-    "release:patch": "npm version patch && npm publish",
-    "release:minor": "npm version minor && npm publish",
-    "release:major": "npm version major && npm publish",
-    "release": "npm version patch && npm publish"
+    "release:patch": "npm version patch",
+    "release:minor": "npm version minor",
+    "release:major": "npm version major",
+    "release": "npm version patch"
   },
   "repository": {
     "type": "git",
