@@ -32,12 +32,12 @@ The server can be configured using environment variables:
 
 ## Usage
 
-### Standard I/O Mode
+### Standard I/O Mode (recommended)
 
 For integration with LLM systems that support MCP over standard I/O:
 
 ```bash
-npm start
+node dist/index.js
 ```
 
 ### HTTP Server Mode
@@ -60,33 +60,6 @@ docker-compose up -d
 
 # To stop the containers
 docker-compose down
-```
-
-The Docker Compose setup includes:
-- eRegulations MCP server
-
-Nginx is configured to serve:
-- The eRegulations MCP server at `/eregulations`
-
-To add additional MCP servers, modify the `docker-compose.yml` and `nginx.conf` files.
-
-Each MCP server is configured to listen on a different port, allowing multiple servers to be run simultaneously.
-
-### Nginx Location for eRegulations MCP server
-```
-location /eregulations/ {
-    proxy_pass http://127.0.0.1:7000/;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
-    proxy_set_header Host $host;
-    proxy_cache_bypass $http_upgrade;
-    # Additional SSE-specific settings
-    proxy_set_header Connection '';
-    proxy_buffering off;
-    proxy_cache off;
-    proxy_read_timeout 86400s; # 24 hours
-}
 ```
 
 ## Available Tools
