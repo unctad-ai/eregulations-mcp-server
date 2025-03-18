@@ -1,6 +1,6 @@
 {
   "name": "@unctad-ai/eregulations-mcp-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Model Context Protocol (MCP) server for eRegulations API",
   "main": "dist/index.js",
   "type": "module",
@@ -14,7 +14,10 @@
     "test:watch": "vitest",
     "mcp-inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
     "test-client": "node dist/test-client.js",
-    "prepublishOnly": "npm run build && npm run test"
+    "prepublishOnly": "npm run build && npm run test",
+    "version": "git add -A",
+    "postversion": "git push && git push --tags",
+    "release": "npm version patch && npm publish"
   },
   "repository": {
     "type": "git",
