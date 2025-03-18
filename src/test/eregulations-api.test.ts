@@ -24,10 +24,7 @@ vi.mock('../utils/db-cache.js', () => ({
 }));
 
 describe('ERegulationsApi', () => {
-  const baseUrl = process.env.EREGULATIONS_API_URL;
-  if (!baseUrl) {
-    process.exit(1);
-  }
+  const baseUrl = 'http://mock-eregulations-api.test';
   let api: ERegulationsApi;
   let mockCache: any;
   

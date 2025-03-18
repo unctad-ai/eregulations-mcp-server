@@ -31,43 +31,32 @@ vi.mock('@modelcontextprotocol/sdk/server/index.js', () => ({
 }));
 
 describe('MCP Server', () => {
+  const mockBaseUrl = 'http://mock-eregulations-api.test';
+  
   beforeEach(() => {
     vi.clearAllMocks();
   });
-  
+
   describe('createServer', () => {
     it('should create server with correct configuration', () => {
-      const baseUrl = process.env.EREGULATIONS_API_URL;
-      if (!baseUrl) {
-        process.exit(1);
-      }
-      const { server } = createServer(baseUrl);
+      const { server } = createServer(mockBaseUrl);
       expect(server).toBeDefined();
     });
   });
   
   describe('tools', () => {
     it('should define the listProcedures tool', () => {
-      const baseUrl = process.env.EREGULATIONS_API_URL;
-      if (!baseUrl) {
-        process.exit(1);
-      }
-      const { handlers } = createServer(baseUrl);
+      const { handlers } = createServer(mockBaseUrl);
       const listProceduresHandler = handlers.find((h: ToolHandler) => h.name === 'listProcedures');
       expect(listProceduresHandler).toBeDefined();
       expect(listProceduresHandler?.description).toContain('List all available procedures');
     });
 
     it('should define the getProcedureDetails tool', () => {
-      const baseUrl = process.env.EREGULATIONS_API_URL;
-      if (!baseUrl) {
-        process.exit(1);
-      }
-      const { handlers } = createServer(baseUrl);
+      const { handlers } = createServer(mockBaseUrl);
       const getProcedureDetailsHandler = handlers.find((h: ToolHandler) => h.name === 'getProcedureDetails');
       expect(getProcedureDetailsHandler).toBeDefined();
       expect(getProcedureDetailsHandler?.description).toContain('Get detailed information');
     });
-
   });
 });
