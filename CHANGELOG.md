@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.7](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.6...v0.1.7) (2025-03-18)
+
+
+### Bug Fixes
+
+* correct bin path in package.json and add logging for server startup in index.ts ([b6d5af3](https://github.com/unctad-ai/eregulations-mcp-server/commit/b6d5af3db24ef504c790199f607b58f37e434293))
+
 ### [0.1.6](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.5...v0.1.6) (2025-03-18)
 
 
