@@ -94,7 +94,7 @@ export class ProcedureFormatter implements DataFormatter<ProcedureData, Formatte
         if (block.steps && block.steps.length) {
           block.steps.forEach((step: any) => {
             // Compact step header
-            result += `${stepNumber}. ${step.name} (ID:${step.id})`;
+            result += `${stepNumber}. ${step.name} (STEP ID:${step.id})`;
             
             // Add online indicator with minimal text
             if (step.online?.url || step.isOnline) {
@@ -115,7 +115,7 @@ export class ProcedureFormatter implements DataFormatter<ProcedureData, Formatte
             
             // Add requirements with minimal formatting
             if (step.requirements && step.requirements.length > 0) {
-              result += '   Req:';
+              result += '   Requirements:';
               // Use inline format for requirements to save space
               step.requirements.forEach((req: any) => {
                 if (!requirements.has(req.name)) {
@@ -158,9 +158,9 @@ export class ProcedureFormatter implements DataFormatter<ProcedureData, Formatte
                     });
                   } else {
                     result += ` ${cost.value} ${cost.unit};`;
-                    if (cost.unit === 'TZS') {
-                      totalCost += parseFloat(cost.value);
-                    }
+                    //if (cost.unit === 'TZS') {
+                    totalCost += parseFloat(cost.value);
+                    //}
                   }
                 }
               });

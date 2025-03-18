@@ -3,14 +3,14 @@ import { DataFormatter, FormattedProcedureSearchResults, ProcedureData } from '.
 /**
  * Formats search results data in a way optimized for LLMs with context length constraints
  */
-export class SearchFormatter implements DataFormatter<{results: ProcedureData[], query?: string}, FormattedProcedureSearchResults> {
+export class SearchFormatter implements DataFormatter<{results: ProcedureData[], query?: string, return_data?: boolean}, FormattedProcedureSearchResults> {
   /**
    * Format search results data for LLM consumption
    * @param data Object containing search results and optional query
    * @returns Formatted search results text and essential data
    */
-  public format(data: {results: ProcedureData[], query?: string}): FormattedProcedureSearchResults {
-    const { results, query } = data;
+  public format(data: {results: ProcedureData[], query?: string, return_data?: boolean}): FormattedProcedureSearchResults {
+    const { results, query, return_data = false } = data;
     
     if (!results || !Array.isArray(results) || results.length === 0) {
       return {
@@ -23,7 +23,7 @@ export class SearchFormatter implements DataFormatter<{results: ProcedureData[],
     const formattedText = this.formatText(results, query);
     
     // Extract essential data for structured representation
-    const essentialData = this.extractEssentialData(results);
+    const essentialData = return_data ? this.extractEssentialData(results) : [];
     
     return {
       text: formattedText,
@@ -50,30 +50,22 @@ export class SearchFormatter implements DataFormatter<{results: ProcedureData[],
    * Format search results data as human-readable text
    * @param results The search results data to format
    * @param query Optional search query for context
-   * @param maxItems Maximum number of items to include in formatted text
    * @returns Formatted text optimized for LLM context window
    */
-  private formatText(results: ProcedureData[], query?: string, maxItems: number = 10): string {
+  private formatText(results: ProcedureData[], query?: string): string {
     // Format search results for display - compact format with essential info
     let searchResults = `Found ${results.length} procedures`;
     if (query) searchResults += ` matching "${query}"`;
     searchResults += ':\n\n';
     
     if (results.length > 0) {
-      // Show first N results in compact format
-      const shownResults = results.slice(0, maxItems);
-      
-      shownResults.forEach((proc: any, index: number) => {
+      results.forEach((proc: any, index: number) => {
         const id = proc.id || 'N/A';
         const name = proc.fullName || proc.name || 'Unknown';
         const online = proc.isOnline ? ' [ONLINE]' : '';
         
         searchResults += `${index + 1}. ${name}${online} (ID:${id})\n`;
       });
-      
-      if (results.length > maxItems) {
-        searchResults += `\n... and ${results.length - maxItems} more results.`;
-      }
     } else {
       searchResults += "No matching procedures found.";
     }

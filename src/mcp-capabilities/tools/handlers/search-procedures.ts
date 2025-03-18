@@ -14,13 +14,22 @@ export function createSearchProceduresHandler(api: ERegulationsApi): ToolHandler
       try {
         const { query } = args;
         const results = await api.searchByName(query || '');
-        
+        const return_data = false
         // Use the search formatter to format the data for LLM consumption
-        const formattedResult = formatters.search.format({ 
-          results, 
-          query 
-        });
-        
+        const formattedResult = formatters.search.format(
+          { results, query, return_data }
+        );
+
+        if (!return_data) {
+          return { 
+              content: [
+              {
+                type: "text",
+                text: formattedResult.text
+              }
+            ]
+            };
+        } else {
         return {
           content: [
             { 
@@ -36,6 +45,7 @@ export function createSearchProceduresHandler(api: ERegulationsApi): ToolHandler
             }
           ],
         };
+      }
       } catch (error) {
         return {
           content: [

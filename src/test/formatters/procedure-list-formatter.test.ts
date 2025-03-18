@@ -31,7 +31,7 @@ describe('ProcedureListFormatter', () => {
   ];
 
   it('formats procedure list with all fields present', () => {
-    const result = formatter.format(mockProcedures);
+    const result = formatter.format(mockProcedures, true);
     
     // Verify text format is optimized for context
     expect(result.text).toContain('Found 3 procedures:');
@@ -61,35 +61,65 @@ describe('ProcedureListFormatter', () => {
     ]);
   });
 
+  it('formats procedure list without data when return_data is false', () => {
+    const result = formatter.format(mockProcedures, false);
+    
+    // Verify text format is present
+    expect(result.text).toContain('Found 3 procedures:');
+    expect(result.text).toContain('Apply for Import License [ONLINE] (ID:1)');
+    expect(result.text).toContain('Register New Business (ID:2)');
+    expect(result.text).toContain('Apply for Tax Certificate [ONLINE] (ID:3)');
+    
+    // Verify data is empty
+    expect(result.data).toEqual([]);
+  });
+
   it('handles empty procedure list', () => {
-    const result = formatter.format([]);
+    const result = formatter.format([], false);
     expect(result.text).toBe('No procedures available');
     expect(result.data).toEqual([]);
   });
 
   it('handles null/undefined procedure list', () => {
-    const resultNull = formatter.format(null as any);
+    const resultNull = formatter.format(null as any, false);
     expect(resultNull.text).toBe('No procedures available');
     expect(resultNull.data).toEqual([]);
 
-    const resultUndefined = formatter.format(undefined as any);
+    const resultUndefined = formatter.format(undefined as any, false);
     expect(resultUndefined.text).toBe('No procedures available');
     expect(resultUndefined.data).toEqual([]);
   });
 
-  it('truncates large lists in text output but keeps full data', () => {
+  it('includes all items in output regardless of list size when return_data is true', () => {
     const largeProcedureList = Array.from({ length: 25 }, (_, i) => ({
       id: i + 1,
       name: `Procedure ${i + 1}`,
       isOnline: i % 2 === 0
     }));
 
-    const result = formatter.format(largeProcedureList);
+    const result = formatter.format(largeProcedureList, true);
     
-    // Text should be truncated
-    expect(result.text).toContain('... and 5 more');
-    // But data should contain all items
+    // Text should include all items
+    expect(result.text.split('\n').length).toBeGreaterThan(25); // Header + 25 items
+    expect(result.text).not.toContain('... and');
+    // Data should contain all items
     expect(result.data.length).toBe(25);
+  });
+
+  it('includes all items in text output and returns empty data when return_data is false', () => {
+    const largeProcedureList = Array.from({ length: 25 }, (_, i) => ({
+      id: i + 1,
+      name: `Procedure ${i + 1}`,
+      isOnline: i % 2 === 0
+    }));
+
+    const result = formatter.format(largeProcedureList, false);
+    
+    // Text should include all items
+    expect(result.text.split('\n').length).toBeGreaterThan(25); // Header + 25 items
+    expect(result.text).not.toContain('... and');
+    // Data should be empty
+    expect(result.data).toEqual([]);
   });
 
   it('optimizes descriptions in text output', () => {
@@ -101,7 +131,7 @@ describe('ProcedureListFormatter', () => {
       }
     ];
 
-    const result = formatter.format(proceduresWithLongDesc);
+    const result = formatter.format(proceduresWithLongDesc, false);
     const descriptionLine = result.text.split('\n').find(line => line.includes('A'));
     expect(descriptionLine?.length).toBeLessThan(100); // Should be truncated
     expect(descriptionLine).toContain('...');

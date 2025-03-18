@@ -16,10 +16,22 @@ export function createListProceduresHandler(api: ERegulationsApi): ToolHandler {
         const procedures = await api.getProceduresList();
         
         // Use the dedicated formatter to format the procedures list
-        const formattedResult = formatters.procedureList.format(procedures);
+        const return_data = false
+        const formattedResult = formatters.procedureList.format(procedures, return_data);
         
         logger.log(`LIST_PROCEDURES returning ${procedures.length} procedures`);
         
+        if (!return_data) {
+          return {
+            content: [
+              { 
+                type: "text", 
+                text: formattedResult.text
+              }
+            ]
+          };
+        }
+
         return {
           content: [
             { 

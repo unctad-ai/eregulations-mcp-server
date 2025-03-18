@@ -9,7 +9,7 @@ export class ProcedureListFormatter implements DataFormatter<ProcedureData[], Fo
    * @param procedures The procedure list data to format
    * @returns Formatted procedure list text and essential data
    */
-  public format(procedures: ProcedureData[]): FormattedProcedureList {
+  public format(procedures: ProcedureData[], return_data = false): FormattedProcedureList {
     if (!procedures || !Array.isArray(procedures) || procedures.length === 0) {
       return {
         text: "No procedures available",
@@ -21,7 +21,7 @@ export class ProcedureListFormatter implements DataFormatter<ProcedureData[], Fo
     const formattedText = this.formatText(procedures);
     
     // Extract essential data for structured representation
-    const essentialData = this.extractEssentialData(procedures);
+    const essentialData = return_data ? this.extractEssentialData(procedures) : [];
     
     return {
       text: formattedText,
@@ -34,7 +34,7 @@ export class ProcedureListFormatter implements DataFormatter<ProcedureData[], Fo
    * @param procedures The full procedures list data
    * @returns A simplified array with essential fields
    */
-  private extractEssentialData(procedures: ProcedureData[]): any[] {
+   private extractEssentialData(procedures: ProcedureData[]): any[] {
     return procedures.map(proc => ({
       id: proc.id,
       name: proc.fullName || proc.name,
@@ -46,16 +46,16 @@ export class ProcedureListFormatter implements DataFormatter<ProcedureData[], Fo
   /**
    * Format procedure list data as human-readable text
    * @param procedures The procedure list data to format
-   * @param maxItems Maximum number of items to include in formatted text
+   * @param maxItems Optional maximum number of items to include in formatted text
    * @returns Formatted text optimized for LLM context window
    */
-  private formatText(procedures: ProcedureData[], maxItems: number = 20): string {
+  private formatText(procedures: ProcedureData[], maxItems?: number): string {
     // Format a summary of procedures for the text response - more compact format
     let proceduresSummary = `Found ${procedures.length} procedures:\n\n`;
     
     if (procedures.length > 0) {
-      // Limit the number of procedures shown to save context
-      const shownProcedures = procedures.slice(0, maxItems);
+      // Only limit the number of procedures shown if maxItems is explicitly set
+      const shownProcedures = maxItems ? procedures.slice(0, maxItems) : procedures;
       
       shownProcedures.forEach((proc, index) => {
         const id = proc.id || 'N/A';
@@ -75,8 +75,8 @@ export class ProcedureListFormatter implements DataFormatter<ProcedureData[], Fo
         proceduresSummary += `${index + 1}. ${name}${online} (ID:${id})${description}\n`;
       });
       
-      // Add note about truncated results
-      if (procedures.length > maxItems) {
+      // Add note about truncated results only if we actually limited the results
+      if (maxItems && procedures.length > maxItems) {
         proceduresSummary += `\n... and ${procedures.length - maxItems} more. Use searchProcedures to narrow results.`;
       }
     } else {
