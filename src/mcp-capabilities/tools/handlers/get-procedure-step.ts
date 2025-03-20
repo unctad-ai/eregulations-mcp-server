@@ -1,14 +1,13 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { ERegulationsApi } from "../../../services/eregulations-api.js";
 import { formatters } from "../formatters/index.js";
-import { logger } from "../../../utils/logger.js";
 import type { ToolHandler } from "./types.js";
 import { GetProcedureStepSchema, ToolName } from "../schemas.js";
 
 export function createGetProcedureStepHandler(api: ERegulationsApi): ToolHandler {
   return {
     name: ToolName.GET_PROCEDURE_STEP,
-    description: "Get information about a specific step within a procedure",
+    description: `Get information about a specific step within a procedure. Source: ${api.baseUrl}`,
     inputSchema: zodToJsonSchema(GetProcedureStepSchema),
     handler: async (args: any) => {
       try {

@@ -145,7 +145,7 @@ interface RequestConfig extends AxiosRequestConfig {
 }
 
 export class ERegulationsApi {
-  private baseUrl: string;
+  public baseUrl: string;
   private cache: SqliteCache;
   private cacheEnabled: boolean;
   private cleanupInterval: NodeJS.Timeout | null = null;
