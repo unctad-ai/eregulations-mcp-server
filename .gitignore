@@ -9,6 +9,7 @@ dist/
 
 # testing
 coverage/
+!coverage/coverage-summary.json
 
 # Logs
 logs
