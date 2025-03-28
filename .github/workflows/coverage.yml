@@ -42,7 +42,9 @@ jobs:
     
     - name: Commit coverage files
       if: github.ref == 'refs/heads/main'
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: "chore: update coverage metrics [skip ci]"
-        file_pattern: "coverage/coverage-summary.json coverage/badge.svg"
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add -f coverage/coverage-summary.json coverage/badge.svg
+        git commit -m "chore: update coverage metrics [skip ci]"
+        git push
