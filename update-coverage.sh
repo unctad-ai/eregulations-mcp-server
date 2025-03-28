@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to generate coverage report and update the summary JSON and badge
+# Script to generate coverage report and update the summary JSON
 
 # Run tests with coverage
 npm run test:coverage
@@ -13,9 +13,11 @@ npx istanbul report json-summary --include coverage/coverage-final.json --dir co
 # Extract coverage percentage
 COVERAGE=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./coverage/coverage-summary.json')).total.statements.pct)")
 
-# Create a badge SVG file (determine color based on coverage)
+# Determine color based on coverage
 COLOR=$(node -e "const cov = $COVERAGE; console.log(cov > 80 ? 'brightgreen' : cov > 70 ? 'green' : cov > 60 ? 'yellowgreen' : cov > 50 ? 'yellow' : 'red')")
-curl -s "https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}" > coverage/badge.svg
+
+# Update the README badge URL
+sed -i "s|https://img.shields.io/badge/coverage-[0-9.]*%25-[a-z]*|https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}|g" README.md
 
 echo "Coverage summary updated in coverage/coverage-summary.json"
-echo "Coverage badge updated in coverage/badge.svg"
+echo "Coverage badge updated in README.md"

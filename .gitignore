@@ -9,8 +9,6 @@ dist/
 
 # testing
 coverage/
-!coverage/coverage-summary.json
-!coverage/badge.svg
 
 # Logs
 logs
