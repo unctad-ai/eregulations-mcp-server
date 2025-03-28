@@ -31,21 +31,16 @@ RUN mkdir -p /app/data/cache
 # Install production dependencies only
 RUN npm ci --omit=dev
 
-ENV PORT=${PORT}
-ENV STDIO_CMD=${STDIO_CMD}
-#ENV BASE_URL=${BASE_URL}
-#ENV SSE_PATH=${SSE_PATH}
-#ENV MESSAGE_PATH=${MESSAGE_PATH}
-#ENV HEALTH_ENDPOINT=${HEALTH_ENDPOINT}
-#ENV LOG_LEVEL=${LOG_LEVEL}
-#ENV CORS_ENABLED=${CORS_ENABLED}
+#ENV PORT=${PORT}
+#ENV STDIO_CMD=${STDIO_CMD}
 
-# Expose the port
-EXPOSE ${PORT}
 
 # Command to run the server - use shell form to allow variable interpolation
 ## SSE
 #CMD node dist/sse.js --stdio="$STDIO_CMD" --port="$PORT" --baseUrl="$BASE_URL" --ssePath="$SSE_PATH" --messagePath="$MESSAGE_PATH" --healthEndpoint="$HEALTH_ENDPOINT" --logLevel="$LOG_LEVEL" --corsEnabled="$CORS_ENABLED"
 
 ## Websocket
-CMD node dist/ws.js --stdio="$STDIO_CMD" --port="$PORT"
+#CMD node dist/ws.js --stdio="$STDIO_CMD" --port="$PORT"
+
+## STDIO
+CMD ["node", "dist/index.js"]
