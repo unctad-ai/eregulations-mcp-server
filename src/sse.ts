@@ -1,17 +1,4 @@
 #!/usr/bin/env node
-/**
- * index.ts
- *
- * Run MCP stdio servers over SSE and SSE over stdio.
- *
- * Usage:
- *   # stdio -> SSE
- *   npx -y supergateway --stdio "npx -y @modelcontextprotocol/server-filesystem /some/folder" \
- *                       --port 8000 --baseUrl http://localhost:8000 --ssePath /sse --messagePath /message
- *
- *   # SSE -> stdio
- *   npx -y supergateway --sse "https://mcp-server-ab71a6b2-cd55-49d0-adba-562bc85956e3.supermachine.app"
- */
 
 import express from 'express'
 import bodyParser from 'body-parser'
@@ -35,13 +22,13 @@ function getVersion(): string {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
     return packageJson.version || '1.0.0'
   } catch (err) {
-    console.error('[supergateway]', 'Unable to retrieve version:', err)
+    console.error('[eregulations-mcp-server]', 'Unable to retrieve version:', err)
     return 'unknown'
   }
 }
 
-const log = (...args: any[]) => console.log('[supergateway]', ...args)
-const logStderr = (...args: any[]) => console.error('[supergateway]', ...args)
+const log = (...args: any[]) => console.log('[eregulations-mcp-server]', ...args)
+const logStderr = (...args: any[]) => console.error('[eregulations-mcp-server]', ...args)
 
 interface Logger {
   info: (...args: any[]) => void
@@ -99,7 +86,6 @@ async function stdioToSse(args: StdioToSseArgs) {
   } = args
 
   logger.info('Starting...')
-  logger.info('Supergateway is supported by Superinterface - https://superinterface.ai')
   logger.info(`  - port: ${port}`)
   logger.info(`  - stdio: ${stdioCmd}`)
   if (baseUrl) {
@@ -120,7 +106,7 @@ async function stdioToSse(args: StdioToSseArgs) {
   })
 
   const server = new Server(
-    { name: 'supergateway', version: getVersion() },
+    { name: 'eregulations-mcp-server', version: getVersion() },
     { capabilities: {} }
   )
 

@@ -1,46 +1,52 @@
 FROM node:20-alpine AS builder
 
+# Add build dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git \
+    sqlite \
+    sqlite-dev
+
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
+# Copy package files first for better caching
+COPY package*.json ./
+COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies without running prepare script yet
+RUN npm ci --ignore-scripts
 
-# Copy source code
+# Copy all source files
 COPY . .
 
 # Build the application
 RUN npm run build
 
-# Create data directory if it doesn't exist
-RUN mkdir -p /app/data/cache
-
 FROM node:20-alpine AS release
+
+# Add runtime dependencies
+RUN apk add --no-cache sqlite sqlite-dev
 
 WORKDIR /app
 
-# Copy package files and build artifacts
-COPY --from=builder /app/package.json /app/package-lock.json* ./
+# Copy only necessary files
+COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
 
-# Create data directory structure
-RUN mkdir -p /app/data/cache
+# Create data directory and ensure it persists
+VOLUME /app/data/cache
+RUN mkdir -p /app/data/cache && \
+    chown -R node:node /app
 
-# Install production dependencies only
-RUN npm ci --omit=dev
+# Switch to non-root user
+USER node
 
-#ENV PORT=${PORT}
-#ENV STDIO_CMD=${STDIO_CMD}
+# Set production environment
+ENV NODE_ENV=production \
+    LOG_LEVEL=info
 
-
-# Command to run the server - use shell form to allow variable interpolation
-## SSE
-#CMD node dist/sse.js --stdio="$STDIO_CMD" --port="$PORT" --baseUrl="$BASE_URL" --ssePath="$SSE_PATH" --messagePath="$MESSAGE_PATH" --healthEndpoint="$HEALTH_ENDPOINT" --logLevel="$LOG_LEVEL" --corsEnabled="$CORS_ENABLED"
-
-## Websocket
-#CMD node dist/ws.js --stdio="$STDIO_CMD" --port="$PORT"
-
-## STDIO
+# Run in STDIO mode
 CMD ["node", "dist/index.js"]
