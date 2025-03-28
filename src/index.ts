@@ -7,17 +7,11 @@ import events from 'events';
 // Increase default max listeners to prevent memory leak warnings
 events.setMaxListeners(20);
 
-const API_URL = process.env.EREGULATIONS_API_URL;
-
 async function main() {
   logger.info("Starting MCP server...");
-  if (!API_URL) {
-    logger.error("No EREGULATIONS_API_URL set. Please set the EREGULATIONS_API_URL environment variable.");
-    process.exit(1);
-  }
-
+    
   const transport = new StdioServerTransport();
-  const { server, cleanup } = createServer(API_URL);
+  const { server, cleanup } = createServer();
   
   await server.connect(transport);
   

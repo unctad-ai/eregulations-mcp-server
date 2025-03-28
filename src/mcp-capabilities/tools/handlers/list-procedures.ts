@@ -8,7 +8,7 @@ import { ListProceduresSchema, ToolName } from "../schemas.js";
 export function createListProceduresHandler(api: ERegulationsApi): ToolHandler {
   return {
     name: ToolName.LIST_PROCEDURES,
-    description: `List all available procedures in the eRegulations system. Source: ${api.baseUrl}`,
+    description: `List all available procedures in the eRegulations system.`,
     inputSchema: zodToJsonSchema(ListProceduresSchema),
     handler: async () => {
       try {

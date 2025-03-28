@@ -11,11 +11,23 @@ import { logger } from "./utils/logger.js";
 import { createHandlers } from "./mcp-capabilities/tools/handlers/index.js";
 import { PromptName, PROMPT_TEMPLATES } from "./mcp-capabilities/prompts/templates.js";
 
-export const createServer = (baseUrl: string) => {
-  const api = new ERegulationsApi(baseUrl);
+/**
+ * Create a new MCP server instance with eRegulations API integration
+ * @param baseUrl Optional base URL for the eRegulations API. If not provided, will use EREGULATIONS_API_URL environment variable.
+ * @returns An object containing the server instance, handlers, and cleanup function
+ */
+export const createServer = (baseUrl?: string) => {
+  // Create API instance with lazy-loading support
+  const api = new ERegulationsApi();
   
-  logger.log(`Creating MCP server with API URL: ${baseUrl}`);
+  // Set the base URL if provided, otherwise it will be lazy-loaded from env vars when needed
+  if (baseUrl) {
+    logger.log(`Setting eRegulations API URL: ${baseUrl}`);
+    api.setBaseUrl(baseUrl);
+  }
   
+  logger.log(`Creating eRegulations MCP server`);
+    
   const server = new Server(
     {
       name: "eregulations-mcp-server",

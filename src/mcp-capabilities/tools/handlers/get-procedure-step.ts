@@ -7,7 +7,7 @@ import { GetProcedureStepSchema, ToolName } from "../schemas.js";
 export function createGetProcedureStepHandler(api: ERegulationsApi): ToolHandler {
   return {
     name: ToolName.GET_PROCEDURE_STEP,
-    description: `Get information about a specific step within a procedure. Source: ${api.baseUrl}`,
+    description: `Get information about a specific step within a procedure.`,
     inputSchema: zodToJsonSchema(GetProcedureStepSchema),
     handler: async (args: any) => {
       try {

@@ -145,14 +145,13 @@ interface RequestConfig extends AxiosRequestConfig {
 }
 
 export class ERegulationsApi {
-  public baseUrl: string;
-  private cache: SqliteCache;
+  private baseUrl: string | null = null;
+  private cache: SqliteCache | null = null;
   private cacheEnabled: boolean;
   private cleanupInterval: NodeJS.Timeout | null = null;
   private axiosInstance: AxiosInstance;
 
-  constructor(baseUrl: string, cacheEnabled: boolean = true) {
-    this.baseUrl = baseUrl;
+  constructor(cacheEnabled: boolean = true) {
     this.cacheEnabled = cacheEnabled;
     
     // Create a single axios instance to reuse
@@ -166,21 +165,82 @@ export class ERegulationsApi {
       }
     });
     
-    // Initialize the SQLite-based cache with the baseUrl for isolation
-    this.cache = new SqliteCache(baseUrl);
+    // We'll initialize the cache on first use when the baseUrl is known
+    // This ensures we have the correct namespace from the beginning
     
-    // Periodically clean expired cache entries everyday
-    if (cacheEnabled) {
-      this.cleanupInterval = setInterval(() => {
-        const removed = this.cache.cleanExpired();
-        if (removed > 0) {
-          logger.debug(`Cache cleanup: removed ${removed} expired items`);
-        }
-      }, 24 * 60 * 60 * 1000);
-    } else {
-      this.cache.clear();
+    if (!cacheEnabled) {
       logger.warn('Cache is disabled. All requests will be made to the server.');
     }
+  }
+
+  /**
+   * Initialize and get the cache instance
+   * @returns The SqliteCache instance
+   */
+  private getCache(): SqliteCache {
+    if (!this.cache) {
+      // Get the base URL to use as namespace
+      const baseUrl = this.getBaseUrl();
+      const namespace = `api-cache-${baseUrl}`;
+      
+      logger.debug(`Initializing cache with namespace based on API URL: ${namespace}`);
+      this.cache = new SqliteCache(namespace);
+      
+      // Set up periodic cache cleanup if enabled
+      if (this.cacheEnabled && !this.cleanupInterval) {
+        this.cleanupInterval = setInterval(() => {
+          const removed = this.cache!.cleanExpired();
+          if (removed > 0) {
+            logger.debug(`Cache cleanup: removed ${removed} expired items`);
+          }
+        }, 24 * 60 * 60 * 1000); // Once per day
+      }
+      
+      // Clear cache if it's disabled
+      if (!this.cacheEnabled) {
+        this.cache.clear();
+      }
+    }
+    
+    return this.cache;
+  }
+
+  /**
+   * Sets the API base URL manually
+   * @param url The base URL for the eRegulations API
+   */
+  setBaseUrl(url: string): void {
+    if (!url) {
+      throw new Error('Base URL cannot be empty');
+    }
+    
+    logger.log(`Manually setting API URL: ${url}`);
+    this.baseUrl = url;
+    
+    // Update the cache namespace with the new URL
+    this.cache?.updateNamespace(url);
+  }
+
+  /**
+   * Get the base URL for the API, initializing it if necessary
+   * @returns The base URL for the API
+   * @throws Error if the base URL cannot be determined
+   */
+  private getBaseUrl(): string {
+    if (!this.baseUrl) {
+      const apiUrl = process.env.EREGULATIONS_API_URL;
+      if (!apiUrl) {
+        throw new Error("No EREGULATIONS_API_URL set. Please set the EREGULATIONS_API_URL environment variable or use setBaseUrl() method.");
+      }
+      
+      logger.log(`Initializing API with URL: ${apiUrl}`);
+      this.baseUrl = apiUrl;
+      
+      // Now that we have the real baseUrl, update the cache namespace
+      this.cache?.updateNamespace(apiUrl);
+    }
+    
+    return this.baseUrl;
   }
 
   /**
@@ -190,6 +250,11 @@ export class ERegulationsApi {
    * @returns The HTTP response
    */
   private async makeRequest<T = unknown>(url: string, config: RequestConfig = {}): Promise<AxiosResponse<T>> {
+    // Validate that we have a URL to work with
+    if (!url) {
+      throw new Error('URL is required for API requests');
+    }
+    
     let retries = 0;
     const maxRetries = config.maxRetries || REQUEST_CONFIG.MAX_RETRIES;
     const retryDelay = config.retryDelay || REQUEST_CONFIG.RETRY_DELAY;
@@ -230,24 +295,28 @@ export class ERegulationsApi {
   }
 
   private async fetchWithCache<T>(cacheKey: string, fetchFn: () => Promise<T>, ttl: number): Promise<T> {
+    // Get the cache instance (will initialize it if needed)
+    const cache = this.getCache();
+    
     if (this.cacheEnabled) {
-      const cachedData = this.cache.get(cacheKey);
+      const cachedData = cache.get(cacheKey);
       if (cachedData) {
         logger.log(`Returning data for ${cacheKey} from cache`);
         return cachedData;
       }
     }
+    
     try {
       const data = await fetchFn();
       if (this.cacheEnabled) {
-        this.cache.set(cacheKey, data, ttl);
+        cache.set(cacheKey, data, ttl);
         logger.debug(`Cached data for ${cacheKey}`);
       }
       return data;
     } catch (error) {
       // Check if we have cached data even if it's expired
       if (this.cacheEnabled) {
-        const cachedData = this.cache.get(cacheKey, true); // Get even if expired
+        const cachedData = cache.get(cacheKey, true); // Get even if expired
         if (cachedData) {
           logger.warn(`Error fetching fresh data for ${cacheKey}, returning stale cache: ${error instanceof Error ? error.message : String(error)}`);
           return cachedData;
@@ -308,8 +377,11 @@ export class ERegulationsApi {
     return this.fetchWithCache<Procedure[]>(cacheKey, async () => {
       logger.log('Fetching procedures from API...');
       
+      // Get the base URL at execution time, not at initialization time
+      const baseUrl = this.getBaseUrl();
+      
       // Use our robust request method instead of direct axios.get
-      const response = await this.makeRequest<unknown>(`${this.baseUrl}/Objectives`);
+      const response = await this.makeRequest<unknown>(`${baseUrl}/Objectives`);
       let procedures: Procedure[] = [];
 
       // Add debug logging for the raw response
@@ -355,8 +427,11 @@ export class ERegulationsApi {
     return this.fetchWithCache<Procedure>(cacheKey, async () => {
       logger.log(`Fetching procedure details for ID ${id}...`);
 
+      // Get the base URL at execution time
+      const baseUrl = this.getBaseUrl();
+      
       // First try to get the correct URL from the procedure's links
-      const url = `${this.baseUrl}/Procedures/${id}`;
+      const url = `${baseUrl}/Procedures/${id}`;
       logger.log(`Making API request to: ${url}`);
       
       // Use our robust request method
@@ -398,7 +473,9 @@ export class ERegulationsApi {
     const cacheKey = `procedure_resume_${id}`;
     return this.fetchWithCache<unknown>(cacheKey, async () => {
       logger.log(`Fetching procedure resume for ID ${id}...`);
-      const response = await this.makeRequest<unknown>(`${this.baseUrl}/Procedures/${id}/Resume`);
+      // Access baseUrl at execution time
+      const baseUrl = this.getBaseUrl(); 
+      const response = await this.makeRequest<unknown>(`${baseUrl}/Procedures/${id}/Resume`);
       if (!response) {
         return null;
       }
@@ -415,7 +492,9 @@ export class ERegulationsApi {
     }
     const cacheKey = `procedure_detailed_resume_${id}`;
     return this.fetchWithCache<unknown>(cacheKey, async () => {
-      const response = await this.makeRequest<unknown>(`${this.baseUrl}/Procedures/${id}/ResumeDetail`);
+      // Access baseUrl at execution time
+      const baseUrl = this.getBaseUrl();
+      const response = await this.makeRequest<unknown>(`${baseUrl}/Procedures/${id}/ResumeDetail`);
       if (!response) {
         return null;
       }
@@ -437,13 +516,16 @@ export class ERegulationsApi {
     return this.fetchWithCache<Step>(cacheKey, async () => {
       logger.log(`Fetching step ${stepId} for procedure ${procedureId}...`);
       
+      // Access baseUrl at execution time
+      const baseUrl = this.getBaseUrl();
+      
       // Use the dedicated step endpoint to get complete step information
       interface StepResponse {
         data?: Step;
         links?: ApiLink[];
       }
       
-      const response = await this.makeRequest<StepResponse>(`${this.baseUrl}/Procedures/${procedureId}/Steps/${stepId}`);
+      const response = await this.makeRequest<StepResponse>(`${baseUrl}/Procedures/${procedureId}/Steps/${stepId}`);
       
       if (!response || !response.data) {
         throw new Error(`Failed to get step ${stepId} for procedure ${procedureId}`);
@@ -471,7 +553,9 @@ export class ERegulationsApi {
     }
     const cacheKey = `procedure_totals_${id}`;
     return this.fetchWithCache<unknown>(cacheKey, async () => {
-      const response = await this.makeRequest<unknown>(`${this.baseUrl}/Procedures/${id}/Totals`);
+      // Access baseUrl at execution time
+      const baseUrl = this.getBaseUrl();
+      const response = await this.makeRequest<unknown>(`${baseUrl}/Procedures/${id}/Totals`);
       if (!response) {
         return null;
       }
@@ -489,6 +573,6 @@ export class ERegulationsApi {
     }
     
     // Close the database connection
-    this.cache.close();
+    this.cache?.close();
   }
 }

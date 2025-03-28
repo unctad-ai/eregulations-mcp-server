@@ -257,6 +257,37 @@ export class SqliteCache<T = any> {
   }
 
   /**
+   * Update the namespace for this cache instance
+   * This should be called when the baseUrl changes to ensure correct cache isolation
+   * @param baseUrl The new base URL
+   */
+  updateNamespace(baseUrl: string): void {
+    if (!baseUrl) {
+      throw new Error('Base URL cannot be empty when updating namespace');
+    }
+    
+    try {
+      // Close the current database connection
+      this.close();
+      
+      // Create a new database connection with the updated namespace
+      const cacheDir = path.resolve(process.cwd(), 'data', 'cache');
+      const dbFileName = this.getBaseUrlHash(baseUrl);
+      const dbPath = path.join(cacheDir, `${dbFileName}.sqlite`);
+      
+      logger.debug(`Updating cache namespace to: ${dbPath}`);
+      
+      this.db = new Database(dbPath);
+      this.initializeDatabase();
+    } catch (error) {
+      logger.error(`Error updating cache namespace: ${error}`);
+      // Fallback to in-memory database if file access fails
+      this.db = new Database(':memory:');
+      this.initializeDatabase();
+    }
+  }
+
+  /**
    * Close the database connection
    */
   close(): void {

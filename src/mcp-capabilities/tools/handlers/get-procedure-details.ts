@@ -8,7 +8,7 @@ import { GetProcedureDetailsSchema, ToolName } from "../schemas.js";
 export function createGetProcedureDetailsHandler(api: ERegulationsApi): ToolHandler {
   return {
     name: ToolName.GET_PROCEDURE_DETAILS,
-    description: `Get detailed information about a specific procedure by ID. Source: ${api.baseUrl}`,
+    description: `Get detailed information about a specific procedure by ID.`,
     inputSchema: zodToJsonSchema(GetProcedureDetailsSchema),
     handler: async (args: any) => {
       try {
