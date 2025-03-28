@@ -48,9 +48,19 @@ async function main() {
     transport = new SSEClientTransport(new URL("http://localhost:7000/sse"));
   } else {
     console.log('Launching MCP server with stdio transport');
+    // Pass through environment variables, especially EREGULATIONS_API_URL
+    // Create a type-safe environment object by filtering out undefined values
+    const env: Record<string, string> = {};
+    for (const [key, value] of Object.entries(process.env)) {
+      if (value !== undefined) {
+        env[key] = value;
+      }
+    }
+    
     transport = new StdioClientTransport({
       command: "node",
-      args: [path.join(__dirname, "../dist/index.js")]
+      args: [path.join(__dirname, "../dist/index.js")],
+      env
     });
   }
   
@@ -164,7 +174,19 @@ async function main() {
           });
           
           console.log('\nProcedures Summary:');
+          let errorOccurred = false;
+          let errorMessage = '';
+          
           if (listResult.content && Array.isArray(listResult.content)) {
+            // Check if there's an error message in the content
+            for (const item of listResult.content) {
+              if (item.type === 'text' && item.text.includes('Error retrieving procedures:')) {
+                errorOccurred = true;
+                errorMessage = item.text;
+                break;
+              }
+            }
+            
             // Print the text content (not the JSON)
             listResult.content.forEach((item: any) => {
               if (item.type === 'text' && !item.text.startsWith('```')) {
@@ -174,6 +196,12 @@ async function main() {
               }
             });
           }
+          
+          if (errorOccurred) {
+            console.error(`\nError in listProcedures: ${errorMessage}`);
+            return false; // Test fails on API error
+          }
+          
           return true;
         } catch (error: any) {
           console.error('Error calling listProcedures:', error.message || error);
@@ -193,7 +221,19 @@ async function main() {
             }
           });
           
+          let errorOccurred = false;
+          let errorMessage = '';
+          
           if (detailsResult.content && Array.isArray(detailsResult.content)) {
+            // Check for errors in the content
+            for (const item of detailsResult.content) {
+              if (item.type === 'text' && item.text.includes('Error retrieving procedure details:')) {
+                errorOccurred = true;
+                errorMessage = item.text;
+                break;
+              }
+            }
+            
             // Print first 15 lines of the procedure details
             const textContent = detailsResult.content.find((item: any) => 
               item.type === 'text' && !item.text.startsWith('```')
@@ -204,6 +244,12 @@ async function main() {
               console.log(lines.slice(0, 15).join('\n') + '\n...');
             }
           }
+          
+          if (errorOccurred) {
+            console.error(`\nError in getProcedureDetails: ${errorMessage}`);
+            return false; // Test fails on API error
+          }
+          
           return true;
         } catch (error: any) {
           console.error('Error calling getProcedureDetails:', error.message || error);
@@ -225,7 +271,19 @@ async function main() {
             }
           });
           
+          let errorOccurred = false;
+          let errorMessage = '';
+          
           if (stepResult.content && Array.isArray(stepResult.content)) {
+            // Check for errors in the content
+            for (const item of stepResult.content) {
+              if (item.type === 'text' && item.text.includes('Error retrieving procedure step:')) {
+                errorOccurred = true;
+                errorMessage = item.text;
+                break;
+              }
+            }
+            
             // Print the formatted step information
             const textContent = stepResult.content.find((item: any) => 
               item.type === 'text' && !item.text.startsWith('```')
@@ -235,6 +293,12 @@ async function main() {
               console.log(textContent.text);
             }
           }
+          
+          if (errorOccurred) {
+            console.error(`\nError in getProcedureStep: ${errorMessage}`);
+            return false; // Test fails on API error
+          }
+          
           return true;
         } catch (error: any) {
           console.error('Error calling getProcedureStep:', error.message || error);
