@@ -42,9 +42,9 @@ jobs:
     
     - name: Commit coverage files
       if: github.ref == 'refs/heads/main'
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add -f coverage/coverage-summary.json coverage/badge.svg
-        git commit -m "chore: update coverage metrics [skip ci]"
-        git push
+      uses: EndBug/add-and-commit@v9
+      with:
+        add: 'coverage/coverage-summary.json coverage/badge.svg --force'
+        message: 'chore: update coverage metrics [skip ci]'
+        push: true
+        default_author: github_actions
