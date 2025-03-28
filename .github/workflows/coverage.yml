@@ -25,19 +25,24 @@ jobs:
     - name: Run tests with coverage
       run: npm run test:coverage
     
-    - name: Install istanbul reports
-      run: npm install -g istanbul-reports
-    
-    - name: Generate coverage summary
+    - name: Generate coverage summary and badge
       run: |
-        # If coverage-summary.json doesn't exist but coverage-final.json does, create it
-        if [ -f "coverage/coverage-final.json" ] && [ ! -f "coverage/coverage-summary.json" ]; then
-          npx istanbul report json-summary --include coverage/coverage-final.json --dir coverage/
-        fi
+        # Create the coverage directory if it doesn't exist
+        mkdir -p coverage
+        
+        # Generate the coverage summary JSON
+        npx istanbul report json-summary --include coverage/coverage-final.json --dir coverage/
+        
+        # Extract coverage percentage
+        COVERAGE=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./coverage/coverage-summary.json')).total.statements.pct)")
+        
+        # Create a badge SVG file
+        COLOR=$(node -e "const cov = $COVERAGE; console.log(cov > 80 ? 'brightgreen' : cov > 70 ? 'green' : cov > 60 ? 'yellowgreen' : cov > 50 ? 'yellow' : 'red')")
+        curl -s "https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}" > coverage/badge.svg
     
-    - name: Update coverage badge
+    - name: Commit coverage files
       if: github.ref == 'refs/heads/main'
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
         commit_message: "chore: update coverage metrics [skip ci]"
-        file_pattern: coverage/coverage-summary.json
+        file_pattern: "coverage/coverage-summary.json coverage/badge.svg"
