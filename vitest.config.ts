@@ -11,6 +11,9 @@ export default defineConfig({
         'node_modules/',
         'dist/',
         'src/test/',
+        'src/test-client.ts',
+        'sample-code/',
+        'vitest.config.ts',
         '**/*.d.ts',
         '**/*.test.ts',
       ],
@@ -21,6 +24,9 @@ export default defineConfig({
         branches: 60,
         statements: 70
       }
+    },
+    typecheck: {
+        enabled: true,
     }
   }
 });

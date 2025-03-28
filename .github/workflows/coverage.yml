@@ -1,0 +1,38 @@
+name: Test Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests with coverage
+      run: npm test -- --coverage
+    
+    - name: Generate coverage summary
+      run: |
+        npx istanbul-merge --out coverage/coverage-merged.json coverage/coverage-final.json
+        npx istanbul report json-summary --include coverage/coverage-merged.json --dir coverage/
+    
+    - name: Update coverage badge
+      if: github.ref == 'refs/heads/main'
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "chore: update coverage metrics [skip ci]"
+        file_pattern: coverage/coverage-summary.json

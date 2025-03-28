@@ -1,6 +1,7 @@
 # eRegulations MCP Server
 
 [![smithery badge](https://smithery.ai/badge/@unctad-ai/eregulations-mcp-server)](https://smithery.ai/server/@unctad-ai/eregulations-mcp-server)
+[![Test Coverage](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/benmoumen/eregulations-mcp-server/main/coverage/coverage-summary.json&label=coverage&query=$.total.statements.pct&suffix=%&color=brightgreen)](https://github.com/benmoumen/eregulations-mcp-server/tree/main/coverage)
 
 A Model Context Protocol (MCP) server implementation for accessing eRegulations API data. This server provides structured, AI-friendly access to eRegulations instances, making it easier for AI models to answer user questions about administrative procedures.
 
