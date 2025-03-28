@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.12](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.11...v0.1.12) (2025-03-28)
+
+
+### Features
+
+* update Dockerfile for improved build process and add runtime dependencies; enhance logging in sse.ts ([822ff91](https://github.com/unctad-ai/eregulations-mcp-server/commit/822ff91fa8ad1a58a985d59fdb14eaa08c31c582))
+
 ### [0.1.11](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.10...v0.1.11) (2025-03-28)
 
 
