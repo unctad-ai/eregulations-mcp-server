@@ -31,14 +31,10 @@ jobs:
     
     - name: Generate coverage summary and badge
       run: |
-        # Create the coverage directory if it doesn't exist
-        mkdir -p coverage
+        # No need to create coverage directory for badge purposes
         
-        # Generate the coverage summary JSON
-        npx istanbul report json-summary --include coverage/coverage-final.json --dir coverage/
-        
-        # Extract coverage percentage
-        COVERAGE=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./coverage/coverage-summary.json')).total.statements.pct)")
+        # Extract coverage percentage directly from vitest output
+        COVERAGE=$(npx vitest run --coverage --reporter json | grep -o '"statements":{"total":[0-9]*,"covered":[0-9]*,"skipped":[0-9]*,"pct":[0-9.]*' | grep -o 'pct":[0-9.]*' | grep -o '[0-9.]*')
         
         # Create a badge SVG file directly using shields.io static URL (no dynamic processing needed)
         echo "Coverage: $COVERAGE%"
