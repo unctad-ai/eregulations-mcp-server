@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.12...v0.2.0) (2025-03-28)
+
+
+### Features
+
+* add test coverage command and configuration ([7371108](https://github.com/unctad-ai/eregulations-mcp-server/commit/7371108ef1ec245277c58bfebec0a4ba584ecbba))
+* refactor ERegulationsApi to support lazy-loading of API URL and improve cache management; update handler descriptions for clarity ([91ef8e2](https://github.com/unctad-ai/eregulations-mcp-server/commit/91ef8e2367a26d92cd4520f65c9bb03ea5ea68ca))
+
+
+### Tests
+
+* add unit tests for SqliteCache functionality including set, get, updateNamespace, and cleanExpired methods ([1c90a00](https://github.com/unctad-ai/eregulations-mcp-server/commit/1c90a00815cde456776f9233b86486ed772b4aa9))
+
 ### [0.1.12](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.11...v0.1.12) (2025-03-28)
 
 
