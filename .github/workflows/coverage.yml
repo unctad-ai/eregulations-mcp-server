@@ -23,12 +23,17 @@ jobs:
       run: npm ci
     
     - name: Run tests with coverage
-      run: npm test -- --coverage
+      run: npm run test:coverage
+    
+    - name: Install istanbul reports
+      run: npm install -g istanbul-reports
     
     - name: Generate coverage summary
       run: |
-        npx istanbul-merge --out coverage/coverage-merged.json coverage/coverage-final.json
-        npx istanbul report json-summary --include coverage/coverage-merged.json --dir coverage/
+        # If coverage-summary.json doesn't exist but coverage-final.json does, create it
+        if [ -f "coverage/coverage-final.json" ] && [ ! -f "coverage/coverage-summary.json" ]; then
+          npx istanbul report json-summary --include coverage/coverage-final.json --dir coverage/
+        fi
     
     - name: Update coverage badge
       if: github.ref == 'refs/heads/main'
