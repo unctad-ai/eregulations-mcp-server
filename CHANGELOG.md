@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.11](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.10...v0.1.11) (2025-03-28)
+
+
+### Features
+
+* add configuration for smithery.ai deployment ([266ce44](https://github.com/unctad-ai/eregulations-mcp-server/commit/266ce440664a9e0a734d9912c14afa1e3176f573))
+
 ### [0.1.10](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.9...v0.1.10) (2025-03-20)
 
 
