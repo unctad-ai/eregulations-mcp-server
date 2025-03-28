@@ -19,7 +19,8 @@ vi.mock('../utils/db-cache.js', () => ({
     set: vi.fn(),
     clear: vi.fn(),
     cleanExpired: vi.fn(),
-    close: vi.fn()
+    close: vi.fn(),
+    updateNamespace: vi.fn()
   }))
 }));
 
@@ -138,18 +139,22 @@ describe('ERegulationsApi', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     
+    // Setup environment variable for the API URL
+    process.env.EREGULATIONS_API_URL = baseUrl;
+    
     // Setup cache mock behavior
     mockCache = {
       get: vi.fn(),
       set: vi.fn(),
       clear: vi.fn(),
       cleanExpired: vi.fn(),
-      close: vi.fn()
+      close: vi.fn(),
+      updateNamespace: vi.fn()
     };
     (SqliteCache as any).mockImplementation(() => mockCache);
     
     // Create fresh API instance for each test
-    api = new ERegulationsApi(baseUrl);
+    api = new ERegulationsApi();
     
     // Mock successful axios responses by default
     (axios.create as any).mockReturnValue({
@@ -160,13 +165,15 @@ describe('ERegulationsApi', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    delete process.env.EREGULATIONS_API_URL;
   });
 
   describe('constructor', () => {
-    it('initializes with correct baseUrl and cache enabled by default', () => {
-      expect(api['baseUrl']).toBe(baseUrl);
+    it('initializes with cache enabled by default but no baseUrl initially', () => {
+      expect(api['baseUrl']).toBeNull();
       expect(api['cacheEnabled']).toBe(true);
-      expect(SqliteCache).toHaveBeenCalledWith(baseUrl);
+      expect(api['cache']).toBeNull(); // Cache should not be initialized yet
+      expect(SqliteCache).not.toHaveBeenCalled(); // SqliteCache constructor should not be called yet
     });
 
     it('creates axios instance with correct configuration', () => {
@@ -180,8 +187,61 @@ describe('ERegulationsApi', () => {
     });
 
     it('initializes with cache disabled when specified', () => {
-      const apiNoCache = new ERegulationsApi(baseUrl, false);
+      const apiNoCache = new ERegulationsApi(false);
       expect(apiNoCache['cacheEnabled']).toBe(false);
+      // Cache should not be initialized or cleared yet
+      expect(mockCache.clear).not.toHaveBeenCalled();
+    });
+
+    it('allows setting base URL manually', () => {
+      const customUrl = 'http://custom-api.test';
+      api.setBaseUrl(customUrl);
+      expect(api['baseUrl']).toBe(customUrl);
+    });
+  });
+
+  describe('getBaseUrl', () => {
+    it('uses process.env.EREGULATIONS_API_URL when baseUrl is not set', () => {
+      const url = (api as any).getBaseUrl();
+      expect(url).toBe(baseUrl);
+    });
+
+    it('throws error when no baseUrl is set and environment variable is missing', () => {
+      delete process.env.EREGULATIONS_API_URL;
+      expect(() => (api as any).getBaseUrl()).toThrow(/No EREGULATIONS_API_URL set/);
+    });
+
+    it('returns manually set baseUrl when available', () => {
+      const customUrl = 'http://custom-api.test';
+      api.setBaseUrl(customUrl);
+      const url = (api as any).getBaseUrl();
+      expect(url).toBe(customUrl);
+    });
+  });
+
+  describe('getCache', () => {
+    it('initializes cache on first access with correct namespace', () => {
+      // First call to getCache should initialize cache
+      const cache = (api as any).getCache();
+      
+      expect(cache).toBeDefined();
+      expect(SqliteCache).toHaveBeenCalledWith("api-cache-http://mock-eregulations-api.test");
+      
+      // Second call should return the same instance without reinitializing
+      const secondCall = (api as any).getCache();
+      expect(secondCall).toBe(cache);
+      expect(SqliteCache).toHaveBeenCalledTimes(1);
+    });
+
+    it('sets up cleanup interval when cache is enabled', () => {
+      const setIntervalSpy = vi.spyOn(global, 'setInterval');
+      (api as any).getCache();
+      expect(setIntervalSpy).toHaveBeenCalled();
+    });
+
+    it('clears cache if cache is disabled', () => {
+      api = new ERegulationsApi(false);
+      (api as any).getCache();
       expect(mockCache.clear).toHaveBeenCalled();
     });
   });
@@ -194,13 +254,12 @@ describe('ERegulationsApi', () => {
       (axios.create as any).mockReturnValue({ get: axiosGet });
       
       // Create a new API instance with the mocked axios
-      api = new ERegulationsApi(baseUrl);
+      api = new ERegulationsApi();
       
       // Call the private makeRequest method
       await (api as any).makeRequest('/test');
       
-      // Check that the get method was called with the correct full URL
-      // The baseUrl should be prepended to the path
+      // Check that the get method was called with the correct path
       expect(axiosGet).toHaveBeenCalledWith('/test', expect.objectContaining({
         signal: expect.any(Object)
       }));
@@ -213,7 +272,7 @@ describe('ERegulationsApi', () => {
         .mockResolvedValueOnce({ data: { success: true } }); // Second call succeeds
       
       (axios.create as any).mockReturnValue({ get: axiosGet });
-      api = new ERegulationsApi(baseUrl);
+      api = new ERegulationsApi();
       
       const result = await (api as any).makeRequest('/test');
       
@@ -226,7 +285,7 @@ describe('ERegulationsApi', () => {
       const axiosGet = vi.fn().mockRejectedValue(error); // Always fails
       
       (axios.create as any).mockReturnValue({ get: axiosGet });
-      api = new ERegulationsApi(baseUrl);
+      api = new ERegulationsApi();
       
       await expect((api as any).makeRequest('/test', { maxRetries: 1 }))
         .rejects.toThrow(error);
@@ -240,6 +299,11 @@ describe('ERegulationsApi', () => {
     const mockData = { id: 123, name: 'Test Data' };
     const fetchFn = vi.fn().mockResolvedValue(mockData);
     const ttl = 3600000; // 1 hour
+    
+    beforeEach(() => {
+      // Set up the getCache method to return our mockCache
+      (api as any).getCache = vi.fn().mockReturnValue(mockCache);
+    });
     
     it('returns cached data when available', async () => {
       mockCache.get.mockReturnValue(mockData);
@@ -289,7 +353,7 @@ describe('ERegulationsApi', () => {
     });
 
     it('bypasses cache when cacheEnabled is false', async () => {
-      api = new ERegulationsApi(baseUrl, false); // Disable cache
+      api = new ERegulationsApi(false); // Disable cache
       mockCache.get.mockReturnValue(mockData); // Cache would return data
       
       await (api as any).fetchWithCache(cacheKey, fetchFn, ttl);
@@ -300,13 +364,16 @@ describe('ERegulationsApi', () => {
   });
 
   describe('getProceduresList', () => {
-    it('fetches and processes procedures correctly', async () => {
+    it('fetches and processes procedures correctly, initializing baseUrl from env', async () => {
       const mockAxiosGet = vi.fn().mockResolvedValue({ data: mockProceduresList });
       (api as any).makeRequest = mockAxiosGet;
       
       const procedures = await api.getProceduresList();
       
+      // Should use baseUrl from environment variable
       expect(mockAxiosGet).toHaveBeenCalledWith(`${baseUrl}/Objectives`);
+      
+      // Rest of expectations remain the same
       expect(procedures).toBeInstanceOf(Array);
       expect(procedures.length).toBeGreaterThan(0);
       expect(procedures).toContainEqual(expect.objectContaining({
@@ -393,7 +460,7 @@ describe('ERegulationsApi', () => {
   });
 
   describe('getProcedureById', () => {
-    it('fetches procedure details by ID', async () => {
+    it('fetches procedure details by ID with lazy-loaded URL', async () => {
       (api as any).makeRequest = vi.fn().mockResolvedValue({ data: mockProcedureDetails });
       
       const procedure = await api.getProcedureById(1244);
@@ -482,6 +549,9 @@ describe('ERegulationsApi', () => {
 
   describe('dispose', () => {
     it('cleans up resources properly', () => {
+      // Initialize the cache first
+      (api as any).getCache();
+      
       // Setup a spy on clearInterval
       const clearIntervalSpy = vi.spyOn(global, 'clearInterval');
       
