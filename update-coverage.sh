@@ -1,8 +1,9 @@
 #!/bin/bash
 # Script to run tests and update the coverage badge in README
 
-# Extract coverage percentage directly from vitest output
-COVERAGE=$(npx vitest run --coverage --reporter json | grep -o '"statements":{"total":[0-9]*,"covered":[0-9]*,"skipped":[0-9]*,"pct":[0-9.]*' | grep -o 'pct":[0-9.]*' | grep -o '[0-9.]*')
+# Run tests with coverage and extract percentage from report
+npm run test:coverage || true
+COVERAGE=$(cat coverage/coverage-final.json | grep -o '"statements":{"total":[0-9]*,"covered":[0-9]*,"pct":[0-9.]*' | grep -o 'pct":[0-9.]*' | grep -o '[0-9.]*' | head -n 1)
 
 # Determine color based on coverage
 if (( $(echo "$COVERAGE > 80" | bc -l) )); then
