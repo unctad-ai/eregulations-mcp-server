@@ -7,7 +7,8 @@ import events from 'events';
 // Increase default max listeners to prevent memory leak warnings
 events.setMaxListeners(20);
 
-async function main() {
+// Export the main function for testing
+export async function main() {
   logger.info("Starting MCP server...");
     
   const transport = new StdioServerTransport();
@@ -26,7 +27,7 @@ async function main() {
   });
 }
 
-main().catch((error) => {
-  console.error("Server error:", error);
-  process.exit(1);
-});
+  main().catch((error) => {
+    console.error("Server error:", error);
+    process.exit(1);
+  });

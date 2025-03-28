@@ -73,7 +73,7 @@ const onSignals = ({ logger }: { logger: Logger }) => {
   })
 }
 
-async function stdioToSse(args: StdioToSseArgs) {
+export async function stdioToSse(args: StdioToSseArgs) {
   const {
     stdioCmd,
     port,

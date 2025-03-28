@@ -4,6 +4,7 @@ import Database from 'better-sqlite3';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import { logger } from '../../utils/logger.js';
 
 // Mock dependencies
 vi.mock('better-sqlite3');
@@ -129,6 +130,24 @@ describe('SqliteCache', () => {
       const runCall = mockStmt.run.mock.calls[0];
       expect(runCall[2]).toBe(now + defaultTtl);
     });
+    
+    it('handles errors when setting data', () => {
+      const key = 'error-key';
+      const data = { id: 123 };
+      
+      // Mock prepare to throw error
+      mockDb.prepare.mockImplementationOnce(() => {
+        throw new Error('Database error');
+      });
+      
+      // Should not throw but log the error
+      cache.set(key, data);
+      
+      // The logger.error is called with a string that includes both the key and error
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining(`Error setting cache key ${key}`)
+      );
+    });
   });
   
   describe('get', () => {
@@ -177,6 +196,207 @@ describe('SqliteCache', () => {
       // The prepare call should not include expiry check
       const prepareArg = mockDb.prepare.mock.calls[0][0]; 
       expect(prepareArg).not.toContain('expiry >');
+    });
+    
+    it('handles JSON parse errors gracefully', () => {
+      // Setup mock to return invalid JSON
+      mockStmt.get.mockReturnValueOnce({ data: 'invalid json' });
+      
+      const result = cache.get('test-key');
+      
+      expect(result).toBeNull();
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+  
+  describe('has', () => {
+    it('returns true when key exists and is not expired', () => {
+      // Setup mock to return a row (any truthy value)
+      mockStmt.get.mockReturnValueOnce({ key: 'test-key' });
+      
+      const result = cache.has('test-key');
+      
+      expect(result).toBe(true);
+      expect(mockDb.prepare).toHaveBeenCalled();
+      
+      const prepareArg = mockDb.prepare.mock.calls[0][0];
+      expect(prepareArg).toContain('SELECT 1');
+      expect(prepareArg).toContain('expiry >');
+    });
+    
+    it('returns false when key does not exist', () => {
+      // Setup mock to return undefined (no row found)
+      mockStmt.get.mockReturnValueOnce(undefined);
+      
+      const result = cache.has('nonexistent-key');
+      
+      expect(result).toBe(false);
+    });
+    
+    it('handles database errors gracefully', () => {
+      // Setup mock to throw error
+      mockDb.prepare.mockImplementationOnce(() => {
+        throw new Error('Database error');
+      });
+      
+      const result = cache.has('test-key');
+      
+      expect(result).toBe(false);
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+  
+  describe('delete', () => {
+    it('deletes a key from the cache', () => {
+      const key = 'test-key';
+      
+      cache.delete(key);
+      
+      expect(mockDb.prepare).toHaveBeenCalled();
+      const prepareArg = mockDb.prepare.mock.calls[0][0];
+      expect(prepareArg).toContain('DELETE FROM');
+      
+      expect(mockStmt.run).toHaveBeenCalledWith(key);
+    });
+    
+    it('handles database errors gracefully', () => {
+      mockDb.prepare.mockImplementationOnce(() => {
+        throw new Error('Delete error');
+      });
+      
+      // Should not throw but log the error
+      cache.delete('test-key');
+      
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+  
+  describe('clear', () => {
+    it('deletes all items from the cache', () => {
+      cache.clear();
+      
+      expect(mockDb.prepare).toHaveBeenCalled();
+      const prepareArg = mockDb.prepare.mock.calls[0][0];
+      expect(prepareArg).toContain('DELETE FROM');
+      expect(prepareArg).not.toContain('WHERE'); // No WHERE clause for clear
+      
+      expect(mockStmt.run).toHaveBeenCalled();
+    });
+    
+    it('handles database errors gracefully', () => {
+      mockDb.prepare.mockImplementationOnce(() => {
+        throw new Error('Clear error');
+      });
+      
+      // Should not throw but log the error
+      cache.clear();
+      
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+  
+  describe('keys', () => {
+    it('returns array of non-expired keys', () => {
+      const mockKeys = [
+        { key: 'key1' },
+        { key: 'key2' },
+        { key: 'key3' }
+      ];
+      
+      mockStmt.all.mockReturnValueOnce(mockKeys);
+      
+      const result = cache.keys();
+      
+      expect(result).toEqual(['key1', 'key2', 'key3']);
+      expect(mockDb.prepare).toHaveBeenCalled();
+      const prepareArg = mockDb.prepare.mock.calls[0][0];
+      expect(prepareArg).toContain('SELECT key');
+      expect(prepareArg).toContain('expiry >');
+    });
+    
+    it('returns empty array when no keys exist', () => {
+      // Default mock returns empty array
+      const result = cache.keys();
+      expect(result).toEqual([]);
+    });
+    
+    it('handles database errors gracefully', () => {
+      mockDb.prepare.mockImplementationOnce(() => {
+        throw new Error('Keys error');
+      });
+      
+      const result = cache.keys();
+      
+      expect(result).toEqual([]);
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+  
+  describe('size', () => {
+    it('returns the number of non-expired items', () => {
+      // Mock a count result
+      mockStmt.get.mockReturnValueOnce({ count: 42 });
+      
+      const result = cache.size();
+      
+      expect(result).toBe(42);
+      expect(mockDb.prepare).toHaveBeenCalled();
+      const prepareArg = mockDb.prepare.mock.calls[0][0];
+      expect(prepareArg).toContain('COUNT(*)');
+      expect(prepareArg).toContain('expiry >');
+    });
+    
+    it('returns 0 when result is undefined', () => {
+      // Mock undefined result
+      mockStmt.get.mockReturnValueOnce(undefined);
+      
+      const result = cache.size();
+      
+      expect(result).toBe(0);
+    });
+    
+    it('handles database errors gracefully', () => {
+      mockDb.prepare.mockImplementationOnce(() => {
+        throw new Error('Size error');
+      });
+      
+      const result = cache.size();
+      
+      expect(result).toBe(0);
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+  
+  describe('cleanExpiredKey', () => {
+    it('deletes expired entries for a specific key', () => {
+      // Get private method
+      const cleanExpiredKey = (cache as any).cleanExpiredKey.bind(cache);
+      const key = 'test-key';
+      
+      cleanExpiredKey(key);
+      
+      expect(mockDb.prepare).toHaveBeenCalled();
+      const prepareArg = mockDb.prepare.mock.calls[0][0];
+      expect(prepareArg).toContain('DELETE FROM');
+      expect(prepareArg).toContain('key = ?');
+      expect(prepareArg).toContain('expiry <=');
+      
+      // Check run was called with key and current time
+      expect(mockStmt.run).toHaveBeenCalledWith(key, expect.any(Number));
+    });
+    
+    it('handles database errors gracefully', () => {
+      // Get private method
+      const cleanExpiredKey = (cache as any).cleanExpiredKey.bind(cache);
+      
+      mockDb.prepare.mockImplementationOnce(() => {
+        throw new Error('Clean key error');
+      });
+      
+      // Should not throw but log the error
+      cleanExpiredKey('test-key');
+      
+      expect(logger.error).toHaveBeenCalled();
     });
   });
   
@@ -255,6 +475,17 @@ describe('SqliteCache', () => {
       const prepareArg = mockDb.prepare.mock.calls[0][0];
       expect(prepareArg).toContain('DELETE FROM');
       expect(prepareArg).toContain('expiry <=');
+    });
+    
+    it('handles database errors gracefully', () => {
+      mockDb.prepare.mockImplementationOnce(() => {
+        throw new Error('Clean error');
+      });
+      
+      const result = cache.cleanExpired();
+      
+      expect(result).toBe(0);
+      expect(logger.error).toHaveBeenCalled();
     });
   });
   

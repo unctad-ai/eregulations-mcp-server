@@ -1,7 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createServer } from '../mcp-server.js';
 import { ERegulationsApi } from '../services/eregulations-api.js';
-import { PromptName } from '../mcp-capabilities/prompts/templates.js';
+import { PromptName, PROMPT_TEMPLATES } from '../mcp-capabilities/prompts/templates.js';
+import {
+  CallToolRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
+  ListToolsRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
 
 // Define types for our tests
 interface ToolHandler {
@@ -25,63 +31,96 @@ vi.mock('../services/eregulations-api.js', () => ({
   ERegulationsApi: vi.fn().mockImplementation(() => mockApiMethods)
 }));
 
-// Mock the tool handlers to throw validation errors as expected
+// Create mock handlers
+const mockHandlers = [
+  {
+    name: 'listProcedures',
+    description: 'List all available procedures',
+    inputSchema: { type: 'object', properties: {} },
+    handler: vi.fn().mockImplementation(() => Promise.resolve({
+      content: [{ type: 'text', text: 'list of procedures' }]
+    }))
+  },
+  {
+    name: 'getProcedureDetails',
+    description: 'Get detailed information about a procedure',
+    inputSchema: { 
+      type: 'object', 
+      properties: { procedureId: { type: 'number' } },
+      required: ['procedureId']
+    },
+    handler: vi.fn().mockImplementation(args => {
+      if (!args.procedureId) {
+        throw new Error('procedureId is required');
+      }
+      return Promise.resolve({
+        content: [{ type: 'text', text: `procedure details for ${args.procedureId}` }]
+      });
+    })
+  },
+  {
+    name: 'getProcedureStep',
+    description: 'Get information about a specific step',
+    inputSchema: { 
+      type: 'object', 
+      properties: { 
+        procedureId: { type: 'number' },
+        stepId: { type: 'number' }
+      },
+      required: ['procedureId', 'stepId']
+    },
+    handler: vi.fn().mockImplementation(args => {
+      if (!args.procedureId) {
+        throw new Error('procedureId is required');
+      }
+      if (!args.stepId) {
+        throw new Error('stepId is required');
+      }
+      return Promise.resolve({
+        content: [{ type: 'text', text: `step details for procedure ${args.procedureId}, step ${args.stepId}` }]
+      });
+    })
+  }
+];
+
+// Mock the tool handlers
 vi.mock('../mcp-capabilities/tools/handlers/index.js', () => ({
-  createHandlers: vi.fn().mockImplementation(() => [
-    {
-      name: 'listProcedures',
-      description: 'List all available procedures',
-      inputSchema: { type: 'object', properties: {} },
-      handler: vi.fn().mockImplementation(() => Promise.resolve([]))
-    },
-    {
-      name: 'getProcedureDetails',
-      description: 'Get detailed information about a procedure',
-      inputSchema: { 
-        type: 'object', 
-        properties: { procedureId: { type: 'number' } },
-        required: ['procedureId']
-      },
-      handler: vi.fn().mockImplementation(args => {
-        if (!args.procedureId) {
-          throw new Error('procedureId is required');
-        }
-        return Promise.resolve({});
-      })
-    },
-    {
-      name: 'getProcedureStep',
-      description: 'Get information about a specific step',
-      inputSchema: { 
-        type: 'object', 
-        properties: { 
-          procedureId: { type: 'number' },
-          stepId: { type: 'number' }
-        },
-        required: ['procedureId', 'stepId']
-      },
-      handler: vi.fn().mockImplementation(args => {
-        if (!args.procedureId) {
-          throw new Error('procedureId is required');
-        }
-        if (!args.stepId) {
-          throw new Error('stepId is required');
-        }
-        return Promise.resolve({});
-      })
-    }
-  ])
+  createHandlers: vi.fn().mockImplementation(() => mockHandlers)
 }));
 
-// Mock the MCP SDK Server
+// Mock the request schemas with method property
+vi.mock('@modelcontextprotocol/sdk/types.js', () => ({
+  CallToolRequestSchema: { method: 'tools/call' },
+  GetPromptRequestSchema: { method: 'prompts/get' },
+  ListPromptsRequestSchema: { method: 'prompts/list' },
+  ListToolsRequestSchema: { method: 'tools/list' }
+}));
+
+// Mock the MCP SDK Server and capture handlers
+const mockSetRequestHandler = vi.fn<(schema: { method: string }, handler: (args: any) => Promise<any>) => void>();
+const mockHandlersMap = new Map<string, (args: any) => Promise<any>>();
+
 vi.mock('@modelcontextprotocol/sdk/server/index.js', () => ({
   Server: vi.fn().mockImplementation(() => ({
     connect: vi.fn(),
     close: vi.fn(),
-    setRequestHandler: vi.fn(),
+    setRequestHandler: (schema: { method: any; }, handler: { (args: any): Promise<any>; (args: any): Promise<any>; }) => {
+      mockSetRequestHandler(schema, handler);
+      mockHandlersMap.set(schema.method, handler);
+    },
     request: vi.fn(),
     notification: vi.fn()
   }))
+}));
+
+// Mock the logger
+vi.mock('../utils/logger.js', () => ({
+  logger: {
+    log: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
+  }
 }));
 
 describe('MCP Server', () => {
@@ -89,6 +128,7 @@ describe('MCP Server', () => {
   
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHandlersMap.clear();
   });
 
   describe('createServer', () => {
@@ -186,7 +226,6 @@ describe('MCP Server', () => {
       const { handlers } = createServer(mockBaseUrl);
       
       // Test getProcedureDetails with missing procedureId
-      // We need to make the handler function use a promise to work with .rejects
       const getProcedureDetailsHandler = handlers.find((h: ToolHandler) => h.name === 'getProcedureDetails');
       await expect(async () => {
         try {
@@ -208,18 +247,174 @@ describe('MCP Server', () => {
     });
   });
 
+  describe('MCP request handler registration', () => {
+    it('should register all required MCP request handlers', () => {
+      createServer(mockBaseUrl);
+      
+      // Verify that setRequestHandler was called 4 times (tools/list, tools/call, prompts/list, prompts/get)
+      expect(mockSetRequestHandler).toHaveBeenCalledTimes(4);
+    });
+    
+    it('should register tools/list handler', () => {
+      createServer(mockBaseUrl);
+      
+      // Check if the handler was registered for ListToolsRequestSchema
+      expect(mockSetRequestHandler).toHaveBeenCalledWith(
+        ListToolsRequestSchema,
+        expect.any(Function)
+      );
+    });
+
+    it('should register tools/call handler', () => {
+      createServer(mockBaseUrl);
+      
+      // Check if the handler was registered for CallToolRequestSchema
+      expect(mockSetRequestHandler).toHaveBeenCalledWith(
+        CallToolRequestSchema,
+        expect.any(Function)
+      );
+    });
+
+    it('should register prompts/list handler', () => {
+      createServer(mockBaseUrl);
+      
+      // Check if the handler was registered for ListPromptsRequestSchema
+      expect(mockSetRequestHandler).toHaveBeenCalledWith(
+        ListPromptsRequestSchema,
+        expect.any(Function)
+      );
+    });
+
+    it('should register prompts/get handler', () => {
+      createServer(mockBaseUrl);
+      
+      // Check if the handler was registered for GetPromptRequestSchema
+      expect(mockSetRequestHandler).toHaveBeenCalledWith(
+        GetPromptRequestSchema,
+        expect.any(Function)
+      );
+    });
+  });
+
+  describe('MCP handler implementations', () => {
+    beforeEach(() => {
+      createServer(mockBaseUrl);
+    });
+
+    it('should return list of tools in ListToolsRequest handler', async () => {
+      const listToolsHandler = mockHandlersMap.get('tools/list');
+      if (!listToolsHandler) throw new Error('listToolsHandler is undefined');
+
+      const response = await listToolsHandler({});
+      expect(response).toHaveProperty('tools');
+      expect(response.tools).toBeInstanceOf(Array);
+      expect(response.tools).toHaveLength(3);
+      
+      expect(response.tools[0]).toMatchObject({
+        name: 'listProcedures',
+        description: expect.any(String),
+        inputSchema: expect.any(Object)
+      });
+    });
+    
+    it('should handle CallToolRequest for valid tools', async () => {
+      const callToolHandler = mockHandlersMap.get('tools/call');
+      if (!callToolHandler) throw new Error('callToolHandler is undefined');
+      
+      // Test calling a valid tool
+      const response = await callToolHandler({
+        params: {
+          name: 'listProcedures',
+          arguments: {}
+        }
+      });
+      
+      expect(response).toHaveProperty('content');
+      expect(response.content[0]).toMatchObject({
+        type: 'text',
+        text: 'list of procedures'
+      });
+    });
+    
+    it('should throw error for unknown tool in CallToolRequest', async () => {
+      const callToolHandler = mockHandlersMap.get('tools/call');
+      if (!callToolHandler) throw new Error('callToolHandler is undefined');
+      
+      await expect(callToolHandler({
+        params: {
+          name: 'unknownTool',
+          arguments: {}
+        }
+      })).rejects.toThrow('Unknown tool: unknownTool');
+    });
+    
+    it('should return list of prompts in ListPromptsRequest handler', async () => {
+      const listPromptsHandler = mockHandlersMap.get('prompts/list');
+      if (!listPromptsHandler) throw new Error('listPromptsHandler is undefined');
+      
+      const response = await listPromptsHandler({});
+      expect(response).toHaveProperty('prompts');
+      expect(response.prompts).toBeInstanceOf(Array);
+      expect(response.prompts).toHaveLength(3);
+      
+      // Verify argument definitions for prompts
+      const getProcedureDetailsPrompt = response.prompts.find((p: { name: string }) => p.name === PromptName.GET_PROCEDURE_DETAILS);
+      expect(getProcedureDetailsPrompt).toBeDefined();
+      expect(getProcedureDetailsPrompt.arguments[0]).toMatchObject({
+        name: 'procedureId',
+        required: true
+      });
+      
+      const getProcedureStepPrompt = response.prompts.find((p: { name: string }) => p.name === PromptName.GET_PROCEDURE_STEP);
+      expect(getProcedureStepPrompt).toBeDefined();
+      expect(getProcedureStepPrompt.arguments).toHaveLength(2);
+    });
+    
+    it('should return prompt content in GetPromptRequest handler', async () => {
+      const getPromptHandler = mockHandlersMap.get('prompts/get');
+      if (!getPromptHandler) throw new Error('getPromptHandler is undefined');
+      
+      // Test each prompt type
+      for (const promptName of Object.values(PromptName)) {
+        const response = await getPromptHandler({
+          params: { name: promptName }
+        });
+        
+        expect(response).toHaveProperty('messages');
+        expect(response.messages).toBeInstanceOf(Array);
+        expect(response.messages[0]).toMatchObject({
+          role: 'user',
+          content: {
+            type: 'text',
+            text: PROMPT_TEMPLATES[promptName]
+          }
+        });
+      }
+    });
+    
+    it('should throw error for unknown prompt in GetPromptRequest', async () => {
+      const getPromptHandler = mockHandlersMap.get('prompts/get');
+      if (!getPromptHandler) throw new Error('getPromptHandler is undefined');
+      
+      await expect(getPromptHandler({
+        params: { name: 'unknownPrompt' }
+      })).rejects.toThrow('Unknown prompt: unknownPrompt');
+    });
+  });
+
   describe('prompts', () => {
     it('should define all required prompts', () => {
-      const { server } = createServer(mockBaseUrl);
+      createServer(mockBaseUrl);
       
-      // Test that setRequestHandler was called for prompt-related requests
-      expect(server.setRequestHandler).toHaveBeenCalledTimes(4); // ListTools, CallTool, ListPrompts, GetPrompt
-      
-      // Since we can't easily test the actual handlers of setRequestHandler,
-      // we'll verify that the prompts are defined by checking that the correct mocks were set up
+      // Verify that the prompts are defined correctly
       expect(Object.values(PromptName)).toContain(PromptName.LIST_PROCEDURES);
       expect(Object.values(PromptName)).toContain(PromptName.GET_PROCEDURE_DETAILS);
       expect(Object.values(PromptName)).toContain(PromptName.GET_PROCEDURE_STEP);
+      
+      // Verify that prompt templates are defined for each prompt
+      expect(PROMPT_TEMPLATES).toHaveProperty(PromptName.LIST_PROCEDURES);
+      expect(PROMPT_TEMPLATES).toHaveProperty(PromptName.GET_PROCEDURE_DETAILS);
+      expect(PROMPT_TEMPLATES).toHaveProperty(PromptName.GET_PROCEDURE_STEP);
     });
   });
 });
