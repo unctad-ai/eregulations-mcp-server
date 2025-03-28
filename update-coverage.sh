@@ -14,7 +14,17 @@ npx istanbul report json-summary --include coverage/coverage-final.json --dir co
 COVERAGE=$(node -e "console.log(JSON.parse(require('fs').readFileSync('./coverage/coverage-summary.json')).total.statements.pct)")
 
 # Determine color based on coverage
-COLOR=$(node -e "const cov = $COVERAGE; console.log(cov > 80 ? 'brightgreen' : cov > 70 ? 'green' : cov > 60 ? 'yellowgreen' : cov > 50 ? 'yellow' : 'red')")
+if (( $(echo "$COVERAGE > 80" | bc -l) )); then
+  COLOR="brightgreen"
+elif (( $(echo "$COVERAGE > 70" | bc -l) )); then
+  COLOR="green"
+elif (( $(echo "$COVERAGE > 60" | bc -l) )); then
+  COLOR="yellowgreen"
+elif (( $(echo "$COVERAGE > 50" | bc -l) )); then
+  COLOR="yellow"
+else
+  COLOR="red"
+fi
 
 # Update the README badge URL
 sed -i "s|https://img.shields.io/badge/coverage-[0-9.]*%25-[a-z]*|https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}|g" README.md

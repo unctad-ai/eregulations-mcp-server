@@ -43,8 +43,21 @@ jobs:
         # Create a badge SVG file directly using shields.io static URL (no dynamic processing needed)
         echo "Coverage: $COVERAGE%"
         
+        # Determine color based on coverage
+        if (( $(echo "$COVERAGE > 80" | bc -l) )); then
+          COLOR="brightgreen"
+        elif (( $(echo "$COVERAGE > 70" | bc -l) )); then
+          COLOR="green"
+        elif (( $(echo "$COVERAGE > 60" | bc -l) )); then
+          COLOR="yellowgreen"
+        elif (( $(echo "$COVERAGE > 50" | bc -l) )); then
+          COLOR="yellow"
+        else
+          COLOR="red"
+        fi
+        
         # Create a README badge using shields.io static badge
-        sed -i "s|https://raw.githubusercontent.com/unctad-ai/eregulations-mcp-server/main/coverage/badge.svg|https://img.shields.io/badge/coverage-${COVERAGE}%25-$(node -e \"const cov = $COVERAGE; console.log(cov > 80 ? 'brightgreen' : cov > 70 ? 'green' : cov > 60 ? 'yellowgreen' : cov > 50 ? 'yellow' : 'red')\")|g" README.md
+        sed -i "s|https://img.shields.io/badge/coverage-[0-9.]*%25-[a-z]*|https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}|g" README.md
     
     - name: Commit updated README
       if: github.ref == 'refs/heads/main'
