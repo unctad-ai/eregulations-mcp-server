@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.1](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.0...v0.2.1) (2025-03-28)
+
+
+### Features
+
+* add GitHub Actions workflow for test coverage and update README with coverage badge; improve coverage reporting script and configuration ([051dfc9](https://github.com/unctad-ai/eregulations-mcp-server/commit/051dfc9a2dcb732fe51c718b8146899694068c0d))
+
+
+### Tests
+
+* Add unit tests for SSE, TTLCache, DB cache, and Logger utilities ([44f48b3](https://github.com/unctad-ai/eregulations-mcp-server/commit/44f48b3c39ac2f236d5d7bdc114f7555d52c063e))
+
 ## [0.2.0](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.1.12...v0.2.0) (2025-03-28)
 
 
