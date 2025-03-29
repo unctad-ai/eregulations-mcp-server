@@ -214,6 +214,11 @@ export class ERegulationsApi {
       throw new Error('Base URL cannot be empty');
     }
     
+    // Ensure the URL has the proper protocol prefix
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    
     logger.log(`Manually setting API URL: ${url}`);
     this.baseUrl = url;
     
@@ -233,11 +238,17 @@ export class ERegulationsApi {
         throw new Error("No EREGULATIONS_API_URL set. Please set the EREGULATIONS_API_URL environment variable or use setBaseUrl() method.");
       }
       
-      logger.log(`Initializing API with URL: ${apiUrl}`);
-      this.baseUrl = apiUrl;
+      // Ensure the URL has the proper protocol prefix
+      let urlWithProtocol = apiUrl;
+      if (!urlWithProtocol.startsWith('http://') && !urlWithProtocol.startsWith('https://')) {
+        urlWithProtocol = 'https://' + urlWithProtocol;
+      }
+      
+      logger.log(`Initializing API with URL: ${urlWithProtocol}`);
+      this.baseUrl = urlWithProtocol;
       
       // Now that we have the real baseUrl, update the cache namespace
-      this.cache?.updateNamespace(apiUrl);
+      this.cache?.updateNamespace(urlWithProtocol);
     }
     
     return this.baseUrl;
@@ -255,6 +266,12 @@ export class ERegulationsApi {
       throw new Error('URL is required for API requests');
     }
     
+    // Ensure URL has protocol - only for absolute URLs, not for relative paths (which typically start with /)
+    if (!url.startsWith('/') && !url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+      logger.log(`Added https:// protocol to URL: ${url}`);
+    }
+    
     let retries = 0;
     const maxRetries = config.maxRetries || REQUEST_CONFIG.MAX_RETRIES;
     const retryDelay = config.retryDelay || REQUEST_CONFIG.RETRY_DELAY;
@@ -267,7 +284,18 @@ export class ERegulationsApi {
       // Attach the signal to the config
       const requestConfig = {
         ...config,
-        signal
+        signal,
+        // Add stricter response type validation
+        transformResponse: [(data: string) => {
+          try {
+            return data ? JSON.parse(data) : null;
+          } catch (error) {
+            logger.error(`Error parsing JSON response from ${url}:`, error);
+            logger.debug(`Raw response data: ${data ? data.slice(0, 500) : 'null or empty'}`);
+            // Return a safe value to prevent further errors
+            return { error: "Invalid JSON response", rawLength: data?.length || 0 };
+          }
+        }]
       };
       
       while (retries <= maxRetries) {
@@ -333,37 +361,75 @@ export class ERegulationsApi {
   private extractAllProcedures(procedures: Procedure[]): Procedure[] {
     const allProcedures: Procedure[] = [];
     
+    if (!Array.isArray(procedures)) {
+      logger.error(`Expected an array of procedures but got: ${typeof procedures}`);
+      return [];
+    }
+    
     const processProcedure = (proc: Procedure, parentName?: string): void => {
-      if (!proc) return;
-      
-      // Check if this is a real procedure by looking at the links
-      const isProcedure = proc.links?.some((link: ApiLink) => link.rel === "procedure");
-      
-      // Add parent context to the name if available
-      const fullName = parentName ? `${parentName} > ${proc.name}` : proc.name;
-      
-      // Only add if it's a procedure (has procedure link)
-      if (isProcedure && proc.name && proc.id) {
-        allProcedures.push({
-          ...proc,
-          fullName,
-          parentName: parentName || null,
-          isProcedure: true
-        });
+      if (!proc || typeof proc !== 'object') {
+        logger.debug(`Invalid procedure object: ${proc}`);
+        return;
       }
       
-      // Process submenus recursively
-      if (Array.isArray(proc.subMenus)) {
-        proc.subMenus.forEach((submenu: Procedure) => processProcedure(submenu, fullName));
-      }
-      
-      // Process children recursively (some APIs use childs instead of subMenus)
-      if (Array.isArray(proc.childs)) {
-        proc.childs.forEach((child: Procedure) => processProcedure(child, fullName));
+      try {
+        // Safely access procedure properties
+        const procName = typeof proc.name === 'string' ? proc.name : `Unnamed #${proc.id || 'unknown'}`;
+        const procId = typeof proc.id === 'number' ? proc.id : undefined;
+        
+        // Check if this is a real procedure by looking at the links
+        const hasLinks = Array.isArray(proc.links);
+        const isProcedure = hasLinks && proc.links?.some((link: ApiLink) => 
+          link && typeof link === 'object' && link.rel === "procedure"
+        );
+        
+        // Add parent context to the name if available
+        const fullName = parentName ? `${parentName} > ${procName}` : procName;
+        
+        // Only add if it has a valid ID
+        if (procId) {
+          allProcedures.push({
+            ...proc,
+            name: procName,
+            id: procId,
+            fullName,
+            parentName: parentName || null,
+            isProcedure: isProcedure || false
+          });
+        }
+        
+        // Process submenus recursively
+        if (Array.isArray(proc.subMenus)) {
+          proc.subMenus.forEach((submenu: Procedure) => {
+            if (submenu && typeof submenu === 'object') {
+              processProcedure(submenu, fullName);
+            }
+          });
+        }
+        
+        // Process children recursively (some APIs use childs instead of subMenus)
+        if (Array.isArray(proc.childs)) {
+          proc.childs.forEach((child: Procedure) => {
+            if (child && typeof child === 'object') {
+              processProcedure(child, fullName);
+            }
+          });
+        }
+      } catch (error) {
+        logger.error(`Error processing procedure: ${error}`);
       }
     };
     
-    procedures.forEach(proc => processProcedure(proc));
+    // Process all procedures with error handling
+    procedures.forEach(proc => {
+      try {
+        processProcedure(proc);
+      } catch (error) {
+        logger.error(`Error in extractAllProcedures: ${error}`);
+      }
+    });
+    
+    logger.log(`Extracted ${allProcedures.length} procedures from API data`);
     
     // Sort procedures by their full path for better organization
     return allProcedures.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
@@ -380,39 +446,66 @@ export class ERegulationsApi {
       // Get the base URL at execution time, not at initialization time
       const baseUrl = this.getBaseUrl();
       
-      // Use our robust request method instead of direct axios.get
-      const response = await this.makeRequest<unknown>(`${baseUrl}/Objectives`);
-      let procedures: Procedure[] = [];
-
-      // Add debug logging for the raw response
-      if (response && response.data) {
-        logger.debug('Raw API response:', JSON.stringify(response.data, null, 2).slice(0, 500) + '...');
-
+      try {
+        // Use our robust request method instead of direct axios.get
+        const response = await this.makeRequest<unknown>(`${baseUrl}/Objectives`);
+        let procedures: Procedure[] = [];
+  
+        // Handle response data safely
+        if (!response || !response.data) {
+          logger.warn('Empty response from API when fetching procedures');
+          return [];
+        }
+        
+        // Add debug logging for the raw response
+        if (typeof response.data === 'object') {
+          try {
+            const preview = JSON.stringify(response.data).slice(0, 200);
+            logger.debug(`Raw API response preview: ${preview}...`);
+          } catch (error) {
+            logger.warn('Could not stringify API response for debugging');
+          }
+        }
+  
         // Handle different response formats - ensure we always have an array to process
         if (Array.isArray(response.data)) {
+          logger.log('API response is an array');
           procedures = response.data as Procedure[];
         } else if (response.data && typeof response.data === 'object') {
+          logger.log('API response is an object, looking for array properties');
+          
           // If it's an object with items/results/data property that's an array
           const possibleArrayProps = ['items', 'results', 'data', 'procedures', 'objectives'];
           const data = response.data as Record<string, unknown>;
           
+          let foundArrayProp = false;
           for (const prop of possibleArrayProps) {
             if (Array.isArray(data[prop])) {
               procedures = data[prop] as Procedure[];
+              logger.log(`Found procedures array in response.${prop}`);
+              foundArrayProp = true;
               break;
             }
           }
+          
           // If it's an object but we can't find a property that's an array, wrap it in an array
-          if (procedures.length === 0) {
+          if (!foundArrayProp) {
+            logger.log('No array property found, treating entire response as a single procedure');
             procedures = [response.data as Procedure];
           }
+        } else {
+          logger.warn(`Unexpected API response type: ${typeof response.data}`);
+          return [];
         }
+  
+        logger.log(`Found ${procedures.length} top-level items in API response`);
+        
+        // Process all procedures recursively
+        return this.extractAllProcedures(procedures);
+      } catch (error) {
+        logger.error('Error fetching procedures list:', error);
+        return [];
       }
-
-      logger.log(`Found ${procedures.length} top-level procedures`);
-      
-      // Process all procedures recursively
-      return this.extractAllProcedures(procedures);
     }, CACHE_TTL.PROCEDURES_LIST);
   }
 

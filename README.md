@@ -107,7 +107,7 @@ The server provides prompt templates to guide LLMs in using the available tools 
 
 ```bash
 # Run in development mode
-npm run dev
+npm run start
 
 # Run tests
 npm test
@@ -118,6 +118,26 @@ npm run test:watch
 # Run test client
 npm run test-client
 ```
+
+## Logs
+
+The MCP Server redirects all console output to a TCP socket to avoid interfering with the MCP protocol which requires clean JSON communication on stdout.
+
+To view logs:
+
+1. Start the log server in a separate terminal:
+   ```bash
+   npm run logs
+   ```
+
+2. Then run the MCP server with the MCP inspector or directly:
+   ```bash
+   npm run mcp-inspector
+   # or
+   npm run start
+   ```
+
+All logs will appear in the log server terminal window instead of stdout/stderr.
 
 ## License
 
