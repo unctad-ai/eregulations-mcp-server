@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.2](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.1...v0.2.2) (2025-03-29)
+
+
+### Features
+
+* add command-line argument support for eRegulations API URL configuration ([1dca1b8](https://github.com/unctad-ai/eregulations-mcp-server/commit/1dca1b89d63b52e585d4e1e1d5f905b2306e8b7c))
+
+
+### Bug Fixes
+
+* completely revise coverage badge approach to update README directly with shields.io URL ([e5a38f0](https://github.com/unctad-ai/eregulations-mcp-server/commit/e5a38f00db7dc40186d52d45ed5420259482d616))
+* enhance error handling and environment variable management in test client ([58d0dae](https://github.com/unctad-ai/eregulations-mcp-server/commit/58d0dae2fe5c1dae493dac364d63a82bfd05c4e0))
+* extract coverage percentage directly from vitest output instead of relying on coverage files ([55ae0eb](https://github.com/unctad-ai/eregulations-mcp-server/commit/55ae0eb13a5c91c940a60240aa92d7948aa81f70))
+* improve coverage extraction to handle potential Vitest exit codes ([96e4182](https://github.com/unctad-ai/eregulations-mcp-server/commit/96e41821587168cbdeb1a3898aae33948d3756c1))
+* remove outdated coverage badge and summary files ([761ed40](https://github.com/unctad-ai/eregulations-mcp-server/commit/761ed404cfd1c69b3018bc05dd9ee594c5aadf20))
+* simplify coverage approach to focus on threshold verification without badge ([968b3e9](https://github.com/unctad-ai/eregulations-mcp-server/commit/968b3e9eee9fa72bb15c8ebe67e603c1395930f8))
+* update coverage badge system to use static SVG badge instead of dynamic JSON processing ([3a9edf2](https://github.com/unctad-ai/eregulations-mcp-server/commit/3a9edf2cc6924c2cafab3ab339aef86634b5aa21))
+* update coverage scripts to ensure proper summary generation and install dependencies ([25cf9ca](https://github.com/unctad-ai/eregulations-mcp-server/commit/25cf9caa690c5a5080653328a4295388053403df))
+* use direct git commands in GitHub Actions workflow to force-add coverage files ([b6172eb](https://github.com/unctad-ai/eregulations-mcp-server/commit/b6172eb2d8443533e669c5e48eac8737224e7d07))
+* use EndBug/add-and-commit action with proper permissions for GitHub Actions ([50ceb99](https://github.com/unctad-ai/eregulations-mcp-server/commit/50ceb99f9ad247cdc8083b8cab8de8a8c4421aab))
+* use standard bash comparison in GitHub Actions workflow for coverage badge color ([61b151a](https://github.com/unctad-ai/eregulations-mcp-server/commit/61b151acae9c2c9e9e7e41749766f5f459fccfed))
+
+
+### Maintenance
+
+* update coverage badge in README [skip ci] ([16dc4ba](https://github.com/unctad-ai/eregulations-mcp-server/commit/16dc4ba5261eaed0bef6b792385bb013eb2dd0f8))
+* update gitignore to track coverage summary for badge ([2ff07f0](https://github.com/unctad-ai/eregulations-mcp-server/commit/2ff07f0299e9f37bbd71c243a98ed691e3c951d0))
+
+
+### Tests
+
+* update tests to cover command-line arguments for API URL ([e5f315e](https://github.com/unctad-ai/eregulations-mcp-server/commit/e5f315e1261674f3196a2ff3b3bbabd4a4269daf))
+
 ### [0.2.1](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.0...v0.2.1) (2025-03-28)
 
 
