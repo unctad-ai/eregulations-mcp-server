@@ -9,7 +9,7 @@ A Model Context Protocol (MCP) server implementation for accessing eRegulations 
 - Access eRegulations data through a standardized protocol
 - Query procedures, steps, requirements, and costs
 - MCP prompt templates to guide LLM tool usage
-- Support for both standard I/O and HTTP connections
+- Streamlined implementation using standard I/O connections
 
 ## Installation
 
@@ -35,13 +35,12 @@ The server can be configured using command-line arguments (preferred) or environ
 
 ### Environment Variables
 - `EREGULATIONS_API_URL`: URL of the eRegulations API to connect to (fallback if --api-url is not provided)
-- `PORT`: Port for the HTTP server when using SSE transport (default: `7000`)
 
 **Note**: Command-line arguments take precedence over environment variables.
 
 ## Usage
 
-### Standard I/O Mode (recommended)
+### Using Standard I/O
 
 For integration with LLM systems that support MCP over standard I/O:
 
@@ -53,23 +52,9 @@ node dist/index.js --api-url https://example.com/api
 EREGULATIONS_API_URL=https://example.com/api node dist/index.js
 ```
 
-### HTTP Server Mode
+### Docker Deployment
 
-For integration with web-based clients or systems that support SSE:
-
-```bash
-# Using command-line argument (preferred)
-node dist/sse.js --stdio "node dist/index.js --api-url https://example.com/api"
-
-# Using environment variable
-node dist/sse.js --stdio "node dist/index.js" --api-url https://example.com/api
-```
-
-Once running, the server can be connected to at `http://localhost:7000/sse`.
-
-### Docker Compose Deployment
-
-You can deploy the MCP server and SSE transport using Docker Compose. Create a `docker-compose.yml` file:
+You can deploy the MCP server using Docker. Create a `docker-compose.yml` file:
 
 ```yaml
 version: '3.8'
@@ -79,8 +64,6 @@ services:
     command: ["--api-url", "https://example.com/api"]  # Command-line args (preferred)
     # environment:  # Alternative: environment variable
     #   - EREGULATIONS_API_URL=https://example.com/api
-    ports:
-      - "7000:7000"
 ```
 
 Then run:

@@ -1,13 +1,11 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const useSSE = process.env.TRANSPORT === 'sse';
-console.log(`Using ${useSSE ? 'sse' : "stdio"} transport`);
+console.log("Using stdio transport");
 
 // Define available test options
 const availableTests = {
@@ -40,32 +38,24 @@ if (!testFilter || testFilter === 'help' || testFilter === '-h' || testFilter ==
 async function main() {
   console.log('Starting eRegulations MCP test client...');
   
-  let transport;
-  
-  if (useSSE) {
-    console.log('Using SSE transport to connect to running MCP server');
-    // Use URL object for SSEClientTransport as required by the SDK
-    transport = new SSEClientTransport(new URL("http://localhost:7000/sse"));
-  } else {
-    console.log('Launching MCP server with stdio transport');
-    // Pass through environment variables, especially EREGULATIONS_API_URL
-    // Create a type-safe environment object by filtering out undefined values
-    const env: Record<string, string> = {};
-    for (const [key, value] of Object.entries(process.env)) {
-      if (value !== undefined) {
-        env[key] = value;
-      }
+  console.log('Launching MCP server with stdio transport');
+  // Pass through environment variables, especially EREGULATIONS_API_URL
+  // Create a type-safe environment object by filtering out undefined values
+  const env: Record<string, string> = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value !== undefined) {
+      env[key] = value;
     }
-    
-    // Pass the API URL as a command-line argument if provided in the environment
-    const apiUrlArg = process.env.EREGULATIONS_API_URL ? ['--api-url', process.env.EREGULATIONS_API_URL] : [];
-    
-    transport = new StdioClientTransport({
-      command: "node",
-      args: [path.join(__dirname, "../dist/index.js"), ...apiUrlArg],
-      env
-    });
   }
+  
+  // Pass the API URL as a command-line argument if provided in the environment
+  const apiUrlArg = process.env.EREGULATIONS_API_URL ? ['--api-url', process.env.EREGULATIONS_API_URL] : [];
+  
+  const transport = new StdioClientTransport({
+    command: "node",
+    args: [path.join(__dirname, "../dist/index.js"), ...apiUrlArg],
+    env
+  });
   
   const client = new Client(
     {

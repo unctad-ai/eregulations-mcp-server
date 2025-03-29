@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file. See [standa
 ### [0.2.3](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.2...v0.2.3) (2025-03-29)
 
 
+### ⚠ BREAKING CHANGES
+
+* removed SSE transport support to focus exclusively on stdio transport for better ES module compatibility
+
 ### Bug Fixes
 
 * switch from CommonJS require.main detection to ES modules import.meta.url pattern ([0abdfa3](https://github.com/unctad-ai/eregulations-mcp-server/commit/0abdfa3e70b1c6db171e799dab390c47e8a0d52c))
