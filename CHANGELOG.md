@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.5](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.4...v0.2.5) (2025-03-29)
+
+
+### Bug Fixes
+
+* fix console logs interference with the protocol communication causing JSON parsing error handling ([46d27b7](https://github.com/unctad-ai/eregulations-mcp-server/commit/46d27b7751673ccf7350e63afd1cddbacf1aefb3))
+
 ### [0.2.4](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.3...v0.2.4) (2025-03-29)
 
 
