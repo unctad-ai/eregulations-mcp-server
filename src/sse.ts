@@ -294,4 +294,9 @@ async function main() {
   }
 }
 
-main()
+// In ES modules, we can use import.meta.url to detect if this is the main module
+const isMainModule = import.meta.url.endsWith(process.argv[1]);
+
+if (isMainModule) {
+  main();
+}

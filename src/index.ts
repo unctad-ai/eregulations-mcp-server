@@ -29,7 +29,11 @@ export async function main(apiUrl?: string) {
   });
 }
 
-if (require.main === module) {
+// In ES modules, we can use import.meta.url to detect if this is the main module
+// This is equivalent to require.main === module in CommonJS
+const isMainModule = import.meta.url.endsWith(process.argv[1]);
+
+if (isMainModule) {
   const argv = yargs(hideBin(process.argv))
     .option('api-url', {
       type: 'string',
@@ -43,7 +47,6 @@ if (require.main === module) {
     console.error("Server error:", error);
     process.exit(1);
   });
-} else {
-  // When imported as a module (for testing), don't automatically run main()
-  // This allows test code to call main() with specific parameters
 }
+// When imported as a module (for testing), don't automatically run main()
+// This allows test code to call main() with specific parameters

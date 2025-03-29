@@ -76,7 +76,9 @@ describe('index.ts', () => {
         main: vi.fn().mockImplementation(async (apiUrl?: string) => {
           // Just verify the function signature includes apiUrl parameter
           return { apiUrl };
-        })
+        }),
+        // Mock the isMainModule check to avoid auto-execution
+        isMainModule: false
       }));
       
       // Import our mocked main
@@ -117,7 +119,9 @@ describe('index.ts', () => {
             const { server } = createServer(apiUrl);
             
             await server.connect(transport);
-          }
+          },
+          // Mock the isMainModule check to avoid auto-execution
+          isMainModule: false
         };
       });
       
@@ -162,7 +166,9 @@ describe('index.ts', () => {
                 process.exit(0);
               });
             });
-          }
+          },
+          // Mock the isMainModule check to avoid auto-execution
+          isMainModule: false
         };
       });
       
@@ -209,7 +215,9 @@ describe('index.ts', () => {
         return {
           main: async () => {
             throw testError;
-          }
+          },
+          // Mock the isMainModule check to avoid auto-execution
+          isMainModule: false
         };
       });
       
