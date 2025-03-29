@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.3](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.2...v0.2.3) (2025-03-29)
+
+
+### Bug Fixes
+
+* switch from CommonJS require.main detection to ES modules import.meta.url pattern ([0abdfa3](https://github.com/unctad-ai/eregulations-mcp-server/commit/0abdfa3e70b1c6db171e799dab390c47e8a0d52c))
+
 ### [0.2.2](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.1...v0.2.2) (2025-03-29)
 
 
