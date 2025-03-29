@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.6](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.5...v0.2.6) (2025-03-29)
+
+
+### Code Refactoring
+
+* update Logger to use named import for Socket and disable socket logging in test environment ([d5b7197](https://github.com/unctad-ai/eregulations-mcp-server/commit/d5b71978f8844fbcccbf852ac50a0d68551d212d))
+
 ### [0.2.5](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.4...v0.2.5) (2025-03-29)
 
 
