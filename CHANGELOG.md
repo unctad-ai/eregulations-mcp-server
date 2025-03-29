@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.4](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.3...v0.2.4) (2025-03-29)
+
+
+### Features
+
+* remove SSE transport support to focus on stdio transport for better ES module compatibility ([7a2b7cc](https://github.com/unctad-ai/eregulations-mcp-server/commit/7a2b7cc78be7e5af9eb25de37b290245ff85b8c8))
+
 ### [0.2.3](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.2...v0.2.3) (2025-03-29)
 
 
