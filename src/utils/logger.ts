@@ -3,7 +3,8 @@
  * Uses a TCP socket for output to avoid interfering with stdout/stderr
  * which is necessary for clean MCP JSON-RPC communication
  */
-import net from "node:net";
+// Direct import for the net module
+import { Socket } from "node:net";
 
 // Constants for TCP logging
 const RECONNECT_INTERVAL = 2000;
@@ -18,7 +19,7 @@ export class Logger {
   private useSocket: boolean = true; // Whether to use TCP socket
   
   // TCP socket related properties
-  private socket: net.Socket | null = null;
+  private socket: Socket | null = null;
   private connected: boolean = false;
   private messageQueue: Array<{level: string, message: string}> = [];
   private reconnectTimer: NodeJS.Timeout | null = null;
@@ -30,6 +31,11 @@ export class Logger {
     
     // Control whether to use the socket (set DISABLE_SOCKET_LOGGING=true to disable)
     this.useSocket = process.env.DISABLE_SOCKET_LOGGING !== 'true';
+    
+    // In test environment, always disable socket
+    if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+      this.useSocket = false;
+    }
     
     if (this.useSocket) {
       // Connect to the TCP log server
@@ -65,7 +71,7 @@ export class Logger {
   }
   
   private connectToServer(): void {
-    this.socket = new net.Socket();
+    this.socket = new Socket();
     
     this.socket.connect(TCP_PORT, "localhost", () => {
       this.connected = true;
@@ -77,12 +83,12 @@ export class Logger {
       }
     });
     
-    this.socket.on("error", (err) => {
+    this.socket.on("error", (err: Error) => {
       this.connected = false;
       this.socket = null;
       
       // If server isn't running, don't spam reconnect attempts
-      if (err.message.includes("ECONNREFUSED")) {
+      if (err.message?.includes("ECONNREFUSED")) {
         // Try to write to stderr directly for this critical error
         try {
           process.stderr.write(`[${this.getTimestamp()}][ERROR] Failed to connect to log server (port ${TCP_PORT}). Start it with: npm run logs\n`);
