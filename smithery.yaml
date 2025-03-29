@@ -10,11 +10,11 @@ startCommand:
     (config) => ({
       "command": "node",
       "args": [
-        "dist/index.js"
+        "dist/index.js",
+        "--api-url",
+        "https://api-tanzania.tradeportal.org"
       ],
       "env": {
-        "NODE_ENV": "production",
-        "PORT": "3000",
-        "EREGULATIONS_API_URL": "https://api-tanzania.tradeportal.org"
+        "NODE_ENV": "production"
       }
     })
