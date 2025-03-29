@@ -3,16 +3,18 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { createServer } from "./mcp-server.js";
 import { logger } from './utils/logger.js';
 import events from 'events';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
 // Increase default max listeners to prevent memory leak warnings
 events.setMaxListeners(20);
 
 // Export the main function for testing
-export async function main() {
+export async function main(apiUrl?: string) {
   logger.info("Starting MCP server...");
     
   const transport = new StdioServerTransport();
-  const { server, cleanup } = createServer();
+  const { server, cleanup } = createServer(apiUrl);
   
   await server.connect(transport);
   
@@ -27,7 +29,21 @@ export async function main() {
   });
 }
 
-  main().catch((error) => {
+if (require.main === module) {
+  const argv = yargs(hideBin(process.argv))
+    .option('api-url', {
+      type: 'string',
+      description: 'eRegulations API URL (overrides EREGULATIONS_API_URL environment variable)',
+      default: process.env.EREGULATIONS_API_URL
+    })
+    .help()
+    .parseSync();
+
+  main(argv['api-url']).catch((error) => {
     console.error("Server error:", error);
     process.exit(1);
   });
+} else {
+  // When imported as a module (for testing), don't automatically run main()
+  // This allows test code to call main() with specific parameters
+}

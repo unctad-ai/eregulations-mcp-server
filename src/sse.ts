@@ -248,6 +248,10 @@ async function main() {
       default: false,
       description: 'Enable CORS'
     })
+    .option('api-url', {
+      type: 'string',
+      description: 'eRegulations API URL for the MCP server (overrides EREGULATIONS_API_URL environment variable)'
+    })
     .option('healthEndpoint', {
       type: 'array',
       default: [],
@@ -262,10 +266,17 @@ async function main() {
     logStderr('Error: You must specify the stdio command to run the server with --stdio')
     process.exit(1)
   }
+  
+  // If --api-url was provided, append it to the stdio command
+  let stdioCommand = argv.stdio!;
+  if (argv['api-url']) {
+    stdioCommand += ` --api-url "${argv['api-url']}"`;
+    log(`Using API URL from command line: ${argv['api-url']}`)
+  }
 
   try {
       await stdioToSse({
-        stdioCmd: argv.stdio!,
+        stdioCmd: stdioCommand,
         port: argv.port,
         baseUrl: argv.baseUrl,
         ssePath: argv.ssePath,

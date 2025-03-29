@@ -57,9 +57,12 @@ async function main() {
       }
     }
     
+    // Pass the API URL as a command-line argument if provided in the environment
+    const apiUrlArg = process.env.EREGULATIONS_API_URL ? ['--api-url', process.env.EREGULATIONS_API_URL] : [];
+    
     transport = new StdioClientTransport({
       command: "node",
-      args: [path.join(__dirname, "../dist/index.js")],
+      args: [path.join(__dirname, "../dist/index.js"), ...apiUrlArg],
       env
     });
   }

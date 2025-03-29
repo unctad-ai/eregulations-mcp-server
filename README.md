@@ -27,10 +27,17 @@ npm run build
 
 ## Configuration
 
-The server can be configured using environment variables:
+The server can be configured using command-line arguments (preferred) or environment variables:
 
-- `EREGULATIONS_API_URL`: URL of the eRegulations API to connect to
+### Command-line Arguments (Preferred)
+- `--api-url`: URL of the eRegulations API to connect to
+- `--help`: Show all available command-line options
+
+### Environment Variables
+- `EREGULATIONS_API_URL`: URL of the eRegulations API to connect to (fallback if --api-url is not provided)
 - `PORT`: Port for the HTTP server when using SSE transport (default: `7000`)
+
+**Note**: Command-line arguments take precedence over environment variables.
 
 ## Usage
 
@@ -39,7 +46,11 @@ The server can be configured using environment variables:
 For integration with LLM systems that support MCP over standard I/O:
 
 ```bash
-node dist/index.js
+# Using command-line argument (preferred)
+node dist/index.js --api-url https://example.com/api
+
+# Using environment variable
+EREGULATIONS_API_URL=https://example.com/api node dist/index.js
 ```
 
 ### HTTP Server Mode
@@ -47,14 +58,32 @@ node dist/index.js
 For integration with web-based clients or systems that support SSE:
 
 ```bash
-node dist/sse.js
+# Using command-line argument (preferred)
+node dist/sse.js --stdio "node dist/index.js --api-url https://example.com/api"
+
+# Using environment variable
+node dist/sse.js --stdio "node dist/index.js" --api-url https://example.com/api
 ```
 
 Once running, the server can be connected to at `http://localhost:7000/sse`.
 
 ### Docker Compose Deployment
 
-You can deploy the MCP server and SSE transport using Docker Compose:
+You can deploy the MCP server and SSE transport using Docker Compose. Create a `docker-compose.yml` file:
+
+```yaml
+version: '3.8'
+services:
+  eregulations-mcp-server:
+    build: .
+    command: ["--api-url", "https://example.com/api"]  # Command-line args (preferred)
+    # environment:  # Alternative: environment variable
+    #   - EREGULATIONS_API_URL=https://example.com/api
+    ports:
+      - "7000:7000"
+```
+
+Then run:
 
 ```bash
 # Build and start the containers
