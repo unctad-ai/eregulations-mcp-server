@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.9](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.8...v0.2.9) (2025-03-30)
+
+
+### Features
+
+* refactor CI/CD pipeline to include Docker build and test stages ([a462983](https://github.com/unctad-ai/eregulations-mcp-server/commit/a46298324370fafa50a8b24da989126a7533d42f))
+
 ### [0.2.8](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.7...v0.2.8) (2025-03-30)
 
 
