@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.7](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.6...v0.2.7) (2025-03-30)
+
+
+### Bug Fixes
+
+* update Dockerfile to fix "Could not locate the bindings file." for better-sqlite3 library ([fe40663](https://github.com/unctad-ai/eregulations-mcp-server/commit/fe406638743345ea2c1446ef80acc64014f25d9b))
+* update startCommand args to include API URL and remove unnecessary environment variables ([7909bbc](https://github.com/unctad-ai/eregulations-mcp-server/commit/7909bbc5d46be96ea90a120a016ee86bda9ffd98))
+
 ### [0.2.6](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.5...v0.2.6) (2025-03-29)
 
 
