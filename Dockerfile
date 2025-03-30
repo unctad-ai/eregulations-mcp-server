@@ -36,7 +36,7 @@ COPY package*.json ./
 
 # Install production dependencies
 # This ensures native modules are built in the target environment
-RUN npm ci --only=production
+RUN npm ci --only=production --ignore-scripts
 
 # Copy built application and other necessary files
 COPY --from=builder /app/dist ./dist
