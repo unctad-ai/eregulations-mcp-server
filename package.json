@@ -22,11 +22,13 @@
     "mcp-inspector-local": "npx @modelcontextprotocol/inspector node dist/index.js",
     "test-client": "node dist/test-client.js",
     "prepublishOnly": "npm run build && npm run test",
+    "docker:build": "docker build -t eregulations-mcp-server:test .",
+    "prerelease": "npm run test && npm run docker:build",
     "postbump": "git push && git push --tags",
-    "release:patch": "standard-version --release-as patch",
-    "release:minor": "standard-version --release-as minor",
-    "release:major": "standard-version --release-as major",
-    "release": "standard-version"
+    "release:patch": "npm run prerelease && standard-version --release-as patch",
+    "release:minor": "npm run prerelease && standard-version --release-as minor", 
+    "release:major": "npm run prerelease && standard-version --release-as major",
+    "release": "npm run prerelease && standard-version"
   },
   "repository": {
     "type": "git",
