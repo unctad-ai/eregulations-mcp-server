@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.8](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.7...v0.2.8) (2025-03-30)
+
+
+### Bug Fixes
+
+* update Dockerfile to ignore scripts during production dependency installation ([70afc07](https://github.com/unctad-ai/eregulations-mcp-server/commit/70afc076257a1065c5e9d35fe9e2f592b3c5f7c0))
+
 ### [0.2.7](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.6...v0.2.7) (2025-03-30)
 
 
