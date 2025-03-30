@@ -13,68 +13,33 @@ A Model Context Protocol (MCP) server implementation for accessing eRegulations 
 
 ## Installation
 
+### Quick Installation with Smithery
+
+The easiest way to install and run the eRegulations MCP Server is through Smithery:
+
+Visit [https://smithery.ai/server/@unctad-ai/eregulations-mcp-server](https://smithery.ai/server/@unctad-ai/eregulations-mcp-server) for the installation command.
+
+### Installation via npm Registry
+
+You can also run the eRegulations MCP Server directly using npx with the published npm package:
+
 ```bash
-# Clone the repository
-git clone https://github.com/benmoumen/eregulations-mcp-server.git
-cd eregulations-mcp-server
-
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
+# Set environment variables and run with npx
+export EREGULATIONS_API_URL=https://example.com/api && export NODE_ENV=production && npx -y @unctad-ai/eregulations-mcp-server@latest
 ```
+
 
 ## Configuration
 
 The server can be configured using command-line arguments (preferred) or environment variables:
 
-### Command-line Arguments (Preferred)
+### Command-line Arguments
 - `--api-url`: URL of the eRegulations API to connect to
-- `--help`: Show all available command-line options
 
 ### Environment Variables
 - `EREGULATIONS_API_URL`: URL of the eRegulations API to connect to (fallback if --api-url is not provided)
 
 **Note**: Command-line arguments take precedence over environment variables.
-
-## Usage
-
-### Using Standard I/O
-
-For integration with LLM systems that support MCP over standard I/O:
-
-```bash
-# Using command-line argument (preferred)
-node dist/index.js --api-url https://example.com/api
-
-# Using environment variable
-EREGULATIONS_API_URL=https://example.com/api node dist/index.js
-```
-
-### Docker Deployment
-
-You can deploy the MCP server using Docker. Create a `docker-compose.yml` file:
-
-```yaml
-version: '3.8'
-services:
-  eregulations-mcp-server:
-    build: .
-    command: ["--api-url", "https://example.com/api"]  # Command-line args (preferred)
-    # environment:  # Alternative: environment variable
-    #   - EREGULATIONS_API_URL=https://example.com/api
-```
-
-Then run:
-
-```bash
-# Build and start the containers
-docker-compose up -d
-
-# To stop the containers
-docker-compose down
-```
 
 ## Available Tools
 
@@ -118,27 +83,3 @@ npm run test:watch
 # Run test client
 npm run test-client
 ```
-
-## Logs
-
-The MCP Server redirects all console output to a TCP socket to avoid interfering with the MCP protocol which requires clean JSON communication on stdout.
-
-To view logs:
-
-1. Start the log server in a separate terminal:
-   ```bash
-   npm run logs
-   ```
-
-2. Then run the MCP server with the MCP inspector or directly:
-   ```bash
-   npm run mcp-inspector
-   # or
-   npm run start
-   ```
-
-All logs will appear in the log server terminal window instead of stdout/stderr.
-
-## License
-
-MIT

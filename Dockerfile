@@ -31,10 +31,15 @@ RUN apk add --no-cache sqlite sqlite-dev
 
 WORKDIR /app
 
-# Copy only necessary files
-COPY --from=builder /app/package*.json ./
+# Copy package files for reinstalling dependencies
+COPY package*.json ./
+
+# Install production dependencies
+# This ensures native modules are built in the target environment
+RUN npm ci --only=production
+
+# Copy built application and other necessary files
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
 
 # Create data directory and ensure it persists
 VOLUME /app/data/cache
