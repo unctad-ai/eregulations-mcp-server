@@ -15,11 +15,12 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies without running prepare script yet
-RUN npm ci --ignore-scripts
-
-# Copy all source files
+# Copy all source files before installing dependencies
+# This ensures TypeScript can find the source files
 COPY . .
+
+# Install dependencies with scripts for proper native module compilation
+RUN npm ci
 
 # Build the application
 RUN npm run build
@@ -27,7 +28,7 @@ RUN npm run build
 FROM node:20-alpine AS release
 
 # Add runtime dependencies
-RUN apk add --no-cache sqlite sqlite-dev
+RUN apk add --no-cache sqlite sqlite-dev python3 make g++
 
 WORKDIR /app
 
@@ -35,8 +36,11 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production dependencies
-# This ensures native modules are built in the target environment
-RUN npm ci --only=production --ignore-scripts
+# Note: Do NOT use --ignore-scripts here as it's needed for better-sqlite3
+RUN npm ci --omit=dev --ignore-scripts && \
+    # Manually rebuild better-sqlite3 for the correct architecture
+    cd node_modules/better-sqlite3 && \
+    npm run install
 
 # Copy built application and other necessary files
 COPY --from=builder /app/dist ./dist
