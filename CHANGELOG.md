@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.11](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.10...v0.2.11) (2025-03-30)
+
+
+### Bug Fixes
+
+* refine release workflow by clarifying triggers and removing Docker build/test steps ([b7390cd](https://github.com/unctad-ai/eregulations-mcp-server/commit/b7390cd0ea12904264fd4c02dfe5fbf50cc5f79f))
+
 ### [0.2.10](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.9...v0.2.10) (2025-03-30)
 
 
