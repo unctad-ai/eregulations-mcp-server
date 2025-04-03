@@ -7,17 +7,17 @@ import { SqliteCache } from '../utils/db-cache.js';
  */
 const CACHE_TTL = {
   PROCEDURES_LIST: 30 * 24 * 60 * 60 * 1000, // 30 days
-  PROCEDURE_DETAILS: 24 * 60 * 60 * 1000, // 24 hours
-  PROCEDURE_COMPONENTS: 8 * 60 * 60 * 1000, // 8 hours
+  PROCEDURE_DETAILS: 7 * 24 * 60 * 60 * 1000, // 7 days
+  PROCEDURE_COMPONENTS: 7 * 24 *60*60*1000, // 7 days
 };
 
 /**
  * Default request configuration
  */
 const REQUEST_CONFIG = {
-  TIMEOUT: 30000, // 30 seconds
-  MAX_RETRIES: 2,
-  RETRY_DELAY: 1000 // 1 second
+  TIMEOUT: 60000, // 60 seconds
+  MAX_RETRIES: 3,
+  RETRY_DELAY: 2000 // 2 seconds
 };
 
 /**
