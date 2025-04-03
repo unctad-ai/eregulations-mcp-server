@@ -36,12 +36,4 @@ describe('Logger', () => {
       expect(logger).toEqual(Logger.getInstance());
     });
   });
-  
-  // Skip more complex tests for now
-  // We can add them back later when we have time to fix the mocking issues
-  describe.skip('Disabled tests', () => {
-    it('warns that tests are disabled', () => {
-      console.warn('⚠️ Advanced logger tests are temporarily disabled');
-    });
-  });
 });
