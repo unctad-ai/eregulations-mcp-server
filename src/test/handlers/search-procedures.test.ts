@@ -58,7 +58,9 @@ describe("createSearchProceduresHandler", () => {
     expect(mockApi.searchProcedures).toHaveBeenCalledWith("test");
     expect(formatters.searchProcedures.format).toHaveBeenCalledWith(
       mockObjectives,
-      "test"
+      "test",
+      undefined,
+      undefined
     );
   });
 

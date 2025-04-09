@@ -76,9 +76,16 @@ describe("SearchProceduresFormatter", () => {
     const objectivesLong: ObjectiveData[] = [
       { id: 201, name: "Long Desc Proc", description: longDesc },
     ];
-    const result = formatter.format(objectivesLong, "long");
+    // Pass explicit maxLength to test truncation
+    const maxLength = 100;
+    const result = formatter.format(
+      objectivesLong,
+      "long",
+      undefined,
+      maxLength
+    );
 
-    const expectedTruncated = longDesc.substring(0, 100) + "...";
+    const expectedTruncated = longDesc.substring(0, maxLength) + "...";
     expect(result.text).toContain(
       `1. Long Desc Proc (ID:201)\n   ${expectedTruncated}\n`
     );
@@ -96,13 +103,21 @@ describe("SearchProceduresFormatter", () => {
       })
     );
 
-    const result = formatter.format(manyObjectives, "many");
+    // Pass explicit maxItems to test limiting
+    const maxItems = 20;
+    const result = formatter.format(manyObjectives, "many", maxItems);
 
-    // Check that only 20 items are listed
-    expect(result.text).toContain("20. Procedure 20 (ID:319)");
-    expect(result.text).not.toContain("21. Procedure 21 (ID:320)");
+    // Check that only maxItems items are listed
+    expect(result.text).toContain(
+      `20. Procedure ${maxItems} (ID:${299 + maxItems})`
+    );
+    expect(result.text).not.toContain(
+      `21. Procedure ${maxItems + 1} (ID:${300 + maxItems})`
+    );
     // Check for the truncation message
-    expect(result.text).toContain("... and 5 more results.");
+    expect(result.text).toContain(
+      `... and ${manyObjectives.length - maxItems} more results.`
+    );
     // Check data still contains all items
     expect(result.data.length).toBe(25);
   });

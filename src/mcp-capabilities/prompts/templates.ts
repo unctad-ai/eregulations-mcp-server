@@ -205,6 +205,7 @@ The response shows each matching procedure with:
 
 ## Notes
 - Use specific terms related to the procedure you're looking for
+- The search uses OR logic between the words in the keyword phrase.
 - Once you find a relevant procedure ID, use \`getProcedureDetails\` to get comprehensive information about it
 - If your search returns too many results, try using more specific keywords
 - If your search returns no results, try using more general terms or synonyms

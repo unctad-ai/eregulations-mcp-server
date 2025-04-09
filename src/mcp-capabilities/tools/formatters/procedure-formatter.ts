@@ -13,9 +13,13 @@ export class ProcedureFormatter
   /**
    * Format procedure data for LLM consumption
    * @param procedure The procedure data to format
+   * @param maxLength Optional maximum length for the main description. Defaults to showing full description.
    * @returns Formatted procedure text and essential data
    */
-  public format(procedure: ProcedureData): FormattedProcedureDetails {
+  public format(
+    procedure: ProcedureData,
+    maxLength?: number
+  ): FormattedProcedureDetails {
     if (!procedure) {
       return {
         text: "No procedure data available",
@@ -24,7 +28,7 @@ export class ProcedureFormatter
     }
 
     // Extract and format the text representation
-    const formattedText = this.formatText(procedure);
+    const formattedText = this.formatText(procedure, maxLength);
 
     // Extract essential data for structured representation
     const essentialData = this.extractEssentialData(procedure);
@@ -58,9 +62,10 @@ export class ProcedureFormatter
   /**
    * Format procedure data as human-readable text
    * @param procedure The procedure data to format
+   * @param maxLength Optional maximum length for the main description. If undefined, full description is included.
    * @returns Formatted text optimized for LLM context window
    */
-  private formatText(procedure: ProcedureData): string {
+  private formatText(procedure: ProcedureData, maxLength?: number): string {
     // Sets for tracking unique entities to avoid repetition
     const institutions = new Set<string>();
     const requirements = new Set<string>();
@@ -86,12 +91,11 @@ export class ProcedureFormatter
       result += `URL: ${procedure.data.url}\n`;
     }
 
-    // Add description if available, with length limit
+    // Add description if available, with optional length limit
     if (procedure.description) {
-      // Truncate long descriptions to save context space
-      const maxLength = 180; // Reduced to account for formatting characters
+      // Truncate long descriptions only if maxLength is provided
       const truncatedText =
-        procedure.description.length > maxLength
+        maxLength !== undefined && procedure.description.length > maxLength
           ? procedure.description.substring(0, maxLength - 3) + "..."
           : procedure.description;
       result += `DESC: ${truncatedText}\n`;

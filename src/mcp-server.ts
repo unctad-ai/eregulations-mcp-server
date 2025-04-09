@@ -9,7 +9,10 @@ import {
 import { ERegulationsApi } from "./services/eregulations-api.js";
 import { logger } from "./utils/logger.js";
 import { createHandlers } from "./mcp-capabilities/tools/handlers/index.js";
-import { PromptName, PROMPT_TEMPLATES } from "./mcp-capabilities/prompts/templates.js";
+import {
+  PromptName,
+  PROMPT_TEMPLATES,
+} from "./mcp-capabilities/prompts/templates.js";
 
 /**
  * Create a new MCP server instance with eRegulations API integration
@@ -19,15 +22,15 @@ import { PromptName, PROMPT_TEMPLATES } from "./mcp-capabilities/prompts/templat
 export const createServer = (baseUrl?: string) => {
   // Create API instance with lazy-loading support
   const api = new ERegulationsApi();
-  
+
   // Set the base URL if provided, otherwise it will be lazy-loaded from env vars when needed
   if (baseUrl) {
     logger.log(`Setting eRegulations API URL: ${baseUrl}`);
     api.setBaseUrl(baseUrl);
   }
-  
+
   logger.log(`Creating eRegulations MCP server`);
-    
+
   const server = new Server(
     {
       name: "eregulations-mcp-server",
@@ -45,10 +48,10 @@ export const createServer = (baseUrl?: string) => {
       },
     }
   );
-  
+
   // Setup cleanup handlers
   const cleanup = () => {
-    logger.log('Cleaning up server resources...');
+    logger.log("Cleaning up server resources...");
     api.dispose();
   };
 
@@ -58,13 +61,13 @@ export const createServer = (baseUrl?: string) => {
   // Register the tool list handler
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     logger.log("Handling ListToolsRequest");
-    
-    const tools: Tool[] = handlers.map(handler => ({
+
+    const tools: Tool[] = handlers.map((handler) => ({
       name: handler.name,
       description: handler.description,
       inputSchema: handler.inputSchema,
     }));
-    
+
     return { tools };
   });
 
@@ -72,30 +75,32 @@ export const createServer = (baseUrl?: string) => {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     logger.log(`Handling tool call: ${name}`);
-    
-    const handler = handlers.find(h => h.name === name);
+
+    const handler = handlers.find((h) => h.name === name);
     if (!handler) {
       const errorMsg = `Unknown tool: ${name}`;
       logger.error(errorMsg);
       throw new Error(errorMsg);
     }
-    
+
     return handler.handler(args);
   });
 
   // Register standard prompts handlers
   server.setRequestHandler(ListPromptsRequestSchema, async () => {
     logger.log("Handling ListPromptsRequest");
-    
+
     return {
       prompts: [
         {
           name: PromptName.LIST_PROCEDURES,
-          description: "Get a list of all available procedures in the eRegulations system",
+          description:
+            "Get a list of all available procedures in the eRegulations system",
         },
         {
           name: PromptName.GET_PROCEDURE_DETAILS,
-          description: "Get detailed information about a specific procedure by its ID",
+          description:
+            "Get detailed information about a specific procedure by its ID",
           arguments: [
             {
               name: "procedureId",
@@ -106,7 +111,8 @@ export const createServer = (baseUrl?: string) => {
         },
         {
           name: PromptName.GET_PROCEDURE_STEP,
-          description: "Get information about a specific step within a procedure",
+          description:
+            "Get information about a specific step within a procedure",
           arguments: [
             {
               name: "procedureId",
@@ -114,7 +120,7 @@ export const createServer = (baseUrl?: string) => {
               required: true,
             },
             {
-              name: "stepId", 
+              name: "stepId",
               description: "ID of the step within the procedure",
               required: true,
             },
@@ -122,7 +128,8 @@ export const createServer = (baseUrl?: string) => {
         },
         {
           name: PromptName.SEARCH_PROCEDURES,
-          description: "Search for procedures by keyword or phrase",
+          description:
+            "Search for procedures by keyword or phrase. The search uses OR logic between words in the keyword phrase.",
           arguments: [
             {
               name: "keyword",
@@ -139,7 +146,7 @@ export const createServer = (baseUrl?: string) => {
   server.setRequestHandler(GetPromptRequestSchema, async (request) => {
     const { name } = request.params;
     logger.log(`Handling GetPromptRequest for prompt: ${name}`);
-    
+
     // Return messages for the requested prompt
     if (Object.values(PromptName).includes(name as PromptName)) {
       return {
@@ -154,7 +161,7 @@ export const createServer = (baseUrl?: string) => {
         ],
       };
     }
-    
+
     const errorMsg = `Unknown prompt: ${name}`;
     logger.error(errorMsg);
     throw new Error(errorMsg);

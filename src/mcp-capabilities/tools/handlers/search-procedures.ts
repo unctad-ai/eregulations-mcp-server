@@ -3,6 +3,11 @@ import { formatters } from "../formatters/index.js";
 import { ERegulationsApi } from "../../../services/eregulations-api.js";
 import { logger } from "../../../utils/logger.js";
 import { ToolHandler } from "./types.js";
+import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
+
+// Define the specific type for args based on the schema
+type SearchProceduresArgs = z.infer<typeof SearchProceduresSchema>;
 
 /**
  * Creates a handler for the searchProcedures tool
@@ -14,11 +19,15 @@ export function createSearchProceduresHandler(
 ): ToolHandler {
   return {
     name: ToolName.SEARCH_PROCEDURES,
-    description: "Search for procedures by keyword or phrase",
-    inputSchema: SearchProceduresSchema,
+    description:
+      "Search for procedures by keyword or phrase. The search uses OR logic between words in the keyword phrase.",
+    inputSchema: zodToJsonSchema(SearchProceduresSchema),
     handler: async (args) => {
-      const { keyword } = args as { keyword: string };
+      // Use the inferred type for args
+      const { keyword, max_items, max_length } = args as SearchProceduresArgs;
       logger.log(`Searching for procedures with keyword: ${keyword}`);
+      if (max_items) logger.log(`  max_items: ${max_items}`);
+      if (max_length) logger.log(`  max_length: ${max_length}`);
 
       try {
         // Search for objectives/procedures using the provided keyword
@@ -29,7 +38,9 @@ export function createSearchProceduresHandler(
         // NOTE: Formatter still works on ObjectiveWithDescriptionBaseModel[] type
         const { text, data } = formatters.searchProcedures.format(
           results,
-          keyword
+          keyword,
+          max_items,
+          max_length
         );
 
         return {

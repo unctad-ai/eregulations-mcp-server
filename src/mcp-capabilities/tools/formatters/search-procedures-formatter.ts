@@ -16,11 +16,15 @@ export class SearchProceduresFormatter
    * Format procedure search results for LLM consumption.
    * @param results The search result data to format (ObjectiveWithDescriptionBaseModel[]).
    * @param keyword The search keyword used.
+   * @param maxItems Optional maximum number of items to include in the formatted text. Defaults to showing all.
+   * @param maxLength Optional maximum length for descriptions in the formatted text. Defaults to showing full description.
    * @returns Formatted procedure search results text and essential data.
    */
   public format(
     results: ObjectiveData[],
-    keyword?: string
+    keyword?: string,
+    maxItems?: number,
+    maxLength?: number
   ): FormattedProcedureList {
     // Renamed variable
     if (!results || !Array.isArray(results) || results.length === 0) {
@@ -30,7 +34,12 @@ export class SearchProceduresFormatter
       };
     }
 
-    const formattedText = this.formatText(results, keyword); // Pass results
+    const formattedText = this.formatText(
+      results,
+      keyword,
+      maxItems,
+      maxLength
+    ); // Pass new params
     const essentialData = this.extractEssentialData(results); // Pass results
 
     return {
@@ -56,13 +65,15 @@ export class SearchProceduresFormatter
    * Format search results (objectives) as human-readable text representing procedures.
    * @param results The search data to format (objectives).
    * @param keyword The search keyword used.
-   * @param maxItems Optional maximum number of items to include.
+   * @param maxItems Optional maximum number of items to include. If undefined, all items are included.
+   * @param maxLength Optional maximum length for descriptions. If undefined, full description is included.
    * @returns Formatted text optimized for LLM context.
    */
   private formatText(
     results: ObjectiveData[],
     keyword?: string,
-    maxItems: number = 20
+    maxItems?: number,
+    maxLength?: number
   ): string {
     const searchTerm = keyword ? ` for "${keyword}"` : "";
     const resultCount = results.length;
@@ -72,7 +83,9 @@ export class SearchProceduresFormatter
     }${searchTerm}:\n\n`; // Use "procedure" in text
 
     const shownResults =
-      resultCount > maxItems ? results.slice(0, maxItems) : results;
+      maxItems !== undefined && resultCount > maxItems
+        ? results.slice(0, maxItems)
+        : results;
 
     if (shownResults.length > 0) {
       shownResults.forEach((res, index) => {
@@ -81,9 +94,8 @@ export class SearchProceduresFormatter
 
         let description = "";
         if (res.description) {
-          const maxLength = 100;
           description =
-            res.description.length > maxLength
+            maxLength !== undefined && res.description.length > maxLength
               ? `\n   ${res.description.substring(0, maxLength)}...`
               : `\n   ${res.description}`;
         }
@@ -91,7 +103,7 @@ export class SearchProceduresFormatter
         header += `${index + 1}. ${name} (ID:${id})${description}\n`;
       });
 
-      if (resultCount > maxItems) {
+      if (maxItems !== undefined && resultCount > maxItems) {
         header += `\n... and ${resultCount - maxItems} more results.`;
       }
 
