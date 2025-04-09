@@ -1,4 +1,9 @@
-import axios, { AxiosRequestConfig, AxiosResponse, AxiosInstance } from "axios";
+import axios, {
+  AxiosRequestConfig,
+  AxiosResponse,
+  AxiosInstance,
+  AxiosError,
+} from "axios";
 import { logger } from "../utils/logger.js";
 import { SqliteCache } from "../utils/db-cache.js";
 
@@ -328,6 +333,30 @@ export class ERegulationsApi {
     const maxRetries = config.maxRetries || REQUEST_CONFIG.MAX_RETRIES;
     const retryDelay = config.retryDelay || REQUEST_CONFIG.RETRY_DELAY;
 
+    // Helper function to determine if an error is retryable
+    const isRetryableError = (error: any): boolean => {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError;
+        // Retry on network errors or specific server-side errors
+        if (
+          !axiosError.response || // Network error (no response received)
+          (axiosError.response.status >= 500 &&
+            axiosError.response.status <= 599) // 5xx server errors
+        ) {
+          return true;
+        }
+        // Also retry on timeout errors (Axios might throw these)
+        if (
+          axiosError.code === "ECONNABORTED" ||
+          axiosError.code === "ETIMEDOUT"
+        ) {
+          return true;
+        }
+      }
+      // Don't retry on other errors (e.g., client-side errors 4xx, non-Axios errors)
+      return false;
+    };
+
     // Create a single controller for all retry attempts
     const controller = new AbortController();
     const signal = controller.signal;
@@ -363,19 +392,27 @@ export class ERegulationsApi {
         try {
           return await this.axiosInstance.get<T>(url, requestConfig);
         } catch (error) {
-          if (retries >= maxRetries) {
-            logger.error(
-              `Request to ${url} failed after ${retries + 1} attempts`
-            );
-            throw error;
-          }
           retries++;
+          if (retries > maxRetries || !isRetryableError(error)) {
+            logger.error(
+              `Request to ${url} failed after ${retries} attempts and will not be retried.`,
+              error
+            );
+            throw error; // Throw original error if max retries reached or error is not retryable
+          }
+
+          // Calculate exponential backoff delay with jitter
+          const delay = Math.pow(2, retries - 1) * retryDelay;
+          const jitter = delay * 0.2 * Math.random(); // Add up to 20% jitter
+          const waitTime = Math.round(delay + jitter);
+
           logger.warn(
             `Request to ${url} failed (attempt ${retries}/${
               maxRetries + 1
-            }), retrying in ${retryDelay}ms...`
+            }), retrying in ${waitTime}ms...`,
+            error // Log the error for context
           );
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
         }
       }
 
