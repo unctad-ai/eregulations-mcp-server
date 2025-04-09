@@ -851,7 +851,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/ObjectiveBaseModel"
+                "$ref": "#/definitions/ObjectiveWithDescriptionModel"
               }
             }
           },
@@ -986,6 +986,50 @@
           },
           "404": {
             "description": "The is no results that match the applied filters"
+          }
+        }
+      }
+    },
+    "/Objectives/Search": {
+      "post": {
+        "tags": [
+          "Objective"
+        ],
+        "operationId": "Objective_Search",
+        "consumes": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "application/x-www-form-urlencoded",
+          "text/html"
+        ],
+        "produces": [
+          "application/json",
+          "text/json",
+          "application/xml",
+          "text/xml",
+          "text/html"
+        ],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ObjectiveWithDescriptionBaseModel"
+              }
+            }
           }
         }
       }
@@ -2621,6 +2665,40 @@
         }
       }
     },
+    "ObjectiveWithDescriptionModel": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "order": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "subMenus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ObjectiveBaseModel"
+          }
+        },
+        "icon": {
+          "$ref": "#/definitions/FileModel"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "KeyValuePair[Int32,Int32]": {
       "type": "object",
       "properties": {
@@ -2791,6 +2869,27 @@
         }
       }
     },
+    "ObjectiveWithDescriptionBaseModel": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinkModel"
+          }
+        },
+        "id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "PersonBaseModel": {
       "type": "object",
       "properties": {
@@ -2848,6 +2947,9 @@
     "ProcedureModel": {
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
         "url": {
           "type": "string"
         },

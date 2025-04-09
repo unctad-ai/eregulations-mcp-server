@@ -2,6 +2,7 @@ export enum PromptName {
   LIST_PROCEDURES = "listProcedures",
   GET_PROCEDURE_DETAILS = "getProcedureDetails",
   GET_PROCEDURE_STEP = "getProcedureStep",
+  SEARCH_PROCEDURES = "searchProcedures",
 }
 
 export const PROMPT_TEMPLATES = {
@@ -165,5 +166,47 @@ The response provides:
 - Use \`getProcedureDetails\` first to identify valid step IDs within a procedure
 - The response includes both formatted text and structured JSON data
 - If either the procedureId or stepId is invalid, an error message will be returned
+`,
+
+  [PromptName.SEARCH_PROCEDURES]: `# Search Procedures
+Search for procedures in the eRegulations system by keyword or phrase.
+
+## Usage
+\`\`\`json
+{
+  "name": "searchProcedures",
+  "arguments": {
+    "keyword": "permit"  // Replace with your search term
+  }
+}
+\`\`\`
+
+## Parameters
+- \`keyword\` (string, required): The keyword or phrase to search for
+
+## Returns
+A list of procedures matching the search criteria, with their IDs, names, and basic information. Use this tool to find relevant procedures based on keywords.
+
+## Example Response
+\`\`\`
+Found 5 procedures for "permit":
+
+1. EXPORT > Tanzania Mainland > Commodities > Fish and fishery products (Samaki) > Quality control procedures > Application for export permit (ID:251)
+2. IMPORT > Tanzania Mainland > Commodities > Agricultural inputs > Pesticides > Apply for import permit (ID:324)
+3. IMPORT > Tanzania Mainland > Commodities > Plants and plant products > Application for plant import permit (ID:465)
+4. EXPORT > Tanzania Mainland > Commodities > Plants and plant products > Application for phytosanitary certificate/export permit (ID:478)
+5. IMPORT > Zanzibar > Commodities > Plants and plant products > Apply for plant import permit (ID:811)
+\`\`\`
+
+The response shows each matching procedure with:
+- Its hierarchical categorization (e.g., EXPORT > Tanzania Mainland > Commodities...)
+- The specific name of the procedure
+- The procedure ID in parentheses (e.g., ID:251)
+
+## Notes
+- Use specific terms related to the procedure you're looking for
+- Once you find a relevant procedure ID, use \`getProcedureDetails\` to get comprehensive information about it
+- If your search returns too many results, try using more specific keywords
+- If your search returns no results, try using more general terms or synonyms
 `,
 };

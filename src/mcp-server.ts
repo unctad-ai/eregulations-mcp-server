@@ -39,6 +39,7 @@ export const createServer = (baseUrl?: string) => {
           listProcedures: true,
           getProcedureDetails: true,
           getProcedureStep: true,
+          searchProcedures: true,
         },
         prompts: {},
       },
@@ -115,6 +116,17 @@ export const createServer = (baseUrl?: string) => {
             {
               name: "stepId", 
               description: "ID of the step within the procedure",
+              required: true,
+            },
+          ],
+        },
+        {
+          name: PromptName.SEARCH_PROCEDURES,
+          description: "Search for procedures by keyword or phrase",
+          arguments: [
+            {
+              name: "keyword",
+              description: "The keyword or phrase to search for",
               required: true,
             },
           ],

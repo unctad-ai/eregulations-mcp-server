@@ -28,15 +28,16 @@ You can also run the eRegulations MCP Server directly using npx with the publish
 export EREGULATIONS_API_URL=https://example.com/api && export NODE_ENV=production && npx -y @unctad-ai/eregulations-mcp-server@latest
 ```
 
-
 ## Configuration
 
 The server can be configured using command-line arguments (preferred) or environment variables:
 
 ### Command-line Arguments
+
 - `--api-url`: URL of the eRegulations API to connect to
 
 ### Environment Variables
+
 - `EREGULATIONS_API_URL`: URL of the eRegulations API to connect to (fallback if --api-url is not provided)
 
 **Note**: Command-line arguments take precedence over environment variables.
@@ -54,6 +55,7 @@ Lists all available procedures in the eRegulations system.
 Gets detailed information about a specific procedure by its ID.
 
 Parameters:
+
 - `procedureId`: ID of the procedure to retrieve
 
 ### `getProcedureStep`
@@ -61,8 +63,17 @@ Parameters:
 Gets information about a specific step within a procedure.
 
 Parameters:
+
 - `procedureId`: ID of the procedure
 - `stepId`: ID of the step within the procedure
+
+### `searchProcedures`
+
+Searches for procedures by keyword or phrase. Note: This currently searches related objectives based on the underlying API and may include results beyond direct procedure names.
+
+Parameters:
+
+- `keyword`: The keyword or phrase to search for
 
 ## Prompt Templates
 

@@ -1,15 +1,23 @@
-export * from './types.js';
-export * from './procedure-formatter.js';
-export * from './procedure-list-formatter.js';
-export * from './step-formatter.js';
+import { ProcedureFormatter } from "./procedure-formatter.js";
+import { ProcedureListFormatter } from "./procedure-list-formatter.js";
+import { StepFormatter } from "./step-formatter.js";
+import { SearchProceduresFormatter } from "./search-procedures-formatter.js";
 
-// Export formatter class instances for convenience
-import { ProcedureFormatter } from './procedure-formatter.js';
-import { ProcedureListFormatter } from './procedure-list-formatter.js';
-import { StepFormatter } from './step-formatter.js';
+// Export necessary types
+export * from "./types.js";
 
+// Create instances of formatters
+const procedure = new ProcedureFormatter();
+const procedureList = new ProcedureListFormatter();
+const step = new StepFormatter();
+const searchProcedures = new SearchProceduresFormatter();
+
+/**
+ * Export a central object containing all formatters
+ */
 export const formatters = {
-  procedure: new ProcedureFormatter(),
-  procedureList: new ProcedureListFormatter(),
-  step: new StepFormatter(),
+  procedure,
+  procedureList,
+  step,
+  searchProcedures,
 };

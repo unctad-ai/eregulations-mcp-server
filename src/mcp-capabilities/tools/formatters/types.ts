@@ -1,3 +1,5 @@
+import type { ERegulationsApi } from "../../../services/eregulations-api.js";
+
 /**
  * Base interface for data formatters
  * All formatters should implement this interface
@@ -16,7 +18,7 @@ export interface ProcedureData {
   fullName?: string;
   explanatoryText?: string;
   isOnline?: boolean;
-  parentName?: string | null;  // Updated to allow null
+  parentName?: string | null; // Updated to allow null
   data?: {
     id?: number;
     name?: string;
@@ -114,6 +116,16 @@ export interface StepData {
 }
 
 /**
+ * Objective data interface (based on ObjectiveWithDescriptionBaseModel)
+ */
+export interface ObjectiveData {
+  id: number;
+  name: string;
+  description?: string;
+  // links?: ApiLink[]; // Add if needed later
+}
+
+/**
  * Interface for formatted procedure list response
  */
 export interface FormattedProcedureList {
@@ -135,4 +147,12 @@ export interface FormattedProcedureDetails {
 export interface FormattedProcedureStep {
   text: string;
   data: any;
+}
+
+/**
+ * Interface representing the formatted output of data formatters
+ */
+export interface FormattedObjectiveList {
+  text: string; // Human-readable summary
+  data: any[]; // Simplified structured data (id, name, description?)
 }
