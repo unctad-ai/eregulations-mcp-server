@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.3.5...v0.4.0) (2025-04-10)
+
+
+### Features
+
+* add TCP log server and improve server connection logging ([3f748ba](https://github.com/unctad-ai/eregulations-mcp-server/commit/3f748bad5371c3efaf13b05e19c00baa154dc78e))
+
+
+### Maintenance
+
+* update GitHub Actions workflow for release process ([13db7c9](https://github.com/unctad-ai/eregulations-mcp-server/commit/13db7c9811246defe1a2e5632a1e6c592974d0a3))
+
+
+### Code Refactoring
+
+* update Dockerfile and improve server implementation ([551d9e7](https://github.com/unctad-ai/eregulations-mcp-server/commit/551d9e7f8c49513f0ef8d80cca60bb37bc2e2b6a))
+
 ### [0.3.5](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.3.4...v0.3.5) (2025-04-10)
 
 
