@@ -46,7 +46,7 @@ describe("createSearchProceduresHandler", () => {
   it("should have correct name, description, and inputSchema", () => {
     expect(handler.name).toBe(ToolName.SEARCH_PROCEDURES);
     expect(handler.description).toBe(
-      "Search for procedures by keyword or phrase. The search uses OR logic between words in the keyword phrase.  For best results, prefer using a single, specific keyword whenever possible."
+      "Search for procedures by keyword or phrase. The search uses OR logic between words in the keyword phrase. For best results, prefer using a single, specific keyword whenever possible."
     );
     expect(handler.inputSchema).toBeDefined(); // Assuming SearchProceduresSchema is imported/mocked correctly
   });
