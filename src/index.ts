@@ -16,13 +16,22 @@ export async function main(apiUrl?: string) {
   const transport = new StdioServerTransport();
   const { server } = createServer(apiUrl);
 
+  logger.info("Attempting to connect server...");
   await server.connect(transport);
+  logger.info("Server connected successfully.");
 
   // Handle termination signals
+  logger.info("Setting up termination signal handlers...");
   ["SIGINT", "SIGTERM", "SIGQUIT"].forEach((signal) => {
     process.on(signal, async () => {
-      logger.log(`Received ${signal}, shutting down...`);
-      await server.close();
+      // Use console.error directly for immediate feedback, bypassing potential logger issues
+      console.error(`Received ${signal}, attempting shutdown...`);
+      try {
+        await server.close();
+        console.error("Server closed gracefully.");
+      } catch (e) {
+        console.error("Error during server close:", e);
+      }
       process.exit(0);
     });
   });

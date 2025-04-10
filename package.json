@@ -15,6 +15,7 @@
     "prepare": "npm run build",
     "watch": "tsc --watch",
     "start": "tsc && node dist/index.js",
+    "logs": "echo \"Starting TCP log server on port 8099...\"; nc -kl 8099",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
