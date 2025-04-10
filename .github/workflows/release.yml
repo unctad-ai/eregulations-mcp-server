@@ -4,10 +4,10 @@ on:
   # Only run release process for tag pushes
   push:
     tags:
-      - 'v*'
+      - "v*"
   # For PRs and main branch pushes, only run the CI part
   pull_request:
-    branches: [ main ]
+    branches: [main]
   # Allow manual trigger
   workflow_dispatch:
 
@@ -26,18 +26,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
-          cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "20.x"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run tests
-        run: npm test
-
-      - name: Build TypeScript
-        run: npm run build
+        run: npm run test
 
   release:
     runs-on: ubuntu-latest
@@ -52,14 +47,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Build
-        run: npm run build
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -72,7 +64,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish to NPM
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        # env: # Keep env commented out or remove if switching fully to OIDC
