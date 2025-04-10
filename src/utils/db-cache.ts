@@ -1,9 +1,10 @@
 // Import better-sqlite3 correctly for usage as a constructor
-import Database from 'better-sqlite3';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
-import { logger } from './logger.js';
+import Database from "better-sqlite3";
+import * as fs from "fs";
+import * as path from "path";
+import { fileURLToPath } from "url";
+import * as crypto from "crypto";
+import { logger } from "./logger.js";
 
 /**
  * Interface for cache entries
@@ -30,35 +31,58 @@ interface CacheRow {
 export class SqliteCache<T = any> {
   private db: Database.Database;
   private defaultTtl: number;
-  private tableName = 'cache_entries';
+  private tableName = "cache_entries";
 
   /**
    * Create a new cache instance
    * @param baseUrl The base URL is used to isolate caches for different API endpoints
    * @param defaultTtlMs Default time-to-live in milliseconds
    */
-  constructor(baseUrl: string, defaultTtlMs: number = 3600000) { // Default: 1 hour
+  constructor(baseUrl: string, defaultTtlMs: number = 3600000) {
+    // Default: 1 hour
     this.defaultTtl = defaultTtlMs;
-    
-    // Create cache directory if it doesn't exist
-    const cacheDir = path.resolve(process.cwd(), 'data', 'cache');
+
+    // Determine the directory of the current module
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    // Create cache directory relative to the script location (inside dist/data/cache)
+    // This goes up one level from `dist/utils` to `dist` and then into `data/cache`
+    const cacheDir = path.resolve(__dirname, "..", "data", "cache");
     if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir, { recursive: true });
+      try {
+        fs.mkdirSync(cacheDir, { recursive: true });
+        logger.debug(`Created cache directory: ${cacheDir}`);
+      } catch (mkdirError) {
+        logger.error(
+          `Failed to create cache directory ${cacheDir}: ${mkdirError}`
+        );
+        // Handle error appropriately, maybe fallback to in-memory as done below
+      }
+    } else {
+      logger.debug(`Cache directory exists: ${cacheDir}`);
     }
-    
+
     // Create a unique filename based on the baseUrl
     const dbFileName = this.getBaseUrlHash(baseUrl);
     const dbPath = path.join(cacheDir, `${dbFileName}.sqlite`);
-    
+
     logger.debug(`Using cache database at: ${dbPath}`);
-    
+
     try {
+      // Ensure the directory exists before trying to create the database file
+      if (!fs.existsSync(cacheDir)) {
+        throw new Error(
+          `Cache directory ${cacheDir} does not exist and could not be created.`
+        );
+      }
       this.db = new Database(dbPath);
       this.initializeDatabase();
     } catch (error) {
-      logger.error(`Error initializing cache database: ${error}`);
+      logger.error(`Error initializing cache database at ${dbPath}: ${error}`);
       // Fallback to in-memory database if file access fails
-      this.db = new Database(':memory:');
+      logger.warn("Falling back to in-memory cache database.");
+      this.db = new Database(":memory:");
       this.initializeDatabase();
     }
   }
@@ -67,7 +91,7 @@ export class SqliteCache<T = any> {
    * Creates a hash of the base URL to use as a unique identifier
    */
   private getBaseUrlHash(baseUrl: string): string {
-    return crypto.createHash('md5').update(baseUrl).digest('hex');
+    return crypto.createHash("md5").update(baseUrl).digest("hex");
   }
 
   /**
@@ -97,7 +121,7 @@ export class SqliteCache<T = any> {
         INSERT OR REPLACE INTO ${this.tableName} (key, data, expiry) 
         VALUES (?, ?, ?)
       `);
-      
+
       stmt.run(key, JSON.stringify(value), expiryTime);
     } catch (error) {
       logger.error(`Error setting cache key ${key}: ${error}`);
@@ -116,19 +140,19 @@ export class SqliteCache<T = any> {
         // Clean expired entries for the specific key if not allowing expired entries
         this.cleanExpiredKey(key);
       }
-      
+
       // Then try to get the value
       const stmt = this.db.prepare(`
         SELECT data FROM ${this.tableName}
-        WHERE key = ? ${!allowExpired ? 'AND expiry > ?' : ''}
+        WHERE key = ? ${!allowExpired ? "AND expiry > ?" : ""}
       `);
-      
-      const row = !allowExpired 
-        ? stmt.get(key, Date.now()) as Pick<CacheRow, 'data'> | undefined
-        : stmt.get(key) as Pick<CacheRow, 'data'> | undefined;
-        
+
+      const row = !allowExpired
+        ? (stmt.get(key, Date.now()) as Pick<CacheRow, "data"> | undefined)
+        : (stmt.get(key) as Pick<CacheRow, "data"> | undefined);
+
       if (!row) return null;
-      
+
       return JSON.parse(row.data);
     } catch (error) {
       logger.error(`Error getting cache key ${key}: ${error}`);
@@ -148,7 +172,7 @@ export class SqliteCache<T = any> {
         WHERE key = ? AND expiry > ?
         LIMIT 1
       `);
-      
+
       const row = stmt.get(key, Date.now());
       return !!row;
     } catch (error) {
@@ -163,7 +187,9 @@ export class SqliteCache<T = any> {
    */
   delete(key: string): void {
     try {
-      const stmt = this.db.prepare(`DELETE FROM ${this.tableName} WHERE key = ?`);
+      const stmt = this.db.prepare(
+        `DELETE FROM ${this.tableName} WHERE key = ?`
+      );
       stmt.run(key);
     } catch (error) {
       logger.error(`Error deleting cache key ${key}: ${error}`);
@@ -192,9 +218,9 @@ export class SqliteCache<T = any> {
         SELECT key FROM ${this.tableName}
         WHERE expiry > ?
       `);
-      
-      const rows = stmt.all(Date.now()) as Pick<CacheRow, 'key'>[];
-      return rows.map(row => row.key);
+
+      const rows = stmt.all(Date.now()) as Pick<CacheRow, "key">[];
+      return rows.map((row) => row.key);
     } catch (error) {
       logger.error(`Error getting cache keys: ${error}`);
       return [];
@@ -211,7 +237,7 @@ export class SqliteCache<T = any> {
         SELECT COUNT(*) as count FROM ${this.tableName}
         WHERE expiry > ?
       `);
-      
+
       const result = stmt.get(Date.now()) as { count: number } | undefined;
       return result ? result.count : 0;
     } catch (error) {
@@ -230,7 +256,7 @@ export class SqliteCache<T = any> {
         DELETE FROM ${this.tableName}
         WHERE expiry <= ?
       `);
-      
+
       const result = stmt.run(Date.now());
       return result.changes;
     } catch (error) {
@@ -249,10 +275,12 @@ export class SqliteCache<T = any> {
         DELETE FROM ${this.tableName}
         WHERE key = ? AND expiry <= ?
       `);
-      
+
       stmt.run(key, Date.now());
     } catch (error) {
-      logger.error(`Error cleaning expired cache entry for key ${key}: ${error}`);
+      logger.error(
+        `Error cleaning expired cache entry for key ${key}: ${error}`
+      );
     }
   }
 
@@ -263,26 +291,26 @@ export class SqliteCache<T = any> {
    */
   updateNamespace(baseUrl: string): void {
     if (!baseUrl) {
-      throw new Error('Base URL cannot be empty when updating namespace');
+      throw new Error("Base URL cannot be empty when updating namespace");
     }
-    
+
     try {
       // Close the current database connection
       this.close();
-      
+
       // Create a new database connection with the updated namespace
-      const cacheDir = path.resolve(process.cwd(), 'data', 'cache');
+      const cacheDir = path.resolve(process.cwd(), "data", "cache");
       const dbFileName = this.getBaseUrlHash(baseUrl);
       const dbPath = path.join(cacheDir, `${dbFileName}.sqlite`);
-      
+
       logger.debug(`Updating cache namespace to: ${dbPath}`);
-      
+
       this.db = new Database(dbPath);
       this.initializeDatabase();
     } catch (error) {
       logger.error(`Error updating cache namespace: ${error}`);
       // Fallback to in-memory database if file access fails
-      this.db = new Database(':memory:');
+      this.db = new Database(":memory:");
       this.initializeDatabase();
     }
   }
