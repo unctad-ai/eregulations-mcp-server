@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.6](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.5...v0.4.6) (2025-04-10)
+
+
+### Maintenance
+
+* update release workflow to support multiple platforms (linux/amd64, linux/arm64) ([f4cf4ce](https://github.com/unctad-ai/eregulations-mcp-server/commit/f4cf4ce953f142aafde2040d371adcf1a7ced46f))
+
 ### [0.4.5](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.4...v0.4.5) (2025-04-10)
 
 
