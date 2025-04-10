@@ -14,6 +14,7 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write
 
 jobs:
   test:
@@ -91,4 +92,3 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --provenance --access public
-        # env: # Keep env commented out or remove if switching fully to OIDC
