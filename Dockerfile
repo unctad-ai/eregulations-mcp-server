@@ -48,5 +48,5 @@ USER node
 ENV NODE_ENV=production \
     LOG_LEVEL=info
 
-# Run in STDIO mode
-CMD ["node", "dist/index.js"]
+# Run in STDIO mode with increased memory
+CMD ["node", "--max-old-space-size=4096", "dist/index.js"]
