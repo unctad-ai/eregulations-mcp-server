@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.12...v0.3.0) (2025-04-10)
+
+
+### Features
+
+* add searchProcedures functionality with API integration and formatter support. ([4428447](https://github.com/unctad-ai/eregulations-mcp-server/commit/4428447a10e42692756d59b438cc23dc04172018))
+* enhance procedure handling with new parameters and formatting options ([5202700](https://github.com/unctad-ai/eregulations-mcp-server/commit/520270084e026bade55e660dcb06b089d17f60cd))
+* enhance ProcedureFormatter to include description and additionalInfo ([4ddf4f6](https://github.com/unctad-ai/eregulations-mcp-server/commit/4ddf4f624b630f9b7b46e5398abff39c3332b590))
+* implement retry logic for API requests with exponential backoff ([88c3178](https://github.com/unctad-ai/eregulations-mcp-server/commit/88c317809f8c32b181d805563638e952f6e91ea9))
+
+
+### Bug Fixes
+
+* update cache TTL values and enhance request configuration for improved performance ([ba3d2da](https://github.com/unctad-ai/eregulations-mcp-server/commit/ba3d2da51ba2b0a2fcb0e53871371823a98e0627))
+* update mcp-inspector scripts to include API URL for improved functionality ([d01b314](https://github.com/unctad-ai/eregulations-mcp-server/commit/d01b314e0b9e5d2c3fed91b185119f78c0b049da))
+
+
+### Code Refactoring
+
+* remove temporarily disabled tests from Logger test suite ([8b79b2b](https://github.com/unctad-ai/eregulations-mcp-server/commit/8b79b2b20c70e795a3ffa79fa4b017d98c9e6f90))
+
+
+### Maintenance
+
+* update dependencies in package.json and package-lock.json ([d872465](https://github.com/unctad-ai/eregulations-mcp-server/commit/d872465e7d60e79ee37128b7c9f05b667f98f2bf))
+
 ### [0.2.12](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.11...v0.2.12) (2025-03-30)
 
 
