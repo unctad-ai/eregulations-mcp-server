@@ -20,7 +20,18 @@ const availableTests = {
 
 // Parse command line arguments to determine which tests to run
 const args = process.argv.slice(2);
-const testFilter = args.length > 0 ? args[0].toLowerCase() : "";
+let testFilter = "";
+let apiUrl = "";
+
+// Parse command line arguments
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === "--api-url" && i + 1 < args.length) {
+    apiUrl = args[i + 1];
+    i++; // Skip the next argument since we've processed it
+  } else if (!testFilter) {
+    testFilter = args[i].toLowerCase();
+  }
+}
 
 // If no arguments provided or help requested, display available options
 if (
@@ -39,7 +50,7 @@ if (
   });
 
   console.log("\nUsage:");
-  console.log("  node dist/test-client.js [test-name]\n");
+  console.log("  node dist/test-client.js [test-name] [--api-url <url>]\n");
   process.exit(0);
 }
 
@@ -56,10 +67,19 @@ async function main() {
     }
   }
 
-  // Pass the API URL as a command-line argument if provided in the environment
-  const apiUrlArg = process.env.EREGULATIONS_API_URL
-    ? ["--api-url", process.env.EREGULATIONS_API_URL]
-    : [];
+  // Use API URL from command line argument if provided, otherwise from environment
+  const apiUrlArg =
+    apiUrl || process.env.EREGULATIONS_API_URL
+      ? ["--api-url", apiUrl || process.env.EREGULATIONS_API_URL || ""]
+      : [];
+
+  if (apiUrlArg.length > 0) {
+    console.log(`Using API URL: ${apiUrlArg[1]}`);
+  } else {
+    console.warn(
+      "Warning: No API URL provided. Please set EREGULATIONS_API_URL environment variable or use --api-url argument."
+    );
+  }
 
   const transport = new StdioClientTransport({
     command: "node",
@@ -238,11 +258,11 @@ async function main() {
       "procedure-details": async () => {
         console.log("\n=== Testing getProcedureDetails Tool ===");
         try {
-          console.log("\nGetting details for procedure ID 725:");
+          console.log("\nGetting details for procedure ID 362:");
           const detailsResult = await client.callTool({
             name: "getProcedureDetails",
             arguments: {
-              procedureId: 725, // Using a valid procedure ID
+              procedureId: 362, // Using a valid procedure ID
             },
           });
 
@@ -298,7 +318,7 @@ async function main() {
           const stepResult = await client.callTool({
             name: "getProcedureStep",
             arguments: {
-              procedureId: 1244,
+              procedureId: 362,
               stepId: 384,
             },
           });
