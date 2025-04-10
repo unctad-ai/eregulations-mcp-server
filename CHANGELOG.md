@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.9](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.8...v0.4.9) (2025-04-10)
+
+
+### Bug Fixes
+
+* **logger:** improve error handling for socket connection failures and manage reconnect attempts ([d6deb73](https://github.com/unctad-ai/eregulations-mcp-server/commit/d6deb73dacbe16f9a9e8356d6835261046984507))
+
 ### [0.4.8](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.7...v0.4.8) (2025-04-10)
 
 
