@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.2](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.3.1...v0.3.2) (2025-04-10)
+
+
+### Bug Fixes
+
+* enhance test-client to support API URL as a command-line argument ([f5180f3](https://github.com/unctad-ai/eregulations-mcp-server/commit/f5180f3f271dd4eb4eb14c23a41a3cfe34fb0bbc))
+
+
+### Code Refactoring
+
+* improve db-cache implementation and error handling ([bcf4470](https://github.com/unctad-ai/eregulations-mcp-server/commit/bcf44706b4f24a430822915a3765b990cd76c54c))
+
+
+### Maintenance
+
+* update dependencies and enhance cache directory handling ([6f844f5](https://github.com/unctad-ai/eregulations-mcp-server/commit/6f844f5919ae152d4e5b2c9e880eb0b3f0f0a284))
+* update mcp-inspector API URL in package.json ([9eda264](https://github.com/unctad-ai/eregulations-mcp-server/commit/9eda2646a95c55f6bde0664ff867d492548cbb8f))
+
 ### [0.3.1](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.3.0...v0.3.1) (2025-04-10)
 
 
