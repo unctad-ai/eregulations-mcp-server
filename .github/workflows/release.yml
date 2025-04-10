@@ -92,3 +92,6 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --provenance --access public
+        # env: # Keep env commented out or remove if switching fully to OIDC
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
