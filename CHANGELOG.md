@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.2](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.1...v0.4.2) (2025-04-10)
+
+
+### Bug Fixes
+
+* correct formatting in search procedures handler test description ([35438dd](https://github.com/unctad-ai/eregulations-mcp-server/commit/35438dd763f769c647b17c23c911decaf590d60f))
+
+
+### Maintenance
+
+* update release scripts to include prerelease checks before versioning ([b3b8dac](https://github.com/unctad-ai/eregulations-mcp-server/commit/b3b8dacfd753154b3bb0b72fd36269bbaf4cfb67))
+
 ### [0.4.1](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.0...v0.4.1) (2025-04-10)
 
 
