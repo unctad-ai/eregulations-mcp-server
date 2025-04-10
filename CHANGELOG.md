@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.1](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.3.0...v0.3.1) (2025-04-10)
+
+
+### Bug Fixes
+
+* refine ProcedureFormatter and enhance ERegulationsApi tests ([3ae7677](https://github.com/unctad-ai/eregulations-mcp-server/commit/3ae7677d12b37685ec1e01171dc06e36cfab84e0))
+
 ## [0.3.0](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.2.12...v0.3.0) (2025-04-10)
 
 
