@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.7](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.6...v0.4.7) (2025-04-10)
+
+
+### Bug Fixes
+
+* increase Node.js memory limit in Dockerfile for improved performance ([fa253c9](https://github.com/unctad-ai/eregulations-mcp-server/commit/fa253c91df0d8de459260bf8a9553251c950ddda))
+
+
+### Code Refactoring
+
+* remove commented-out tests and adjust response structure in procedure handlers ([0c08ab0](https://github.com/unctad-ai/eregulations-mcp-server/commit/0c08ab0344ba979f6aecafabea6fbe5051783151))
+* remove return_data option and ensure only text content is returned in procedure handlers ([35b89b4](https://github.com/unctad-ai/eregulations-mcp-server/commit/35b89b4e6ef9d81f37e08c16e246a9e68b7c790d))
+
 ### [0.4.6](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.5...v0.4.6) (2025-04-10)
 
 
