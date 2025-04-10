@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.5](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.3.4...v0.3.5) (2025-04-10)
+
+
+### Code Refactoring
+
+* simplify implementation and remove caching (should be handled by the API) ([e6389dd](https://github.com/unctad-ai/eregulations-mcp-server/commit/e6389dd1ef8c5baf7d346e3523f714f7d568b042))
+
 ### [0.3.4](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.3.2...v0.3.4) (2025-04-10)
 
 
