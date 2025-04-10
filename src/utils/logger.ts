@@ -11,6 +11,8 @@ const RECONNECT_INTERVAL = 2000;
 const defaultPort = 8099;
 const envPort = process.env.MCPS_LOGGER_PORT;
 const TCP_PORT = envPort ? Number(envPort) : defaultPort;
+const envHost = process.env.MCPS_LOGGER_HOST;
+const TCP_HOST = envHost || "localhost";
 
 export class Logger {
   private static instance: Logger;
@@ -73,7 +75,7 @@ export class Logger {
   private connectToServer(): void {
     this.socket = new Socket();
 
-    this.socket.connect(TCP_PORT, "localhost", () => {
+    this.socket.connect(TCP_PORT, TCP_HOST, () => {
       this.connected = true;
 
       // Send any queued messages
@@ -87,31 +89,52 @@ export class Logger {
       this.connected = false;
       this.socket = null;
 
-      // If server isn't running, don't spam reconnect attempts
       if (err.message?.includes("ECONNREFUSED")) {
-        // Try to write to stderr directly for this critical error
+        // Log the connection refusal and disable socket logging permanently for this session
         try {
           process.stderr.write(
-            `[${this.getTimestamp()}][ERROR] Failed to connect to log server (port ${TCP_PORT}). Start it with: npm run logs\n`
+            `[${this.getTimestamp()}][ERROR] Failed to connect to log server (port ${TCP_PORT}). Disabling socket logging for this session. Start log server with 'npm run logs' for future sessions.\n`
           );
         } catch (e) {
-          // Ignore if we can't write to stderr
+          // Ignore stderr write errors
+        }
+        this.useSocket = false; // Disable future socket attempts
+        // DO NOT schedule reconnect for ECONNREFUSED
+        if (this.reconnectTimer) {
+          clearTimeout(this.reconnectTimer); // Clear any pending reconnect timer
+          this.reconnectTimer = null;
+        }
+      } else {
+        // For other errors, attempt to reconnect if socket logging is still enabled
+        if (this.useSocket) {
+          // Clear any existing timer before setting a new one
+          if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+          }
+          this.reconnectTimer = setTimeout(
+            () => this.connectToServer(),
+            RECONNECT_INTERVAL
+          );
         }
       }
-
-      this.reconnectTimer = setTimeout(
-        () => this.connectToServer(),
-        RECONNECT_INTERVAL
-      );
     });
 
     this.socket.on("close", () => {
       this.connected = false;
       this.socket = null;
-      this.reconnectTimer = setTimeout(
-        () => this.connectToServer(),
-        RECONNECT_INTERVAL
-      );
+      // Only schedule reconnect if socket logging is still enabled
+      if (this.useSocket) {
+        // Clear any existing timer before setting a new one
+        if (this.reconnectTimer) {
+          clearTimeout(this.reconnectTimer);
+          this.reconnectTimer = null;
+        }
+        this.reconnectTimer = setTimeout(
+          () => this.connectToServer(),
+          RECONNECT_INTERVAL
+        );
+      }
     });
   }
 
