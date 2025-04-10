@@ -21,59 +21,30 @@ export function createGetProcedureDetailsHandler(
       try {
         // Use the inferred type for args
         const { procedureId, max_length } = args as GetProcedureDetailsArgs;
+
         logger.log(
-          `Handling GET_PROCEDURE_DETAILS request for procedure ID ${procedureId}`
+          `Handling GET_PROCEDURE_DETAILS request for ID ${procedureId}`
         );
         if (max_length) logger.log(`  max_length: ${max_length}`);
 
-        // Get the basic procedure details
         const procedure = await api.getProcedureById(procedureId);
 
-        // The following API calls are not currently used in the formatter but may be used in the future
-        // Uncomment if needed:
-        /*
-        // Try to get additional information in parallel
-        const [resume, totals] = await Promise.all([
-          api.getProcedureResume(procedureId).catch(err => {
-            logger.error(`Error fetching procedure resume for ID ${procedureId}:`, err);
-            return null;
-          }),
-          api.getProcedureTotals(procedureId).catch(err => {
-            logger.error(`Error fetching procedure totals for ID ${procedureId}:`, err);
-            return null;
-          })
-        ]);
-        */
-
-        // Use the procedure formatter to format the data for LLM consumption
+        // Use the formatter - Get result (data part will be ignored)
         const formattedResult = formatters.procedure.format(
-          {
-            ...procedure,
-            // resume,
-            // totals
-          },
+          procedure,
           max_length
         );
 
         logger.log(
-          `Successfully retrieved details for procedure ID ${procedureId}`
+          `GET_PROCEDURE_DETAILS returning details for ${procedure.name}`
         );
 
+        // Always return only text content
         return {
           content: [
             {
               type: "text",
-              text: formattedResult.text,
-            },
-            {
-              type: "text",
-              text:
-                "```json\n" +
-                JSON.stringify(formattedResult.data, null, 2) +
-                "\n```",
-              annotations: {
-                role: "data",
-              },
+              text: formattedResult.text, // Data part of formattedResult is ignored
             },
           ],
         };

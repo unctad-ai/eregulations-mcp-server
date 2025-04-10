@@ -8,12 +8,6 @@ export enum ToolName {
 }
 
 export const ListProceduresSchema = z.object({
-  return_data: z
-    .boolean()
-    .optional()
-    .describe(
-      "Whether to return the structured data array alongside the text."
-    ),
   max_items: z
     .number()
     .int()

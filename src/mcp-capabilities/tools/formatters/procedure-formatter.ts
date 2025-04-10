@@ -30,7 +30,7 @@ export class ProcedureFormatter
     // Extract and format the text representation
     const formattedText = this.formatText(procedure, maxLength);
 
-    // Extract essential data for structured representation
+    // Extract essential data only if requested
     const essentialData = this.extractEssentialData(procedure);
 
     return {

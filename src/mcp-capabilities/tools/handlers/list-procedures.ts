@@ -17,55 +17,31 @@ export function createListProceduresHandler(api: ERegulationsApi): ToolHandler {
     inputSchemaDefinition: ListProceduresSchema,
     handler: async (args: any) => {
       try {
-        // Use the inferred type for args, providing defaults for optional params
-        const {
-          return_data = false,
-          max_items,
-          max_length,
-        } = args as ListProceduresArgs;
+        // Use the inferred type for args
+        const { max_items, max_length } = args as ListProceduresArgs;
+
         logger.log(`Handling LIST_PROCEDURES request`);
-        if (return_data) logger.log(`  return_data: true`);
         if (max_items) logger.log(`  max_items: ${max_items}`);
         if (max_length) logger.log(`  max_length: ${max_length}`);
 
         const procedures = await api.getProceduresList();
 
-        // Use the dedicated formatter to format the procedures list
+        // Use the dedicated formatter, always requesting text only
         const formattedResult = formatters.procedureList.format(
           procedures,
-          return_data,
+          false,
           max_items,
           max_length
         );
 
         logger.log(`LIST_PROCEDURES returning ${procedures.length} procedures`);
 
-        if (!return_data) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: formattedResult.text,
-              },
-            ],
-          };
-        }
-
+        // Always return only text content
         return {
           content: [
             {
               type: "text",
               text: formattedResult.text,
-            },
-            {
-              type: "text",
-              text:
-                "```json\n" +
-                JSON.stringify(formattedResult.data, null, 2) +
-                "\n```",
-              annotations: {
-                role: "data",
-              },
             },
           ],
         };

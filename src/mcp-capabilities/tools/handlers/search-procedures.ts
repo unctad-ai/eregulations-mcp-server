@@ -25,36 +25,29 @@ export function createSearchProceduresHandler(
     handler: async (args) => {
       // Use the inferred type for args
       const { keyword, max_items, max_length } = args as SearchProceduresArgs;
-      logger.log(`Searching for procedures with keyword: ${keyword}`);
+      logger.log(`Handling searchProcedures with keyword: ${keyword}`);
       if (max_items) logger.log(`  max_items: ${max_items}`);
       if (max_length) logger.log(`  max_length: ${max_length}`);
 
       try {
-        // Search for objectives/procedures using the provided keyword
-        // NOTE: API function still calls /Objectives/Search endpoint
-        const results = await api.searchProcedures(keyword);
+        const procedures = await api.searchProcedures(keyword);
 
-        // Format the search results using the procedure formatter
-        // NOTE: Formatter still works on ObjectiveWithDescriptionBaseModel[] type
-        const { text, data } = formatters.searchProcedures.format(
-          results,
-          keyword,
+        // Format the results using the search procedures formatter (always text only)
+        const formattedResult = formatters.searchProcedures.format(
+          procedures,
+          keyword, // Pass keyword for context
           max_items,
           max_length
         );
 
+        logger.log(`searchProcedures found ${procedures.length} results`);
+
+        // Always return only text content
         return {
           content: [
             {
               type: "text",
-              text: text,
-            },
-            {
-              type: "text",
-              text: "```json\n" + JSON.stringify(data, null, 2) + "\n```",
-              annotations: {
-                role: "data",
-              },
+              text: formattedResult.text,
             },
           ],
         };
