@@ -49,6 +49,9 @@ export class ProcedureFormatter
       id: procedure.id,
       name: procedure.fullName || procedure.name,
       isOnline: procedure.isOnline || false,
+      description:
+        procedure.data?.description || procedure.explanatoryText || null,
+      additionalInfo: procedure.data?.additionalInfo || null,
       steps:
         procedure.data?.blocks?.[0]?.steps?.map((step) => ({
           id: step.id,
@@ -92,13 +95,20 @@ export class ProcedureFormatter
     }
 
     // Add description if available, with optional length limit
-    if (procedure.description) {
+    const description = procedure.data?.description;
+    if (description) {
       // Truncate long descriptions only if maxLength is provided
-      const truncatedText =
-        maxLength !== undefined && procedure.description.length > maxLength
-          ? procedure.description.substring(0, maxLength - 3) + "..."
-          : procedure.description;
-      result += `DESC: ${truncatedText}\n`;
+      const descriptionText =
+        maxLength !== undefined && description.length > maxLength
+          ? description.substring(0, maxLength - 3) + "..."
+          : description;
+      result += `DESC: ${descriptionText}\n`;
+    }
+
+    // Add additionalInfo if available
+    const additionalInfoText = procedure.data?.additionalInfo;
+    if (additionalInfoText) {
+      result += `INFO: ${additionalInfoText}\n`;
     }
 
     result += "\nSTEPS:\n";

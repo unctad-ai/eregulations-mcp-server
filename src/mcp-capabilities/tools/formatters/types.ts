@@ -23,6 +23,8 @@ export interface ProcedureData {
     id?: number;
     name?: string;
     url?: string;
+    description?: string;
+    additionalInfo?: string;
     blocks?: {
       steps?: StepData[];
     }[];
