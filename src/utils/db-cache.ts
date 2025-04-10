@@ -298,18 +298,44 @@ export class SqliteCache<T = any> {
       // Close the current database connection
       this.close();
 
-      // Create a new database connection with the updated namespace
-      const cacheDir = path.resolve(process.cwd(), "data", "cache");
+      // Determine the directory of the current module
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+
+      // Create cache directory relative to the script location
+      const cacheDir = path.resolve(__dirname, "..", "data", "cache");
       const dbFileName = this.getBaseUrlHash(baseUrl);
       const dbPath = path.join(cacheDir, `${dbFileName}.sqlite`);
 
       logger.debug(`Updating cache namespace to: ${dbPath}`);
+
+      // Ensure the directory exists
+      if (!fs.existsSync(cacheDir)) {
+        // Attempt to create it if missing (optional, depending on desired behavior)
+        try {
+          fs.mkdirSync(cacheDir, { recursive: true });
+          logger.debug(
+            `Created cache directory during namespace update: ${cacheDir}`
+          );
+        } catch (mkdirError) {
+          logger.error(
+            `Failed to create cache directory ${cacheDir} during namespace update: ${mkdirError}`
+          );
+          // Rethrow or handle as appropriate, maybe fallback is needed?
+          throw new Error(
+            `Cache directory ${cacheDir} does not exist and could not be created.`
+          );
+        }
+      }
 
       this.db = new Database(dbPath);
       this.initializeDatabase();
     } catch (error) {
       logger.error(`Error updating cache namespace: ${error}`);
       // Fallback to in-memory database if file access fails
+      logger.warn(
+        "Falling back to in-memory cache database after namespace update failure."
+      );
       this.db = new Database(":memory:");
       this.initializeDatabase();
     }
