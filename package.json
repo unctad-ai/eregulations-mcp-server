@@ -26,9 +26,9 @@
     "docker:build": "docker build -t eregulations-mcp-server:latest .",
     "prerelease": "npm run test && npm run docker:build",
     "postbump": "git push && git push --tags",
-    "release:patch": "standard-version --release-as patch",
-    "release:minor": "standard-version --release-as minor",
-    "release:major": "standard-version --release-as major",
+    "release:patch": "npm run prerelease && standard-version --release-as patch",
+    "release:minor": "npm run prerelease && standard-version --release-as minor",
+    "release:major": "npm run prerelease && standard-version --release-as major",
     "release": "standard-version"
   },
   "repository": {
