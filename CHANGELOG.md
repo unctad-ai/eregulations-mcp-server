@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.8](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.7...v0.4.8) (2025-04-10)
+
+
+### Code Refactoring
+
+* update logger configuration to use environment variables for socket logging ([932cf14](https://github.com/unctad-ai/eregulations-mcp-server/commit/932cf14da92dd24d4872d5be860bcd484d901eb1))
+
 ### [0.4.7](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.6...v0.4.7) (2025-04-10)
 
 
