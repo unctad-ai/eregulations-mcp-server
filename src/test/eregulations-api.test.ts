@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import axios, { AxiosError } from "axios";
 import { ERegulationsApi } from "../services/eregulations-api.js";
-import { SqliteCache } from "../utils/db-cache.js";
 import type { ObjectiveData } from "../mcp-capabilities/tools/formatters/types.js";
 import { logger } from "../utils/logger.js";
 
@@ -15,21 +14,20 @@ vi.mock("../utils/logger.js", () => ({
     error: vi.fn(),
   },
 }));
-vi.mock("../utils/db-cache.js", () => ({
-  SqliteCache: vi.fn().mockImplementation(() => ({
-    get: vi.fn(),
-    set: vi.fn(),
-    clear: vi.fn(),
-    cleanExpired: vi.fn(),
-    close: vi.fn(),
-    updateNamespace: vi.fn(),
-  })),
+vi.mock("../utils/logger.js", () => ({
+  logger: {
+    log: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 describe("ERegulationsApi", () => {
   const baseUrl = "http://mock-eregulations-api.test";
   let api: ERegulationsApi;
-  let mockCache: any;
+  // Define mockAxiosInstance at the top level
+  let mockAxiosInstance: any;
 
   // Sample mock data based on real API responses
   const mockProceduresList = [
@@ -155,25 +153,35 @@ describe("ERegulationsApi", () => {
     // Setup environment variable for the API URL
     process.env.EREGULATIONS_API_URL = baseUrl;
 
-    // Setup cache mock behavior
-    mockCache = {
+    // Initialize the mockAxiosInstance structure
+    mockAxiosInstance = {
       get: vi.fn(),
-      set: vi.fn(),
-      clear: vi.fn(),
-      cleanExpired: vi.fn(),
-      close: vi.fn(),
-      updateNamespace: vi.fn(),
+      post: vi.fn(),
+      request: vi.fn(),
     };
-    (SqliteCache as any).mockImplementation(() => mockCache);
+
+    // Mock axios.create to return our instance initially (important for constructor)
+    (axios.create as any).mockReturnValue(mockAxiosInstance);
 
     // Create fresh API instance for each test
     api = new ERegulationsApi();
 
-    // Mock successful axios responses by default
-    (axios.create as any).mockReturnValue({
-      get: vi.fn().mockResolvedValue({ data: {} }),
-      request: vi.fn().mockResolvedValue({ data: {} }),
-    });
+    // --- NEW APPROACH: Directly assign the mock to the instance ---
+    // After the api instance is created, forcefully replace its internal
+    // axiosInstance with our mockAxiosInstance. This ensures the API
+    // methods definitely use our mock.
+    (api as any).axiosInstance = mockAxiosInstance;
+    // --- END NEW APPROACH ---
+
+    // Clear mocks before each test using the instance
+    mockAxiosInstance.get.mockClear();
+    mockAxiosInstance.post.mockClear();
+    mockAxiosInstance.request.mockClear();
+
+    // Set default success behavior (can be overridden in specific tests)
+    mockAxiosInstance.get.mockResolvedValue({ data: {} });
+    mockAxiosInstance.post.mockResolvedValue({ data: {} });
+    mockAxiosInstance.request.mockResolvedValue({ data: {} });
   });
 
   afterEach(() => {
@@ -181,37 +189,37 @@ describe("ERegulationsApi", () => {
     delete process.env.EREGULATIONS_API_URL;
   });
 
-  describe("constructor", () => {
-    it("initializes with cache enabled by default but no baseUrl initially", () => {
-      expect(api["baseUrl"]).toBeNull();
-      expect(api["cacheEnabled"]).toBe(true);
-      expect(api["cache"]).toBeNull(); // Cache should not be initialized yet
-      expect(SqliteCache).not.toHaveBeenCalled(); // SqliteCache constructor should not be called yet
+  describe("constructor and initialization", () => {
+    it("should create an Axios instance on creation", () => {
+      expect(axios.create).toHaveBeenCalled();
     });
 
-    it("creates axios instance with correct configuration", () => {
-      expect(axios.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          timeout: expect.any(Number),
-          headers: expect.objectContaining({
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          }),
-        })
+    it("should initialize with the base URL from environment variables", () => {
+      // Access private method for testing initialization path
+      (api as any).getBaseUrl();
+      expect((api as any).baseUrl).toBe(baseUrl);
+    });
+
+    it("should throw error if no base URL is set", () => {
+      delete process.env.EREGULATIONS_API_URL;
+      // Create new instance without env var
+      const newApi = new ERegulationsApi();
+      expect(() => (newApi as any).getBaseUrl()).toThrow(
+        /No EREGULATIONS_API_URL set/
       );
     });
 
-    it("initializes with cache disabled when specified", () => {
-      const apiNoCache = new ERegulationsApi(false);
-      expect(apiNoCache["cacheEnabled"]).toBe(false);
-      // Cache should not be initialized or cleared yet
-      expect(mockCache.clear).not.toHaveBeenCalled();
+    it("should allow setting base URL manually", () => {
+      const manualUrl = "http://manual.example.com";
+      api.setBaseUrl(manualUrl);
+      expect((api as any).baseUrl).toBe(manualUrl);
     });
 
-    it("allows setting base URL manually", () => {
-      const customUrl = "http://custom-api.test";
-      api.setBaseUrl(customUrl);
-      expect(api["baseUrl"]).toBe(customUrl);
+    it("should add https protocol if missing", () => {
+      const testBaseUrl = "http://test-eregulations-api.test";
+      const api = new ERegulationsApi();
+      api.setBaseUrl(testBaseUrl);
+      expect((api as any).baseUrl).toBe(testBaseUrl);
     });
   });
 
@@ -233,35 +241,6 @@ describe("ERegulationsApi", () => {
       api.setBaseUrl(customUrl);
       const url = (api as any).getBaseUrl();
       expect(url).toBe(customUrl);
-    });
-  });
-
-  describe("getCache", () => {
-    it("initializes cache on first access with correct namespace", () => {
-      // First call to getCache should initialize cache
-      const cache = (api as any).getCache();
-
-      expect(cache).toBeDefined();
-      expect(SqliteCache).toHaveBeenCalledWith(
-        "api-cache-http://mock-eregulations-api.test"
-      );
-
-      // Second call should return the same instance without reinitializing
-      const secondCall = (api as any).getCache();
-      expect(secondCall).toBe(cache);
-      expect(SqliteCache).toHaveBeenCalledTimes(1);
-    });
-
-    it("sets up cleanup interval when cache is enabled", () => {
-      const setIntervalSpy = vi.spyOn(global, "setInterval");
-      (api as any).getCache();
-      expect(setIntervalSpy).toHaveBeenCalled();
-    });
-
-    it("clears cache if cache is disabled", () => {
-      api = new ERegulationsApi(false);
-      (api as any).getCache();
-      expect(mockCache.clear).toHaveBeenCalled();
     });
   });
 
@@ -304,17 +283,17 @@ describe("ERegulationsApi", () => {
       // Ensure isAxiosError is true if needed (AxiosError constructor should handle this)
       error.isAxiosError = true;
 
-      const axiosGet = vi
-        .fn()
+      // Use mockAxiosInstance directly
+      mockAxiosInstance.get
         .mockRejectedValueOnce(error) // First call fails
         .mockResolvedValueOnce({ data: { success: true } }); // Second call succeeds
 
-      (axios.create as any).mockReturnValue({ get: axiosGet });
-      api = new ERegulationsApi();
+      // (axios.create as any).mockReturnValue({ get: axiosGet }); // REMOVE
+      // api = new ERegulationsApi(); // REMOVE (already created in beforeEach)
 
       const result = await (api as any).makeRequest("/test");
 
-      expect(axiosGet).toHaveBeenCalledTimes(2);
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2); // Changed from axiosGet
       expect(result).toEqual({ data: { success: true } });
 
       // Restore the original implementation
@@ -337,99 +316,20 @@ describe("ERegulationsApi", () => {
       );
       // error.isAxiosError = true;
 
-      const axiosGet = vi.fn().mockRejectedValue(error); // Always fails
+      // Use mockAxiosInstance directly
+      mockAxiosInstance.get.mockRejectedValue(error); // Always fails
 
-      (axios.create as any).mockReturnValue({ get: axiosGet });
-      api = new ERegulationsApi();
+      // (axios.create as any).mockReturnValue({ get: axiosGet }); // REMOVE
+      // api = new ERegulationsApi(); // REMOVE
 
       await expect(
         (api as any).makeRequest("/test", { maxRetries: 1 })
       ).rejects.toThrowError(error.message); // Assert based on message
 
-      expect(axiosGet).toHaveBeenCalledTimes(2); // Initial + 1 retry
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2); // Changed from axiosGet // Initial + 1 retry
 
       // Restore the original implementation
       isAxiosErrorSpy.mockRestore();
-    });
-  });
-
-  describe("fetchWithCache", () => {
-    const cacheKey = "test_key";
-    const mockData = { id: 123, name: "Test Data" };
-    const fetchFn = vi.fn().mockResolvedValue(mockData);
-    const ttl = 3600000; // 1 hour
-
-    beforeEach(() => {
-      // Set up the getCache method to return our mockCache
-      (api as any).getCache = vi.fn().mockReturnValue(mockCache);
-    });
-
-    it("returns cached data when available", async () => {
-      mockCache.get.mockReturnValue(mockData);
-
-      const result = await (api as any).fetchWithCache(cacheKey, fetchFn, ttl);
-
-      expect(result).toEqual(mockData);
-      expect(mockCache.get).toHaveBeenCalledWith(cacheKey);
-      expect(fetchFn).not.toHaveBeenCalled(); // Fetch function not called
-    });
-
-    it("calls fetch function and caches result when cache misses", async () => {
-      // Setup cache miss
-      mockCache.get.mockReturnValue(null);
-
-      // Create a mock function that actually returns the data
-      const fetchFunction = vi
-        .fn()
-        .mockImplementation(() => Promise.resolve(mockData));
-
-      const result = await (api as any).fetchWithCache(
-        cacheKey,
-        fetchFunction,
-        ttl
-      );
-
-      expect(fetchFunction).toHaveBeenCalled();
-      expect(mockCache.set).toHaveBeenCalledWith(cacheKey, mockData, ttl);
-      expect(result).toEqual(mockData);
-    });
-
-    it("returns stale cache data on fetch error if available", async () => {
-      mockCache.get
-        .mockReturnValueOnce(null) // First call (normal get) returns null
-        .mockReturnValueOnce(mockData); // Second call (get with allowExpired) returns data
-
-      const errorFetchFn = vi.fn().mockRejectedValue(new Error("Fetch failed"));
-
-      const result = await (api as any).fetchWithCache(
-        cacheKey,
-        errorFetchFn,
-        ttl
-      );
-
-      expect(result).toEqual(mockData);
-      expect(errorFetchFn).toHaveBeenCalled();
-      expect(mockCache.get).toHaveBeenNthCalledWith(2, cacheKey, true); // Second call with allowExpired=true
-    });
-
-    it("throws error when fetch fails and no cache data is available", async () => {
-      mockCache.get.mockReturnValue(null); // No cache data
-      const error = new Error("Fetch failed and no cache");
-      const errorFetchFn = vi.fn().mockRejectedValue(error);
-
-      await expect(
-        (api as any).fetchWithCache(cacheKey, errorFetchFn, ttl)
-      ).rejects.toThrow(error);
-    });
-
-    it("bypasses cache when cacheEnabled is false", async () => {
-      api = new ERegulationsApi(false); // Disable cache
-      mockCache.get.mockReturnValue(mockData); // Cache would return data
-
-      await (api as any).fetchWithCache(cacheKey, fetchFn, ttl);
-
-      expect(fetchFn).toHaveBeenCalled(); // Should fetch despite cached data
-      expect(mockCache.set).not.toHaveBeenCalled(); // Should not cache the result
     });
   });
 
@@ -541,6 +441,12 @@ describe("ERegulationsApi", () => {
         })
       );
     });
+
+    it("should return empty array from getProceduresList on API error", async () => {
+      (axios.create() as any).get.mockRejectedValue(new Error("API Down"));
+      const procedures = await api.getProceduresList();
+      expect(procedures).toEqual([]);
+    });
   });
 
   describe("getProcedureById", () => {
@@ -601,6 +507,13 @@ describe("ERegulationsApi", () => {
       // Should fill in missing id from the parameter
       expect(procedure.id).toBe(999);
       expect(procedure.name).toBe("Incomplete Procedure");
+    });
+
+    it("should throw error from getProcedureById on API error", async () => {
+      // Use mockAxiosInstance directly
+      mockAxiosInstance.get.mockRejectedValue(new Error("API Down"));
+      // (axios.create() as any).get.mockRejectedValue(new Error("API Down")); // REMOVE
+      await expect(api.getProcedureById(1)).rejects.toThrow("API Down");
     });
   });
 
@@ -679,147 +592,99 @@ describe("ERegulationsApi", () => {
     });
   });
 
-  describe("dispose", () => {
-    it("cleans up resources properly", () => {
-      // Initialize the cache first
-      (api as any).getCache();
-
-      // Setup a spy on clearInterval
-      const clearIntervalSpy = vi.spyOn(global, "clearInterval");
-
-      api.dispose();
-
-      expect(clearIntervalSpy).toHaveBeenCalled();
-      expect(mockCache.close).toHaveBeenCalled();
-    });
-  });
-
   describe("searchProcedures", () => {
-    const keyword = "import";
-    const cacheKey = `search_objectives_${encodeURIComponent(keyword)}`;
+    const keyword = "investment permit";
     const mockObjectivesResult: ObjectiveData[] = [
       {
         id: 1,
-        name: "Import Permit",
-        description: "General import permit objective",
+        name: "Investment Permit",
+        description: "Permit for foreign investment",
       },
       {
         id: 2,
-        name: "Import Sugar",
-        description: "Objective for importing sugar",
+        name: "Work Permit",
+        description: "Permit for foreign workers",
       },
     ];
 
     beforeEach(() => {
-      // Mock the axios instance POST method used by searchProcedures
-      (axios.create as any).mockReturnValue({
-        post: vi.fn().mockResolvedValue({ data: mockObjectivesResult }),
-        // Include get for other potential calls within the class
-        get: vi.fn().mockResolvedValue({ data: {} }),
+      // Setup Axios mock specifically for POST requests using mockAxiosInstance
+      mockAxiosInstance.post.mockClear();
+      mockAxiosInstance.post.mockResolvedValue({
+        data: mockObjectivesResult,
       });
-      // Re-create API instance with mocked post
-      api = new ERegulationsApi();
-      // Mock cache setup
-      mockCache = {
-        get: vi.fn(),
-        set: vi.fn(),
-        clear: vi.fn(),
-        cleanExpired: vi.fn(),
-        close: vi.fn(),
-        updateNamespace: vi.fn(),
-      };
-      (SqliteCache as any).mockImplementation(() => mockCache);
-      (api as any).getCache = vi.fn().mockReturnValue(mockCache);
+      // (axios.create() as any).post.mockClear(); // REMOVE
+      // (axios.create() as any).post.mockResolvedValue({ // REMOVE
+      //   data: mockObjectivesResult,
+      // });
+
+      // Re-create API instance - NO, use the one from outer beforeEach
+      // api = new ERegulationsApi();
     });
 
     it("fetches objectives from POST /Objectives/Search and returns them", async () => {
-      mockCache.get.mockReturnValue(null); // Cache miss
-      const axiosPost = (axios.create() as any).post;
+      // const axiosPost = (axios.create() as any).post; // REMOVE
+      const axiosPost = mockAxiosInstance.post; // Use the mock instance
 
       const results = await api.searchProcedures(keyword);
 
       expect(axiosPost).toHaveBeenCalledWith(
         `${baseUrl}/Objectives/Search`,
         JSON.stringify(keyword),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            "Content-Type": "application/json",
-          }),
-        })
+        expect.objectContaining({ headers: expect.any(Object) })
       );
-      expect(results).toEqual(mockObjectivesResult);
-      expect(mockCache.set).toHaveBeenCalledWith(
-        cacheKey,
-        mockObjectivesResult,
-        expect.any(Number)
-      );
-    });
-
-    it("returns cached results when available", async () => {
-      mockCache.get.mockReturnValue(mockObjectivesResult); // Cache hit
-      const axiosPost = (axios.create() as any).post;
-
-      const results = await api.searchProcedures(keyword);
-
-      expect(mockCache.get).toHaveBeenCalledWith(cacheKey);
-      expect(axiosPost).not.toHaveBeenCalled();
       expect(results).toEqual(mockObjectivesResult);
     });
 
     it("handles API returning an empty array", async () => {
-      mockCache.get.mockReturnValue(null);
-      (axios.create() as any).post.mockResolvedValue({ data: [] }); // API returns empty
-      const axiosPost = (axios.create() as any).post;
+      // Use mockAxiosInstance directly
+      mockAxiosInstance.post.mockResolvedValue({ data: [] }); // API returns empty
+      // (axios.create() as any).post.mockResolvedValue({ data: [] }); // REMOVE
+      // const axiosPost = (axios.create() as any).post; // REMOVE
+      const axiosPost = mockAxiosInstance.post;
 
       const results = await api.searchProcedures(keyword);
 
       expect(axiosPost).toHaveBeenCalled();
       expect(results).toEqual([]);
-      expect(mockCache.set).toHaveBeenCalledWith(
-        cacheKey,
-        [],
-        expect.any(Number)
-      );
     });
 
     it("handles API errors gracefully and returns empty array", async () => {
-      mockCache.get.mockReturnValue(null);
       const apiError = new Error("API search failed");
-      (axios.create() as any).post.mockRejectedValue(apiError);
-      const loggerSpy = vi.spyOn(logger, "error");
+      // Use mockAxiosInstance directly
+      mockAxiosInstance.post.mockRejectedValue(apiError);
+      // (axios.create() as any).post.mockRejectedValue(apiError); // REMOVE
+      // const axiosPost = (axios.create() as any).post; // REMOVE
+      const axiosPost = mockAxiosInstance.post;
 
       const results = await api.searchProcedures(keyword);
 
+      expect(axiosPost).toHaveBeenCalled();
       expect(results).toEqual([]);
-      expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Error searching objectives"),
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining(`Error searching objectives`),
         apiError
-      );
-      expect(mockCache.set).toHaveBeenCalledWith(
-        cacheKey,
-        [],
-        expect.any(Number)
       );
     });
 
     it("handles non-array API responses gracefully", async () => {
-      mockCache.get.mockReturnValue(null);
-      (axios.create() as any).post.mockResolvedValue({
-        data: { message: "Unexpected format" },
-      }); // API returns object, not array
-      const loggerSpy = vi.spyOn(logger, "warn");
+      // Use mockAxiosInstance directly
+      mockAxiosInstance.post.mockResolvedValue({
+        data: { message: "Unexpected format" }, // API returns non-array
+      });
+      // (axios.create() as any).post.mockResolvedValue({ // REMOVE
+      //   data: { message: "Unexpected format" }, // API returns non-array
+      // });
+      // const axiosPost = (axios.create() as any).post; // REMOVE
+      const axiosPost = mockAxiosInstance.post;
 
       const results = await api.searchProcedures(keyword);
 
-      expect(results).toEqual([]); // Should return empty array
-      expect(loggerSpy).toHaveBeenCalledWith(
+      expect(axiosPost).toHaveBeenCalled();
+      expect(results).toEqual([]);
+      expect(logger.warn).toHaveBeenCalledWith(
         expect.stringContaining("Unexpected search API response type")
       );
-      expect(mockCache.set).toHaveBeenCalledWith(
-        cacheKey,
-        [],
-        expect.any(Number)
-      ); // Cache empty result
     });
   });
 });

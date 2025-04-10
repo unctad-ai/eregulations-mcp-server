@@ -454,6 +454,18 @@ async function main() {
     console.error("Error running tests:", error.message || error);
     process.exit(1);
   }
+
+  // Ensure disconnection and exit regardless of success or failure
+  console.log("\nClosing transport connection...");
+  // Use transport.close() instead of client.disconnect()
+  if (transport && typeof transport.close === "function") {
+    await transport.close();
+    console.log("Transport closed.");
+  } else {
+    console.warn("Transport could not be closed automatically.");
+  }
+  // Exit with appropriate code
+  process.exit(allPassed ? 0 : 1);
 }
 
 main();

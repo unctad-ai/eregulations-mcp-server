@@ -151,10 +151,9 @@ describe("MCP Server", () => {
 
   describe("createServer", () => {
     it("should create server with correct configuration", () => {
-      const { server, handlers, cleanup } = createServer(mockBaseUrl);
+      const { server, handlers } = createServer(mockBaseUrl);
       expect(server).toBeDefined();
       expect(handlers).toBeInstanceOf(Array);
-      expect(cleanup).toBeInstanceOf(Function);
     });
 
     it("should pass baseUrl to the ERegulationsApi instance when provided", () => {
@@ -165,12 +164,6 @@ describe("MCP Server", () => {
     it("should not pass baseUrl to the ERegulationsApi when not provided", () => {
       createServer();
       expect(mockApiMethods.setBaseUrl).not.toHaveBeenCalled();
-    });
-
-    it("should call dispose on the API instance when cleanup is called", () => {
-      const { cleanup } = createServer(mockBaseUrl);
-      cleanup();
-      expect(mockApiMethods.dispose).toHaveBeenCalled();
     });
   });
 

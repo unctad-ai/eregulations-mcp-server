@@ -17,7 +17,7 @@ import {
 /**
  * Create a new MCP server instance with eRegulations API integration
  * @param baseUrl Optional base URL for the eRegulations API. If not provided, will use EREGULATIONS_API_URL environment variable.
- * @returns An object containing the server instance, handlers, and cleanup function
+ * @returns An object containing the server instance and handlers
  */
 export const createServer = (baseUrl?: string) => {
   // Create API instance with lazy-loading support
@@ -48,12 +48,6 @@ export const createServer = (baseUrl?: string) => {
       },
     }
   );
-
-  // Setup cleanup handlers
-  const cleanup = () => {
-    logger.log("Cleaning up server resources...");
-    api.dispose();
-  };
 
   // Create all tool handlers
   const handlers = createHandlers(api);
@@ -167,5 +161,5 @@ export const createServer = (baseUrl?: string) => {
     throw new Error(errorMsg);
   });
 
-  return { server, handlers, cleanup };
+  return { server, handlers };
 };

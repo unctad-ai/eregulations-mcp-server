@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createServer } from "./mcp-server.js";
-import { logger } from './utils/logger.js';
-import events from 'events';
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
+import { logger } from "./utils/logger.js";
+import events from "events";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 
 // Increase default max listeners to prevent memory leak warnings
 events.setMaxListeners(20);
@@ -12,17 +12,16 @@ events.setMaxListeners(20);
 // Export the main function for testing
 export async function main(apiUrl?: string) {
   logger.info("Starting MCP server...");
-    
+
   const transport = new StdioServerTransport();
-  const { server, cleanup } = createServer(apiUrl);
-  
+  const { server } = createServer(apiUrl);
+
   await server.connect(transport);
-  
+
   // Handle termination signals
-  ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach(signal => {
+  ["SIGINT", "SIGTERM", "SIGQUIT"].forEach((signal) => {
     process.on(signal, async () => {
       logger.log(`Received ${signal}, shutting down...`);
-      await cleanup();
       await server.close();
       process.exit(0);
     });
@@ -35,15 +34,16 @@ const isMainModule = import.meta.url.endsWith(process.argv[1]);
 
 if (isMainModule) {
   const argv = yargs(hideBin(process.argv))
-    .option('api-url', {
-      type: 'string',
-      description: 'eRegulations API URL (overrides EREGULATIONS_API_URL environment variable)',
-      default: process.env.EREGULATIONS_API_URL
+    .option("api-url", {
+      type: "string",
+      description:
+        "eRegulations API URL (overrides EREGULATIONS_API_URL environment variable)",
+      default: process.env.EREGULATIONS_API_URL,
     })
     .help()
     .parseSync();
 
-  main(argv['api-url']).catch((error) => {
+  main(argv["api-url"]).catch((error) => {
     console.error("Server error:", error);
     process.exit(1);
   });
