@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.5](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.4...v0.4.5) (2025-04-10)
+
+
+### Maintenance
+
+* update release workflow to include NODE_AUTH_TOKEN for npm publishing ([0758a42](https://github.com/unctad-ai/eregulations-mcp-server/commit/0758a42f3767ef638068bad31e0e25aa062d2424))
+
 ### [0.4.4](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.3...v0.4.4) (2025-04-10)
 
 
