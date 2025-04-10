@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { ERegulationsApi } from "../services/eregulations-api.js";
 import { SqliteCache } from "../utils/db-cache.js";
 import type { ObjectiveData } from "../mcp-capabilities/tools/formatters/types.js";
@@ -288,7 +288,22 @@ describe("ERegulationsApi", () => {
     });
 
     it("implements retry logic on failure", async () => {
-      const error = new Error("Network error");
+      // Spy on axios.isAxiosError and force it to return true for this test
+      const isAxiosErrorSpy = vi
+        .spyOn(axios, "isAxiosError")
+        .mockReturnValue(true);
+
+      // More complete mock Axios network error
+      const error = new axios.AxiosError(
+        "Network error",
+        "ERR_NETWORK", // Code
+        {} as any, // config
+        {} as any, // request
+        undefined // response (key for retry logic)
+      );
+      // Ensure isAxiosError is true if needed (AxiosError constructor should handle this)
+      error.isAxiosError = true;
+
       const axiosGet = vi
         .fn()
         .mockRejectedValueOnce(error) // First call fails
@@ -301,10 +316,27 @@ describe("ERegulationsApi", () => {
 
       expect(axiosGet).toHaveBeenCalledTimes(2);
       expect(result).toEqual({ data: { success: true } });
+
+      // Restore the original implementation
+      isAxiosErrorSpy.mockRestore();
     });
 
     it("throws error after exceeding maximum retries", async () => {
-      const error = new Error("Persistent network error");
+      // Spy on axios.isAxiosError and force it to return true for this test
+      const isAxiosErrorSpy = vi
+        .spyOn(axios, "isAxiosError")
+        .mockReturnValue(true);
+
+      // More complete mock persistent Axios network error
+      const error = new axios.AxiosError(
+        "Persistent network error",
+        "ERR_NETWORK", // Code
+        {} as any, // config
+        {} as any, // request
+        undefined // response
+      );
+      // error.isAxiosError = true;
+
       const axiosGet = vi.fn().mockRejectedValue(error); // Always fails
 
       (axios.create as any).mockReturnValue({ get: axiosGet });
@@ -312,9 +344,12 @@ describe("ERegulationsApi", () => {
 
       await expect(
         (api as any).makeRequest("/test", { maxRetries: 1 })
-      ).rejects.toThrow(error);
+      ).rejects.toThrowError(error.message); // Assert based on message
 
       expect(axiosGet).toHaveBeenCalledTimes(2); // Initial + 1 retry
+
+      // Restore the original implementation
+      isAxiosErrorSpy.mockRestore();
     });
   });
 

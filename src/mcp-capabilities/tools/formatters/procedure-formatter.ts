@@ -51,7 +51,7 @@ export class ProcedureFormatter
       isOnline: procedure.isOnline || false,
       description:
         procedure.data?.description || procedure.explanatoryText || null,
-      additionalInfo: procedure.data?.additionalInfo || null,
+      additionalInfo: procedure.data?.additionalInfo,
       steps:
         procedure.data?.blocks?.[0]?.steps?.map((step) => ({
           id: step.id,

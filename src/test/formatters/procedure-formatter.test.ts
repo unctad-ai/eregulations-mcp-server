@@ -15,6 +15,9 @@ describe("ProcedureFormatter", () => {
       id: 123,
       name: "Import License Application",
       url: "https://example.com/import-license",
+      description:
+        "Process for obtaining an import license for restricted goods",
+      additionalInfo: undefined,
       blocks: [
         {
           steps: [
@@ -79,6 +82,9 @@ describe("ProcedureFormatter", () => {
       id: 123,
       name: "Apply for Import License",
       isOnline: true,
+      description:
+        "Process for obtaining an import license for restricted goods",
+      additionalInfo: undefined,
       steps: [
         {
           id: 1,
@@ -104,6 +110,8 @@ describe("ProcedureFormatter", () => {
       id: 456,
       name: "Basic Procedure",
       isOnline: false,
+      description: null,
+      additionalInfo: undefined,
       steps: [],
     });
   });
@@ -122,14 +130,16 @@ describe("ProcedureFormatter", () => {
     const longDescProcedure: ProcedureData = {
       id: 789,
       name: "Test Procedure",
-      description: "A".repeat(300),
+      data: {
+        description: "A".repeat(300),
+      },
     };
 
     // Call format with an explicit maxLength to test truncation
     const maxLength = 180;
     const result = formatter.format(longDescProcedure, maxLength);
 
-    const descriptionText = longDescProcedure.description || "";
+    const descriptionText = longDescProcedure.data?.description || "";
     expect(result.text).toContain("DESC:");
     expect(result.text).toContain("..."); // Check for truncation indicator
     const descLine = result.text
@@ -138,6 +148,6 @@ describe("ProcedureFormatter", () => {
     expect(descLine).toBeDefined();
     // Check that the line is truncated (length < original) and close to maxLength (accounting for 'DESC: ' and '...')
     expect(descLine!.length).toBeLessThan(descriptionText.length);
-    expect(descLine!.length).toBe(maxLength + "DESC: ".length); // Correct length check
+    expect(descLine!.length).toBe(maxLength + "DESC: ".length - 3 + 3); // Check exact truncated length: prefix + (maxLength-3 chars) + ...
   });
 });
