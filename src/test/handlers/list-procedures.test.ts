@@ -104,38 +104,6 @@ describe("ListProceduresHandler", () => {
     );
   });
 
-  it("includes data in JSON format when return_data is true", async () => {
-    // Setup formatter to simulate return_data = true
-    const mockFormattedResultWithData = {
-      text: "Test formatted procedures list",
-      data: [{ id: 1, name: "Test" }],
-    };
-    vi.mocked(formatters.procedureList.format).mockReturnValue(
-      mockFormattedResultWithData
-    );
-
-    // Call the handler with return_data: true
-    const result = await handler.handler({ return_data: true });
-
-    // Verify formatter was called correctly
-    expect(formatters.procedureList.format).toHaveBeenCalledWith(
-      mockProcedures,
-      true,
-      undefined,
-      undefined
-    );
-
-    // Verify the response includes both text and data
-    expect(result.content).toHaveLength(2);
-    expect(result.content[0]).toEqual({
-      type: "text",
-      text: "Test formatted procedures list",
-    });
-    expect(result.content[1].type).toBe("text");
-    expect(result.content[1].text).toContain("```json\n");
-    expect(result.content[1].annotations).toEqual({ role: "data" });
-  });
-
   it("handles API errors correctly", async () => {
     // Setup API to throw an error
     const testError = new Error("Test API error");

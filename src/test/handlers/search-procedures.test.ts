@@ -69,18 +69,7 @@ describe("createSearchProceduresHandler", () => {
     const result = await handler.handler(args);
 
     expect(result).toEqual({
-      content: [
-        { type: "text", text: mockFormattedResult.text },
-        {
-          type: "text",
-          text: `\`\`\`json\n${JSON.stringify(
-            mockFormattedResult.data,
-            null,
-            2
-          )}\n\`\`\``,
-          annotations: { role: "data" },
-        },
-      ],
+      content: [{ type: "text", text: mockFormattedResult.text }],
     });
   });
 

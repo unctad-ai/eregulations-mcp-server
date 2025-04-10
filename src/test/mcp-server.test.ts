@@ -234,7 +234,8 @@ describe("MCP Server", () => {
     // TODO: Add tests here later when eRegulations tools are re-added using server.tool()
   });
 
-  // --- COMMENT OUT tests relying on the old setRequestHandler structure ---
+  // --- REMOVED commented out tests relying on the old setRequestHandler structure ---
+  /*
   // describe("MCP request handler registration", () => {
   //   it("should register all required MCP request handlers", () => { ... });
   //   it("should register tools/list handler", () => { ... });
@@ -242,7 +243,9 @@ describe("MCP Server", () => {
   //   it("should register prompts/list handler", () => { ... });
   //   it("should register prompts/get handler", () => { ... });
   // });
+  */
 
+  /*
   // describe("MCP handler implementations", () => {
   //   it("should return list of tools in ListToolsRequest handler", async () => { ... });
   //   it("should handle CallToolRequest for valid tools", async () => { ... });
@@ -251,8 +254,11 @@ describe("MCP Server", () => {
   //   it("should return prompt content in GetPromptRequest handler", async () => { ... });
   //   it("should throw error for unknown prompt in GetPromptRequest", async () => { ... });
   // });
+  */
 
+  /*
   // describe("prompts", () => {
   //   it("should define all required prompts", () => { ... });
   // });
+  */
 });

@@ -79,25 +79,24 @@ describe("GetProcedureDetailsHandler", () => {
     );
 
     // Verify the response structure
-    expect(result.content).toHaveLength(2);
+    expect(result.content).toHaveLength(1);
     expect(result.content[0]).toEqual({
       type: "text",
       text: "Test formatted procedure details",
     });
-    expect(result.content[1].type).toBe("text");
-    expect(result.content[1].text).toContain("```json\n");
-    expect(result.content[1].annotations).toEqual({ role: "data" });
 
     // Verify logging
     expect(logger.log).toHaveBeenCalledWith(
-      expect.stringContaining(`request for procedure ID ${mockProcedureId}`)
+      expect.stringContaining(
+        `Handling GET_PROCEDURE_DETAILS request for ID ${mockProcedureId}`
+      )
     );
     expect(logger.log).not.toHaveBeenCalledWith(
       expect.stringContaining(`max_length:`)
     ); // Ensure max_length wasn't logged when not provided
     expect(logger.log).toHaveBeenCalledWith(
       expect.stringContaining(
-        `Successfully retrieved details for procedure ID ${mockProcedureId}`
+        `GET_PROCEDURE_DETAILS returning details for ${mockProcedure.name}`
       )
     );
   });
