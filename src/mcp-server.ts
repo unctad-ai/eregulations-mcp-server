@@ -1,23 +1,28 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import {
-  CallToolRequestSchema,
-  GetPromptRequestSchema,
-  ListPromptsRequestSchema,
-  ListToolsRequestSchema,
-  Tool,
-} from "@modelcontextprotocol/sdk/types.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod"; // Import Zod
+// Remove old schema imports
+// import {
+//   CallToolRequestSchema,
+//   GetPromptRequestSchema,
+//   ListPromptsRequestSchema,
+//   ListToolsRequestSchema,
+//   Tool,
+// } from "@modelcontextprotocol/sdk/types.js";
 import { ERegulationsApi } from "./services/eregulations-api.js";
 import { logger } from "./utils/logger.js";
+// Keep handler imports for now, but comment out createHandlers call temporarily
+// import { createHandlers } from "./mcp-capabilities/tools/handlers/index.js";
+// import {
+//   PromptName,
+//   PROMPT_TEMPLATES,
+// } from "./mcp-capabilities/prompts/templates.js";
+// Import the function to create handlers
 import { createHandlers } from "./mcp-capabilities/tools/handlers/index.js";
-import {
-  PromptName,
-  PROMPT_TEMPLATES,
-} from "./mcp-capabilities/prompts/templates.js";
 
 /**
  * Create a new MCP server instance with eRegulations API integration
  * @param baseUrl Optional base URL for the eRegulations API. If not provided, will use EREGULATIONS_API_URL environment variable.
- * @returns An object containing the server instance and handlers
+ * @returns An object containing the server instance
  */
 export const createServer = (baseUrl?: string) => {
   // Create API instance with lazy-loading support
@@ -29,137 +34,52 @@ export const createServer = (baseUrl?: string) => {
     api.setBaseUrl(baseUrl);
   }
 
-  logger.log(`Creating eRegulations MCP server`);
+  logger.log(`Creating eRegulations MCP server using McpServer`);
 
-  const server = new Server(
-    {
-      name: "eregulations-mcp-server",
-      version: "1.0.0",
-    },
-    {
-      capabilities: {
-        tools: {
-          listProcedures: true,
-          getProcedureDetails: true,
-          getProcedureStep: true,
-          searchProcedures: true,
-        },
-        prompts: {},
-      },
-    }
-  );
+  // Instantiate McpServer (no capabilities needed)
+  const server = new McpServer({
+    name: "eregulations-mcp-server",
+    version: "1.0.0", // Consider using version from package.json later
+  });
 
-  // Create all tool handlers
+  // Create handlers
+  // const { createHandlers } = await import("./mcp-capabilities/tools/handlers/index.js"); // REMOVE await import
   const handlers = createHandlers(api);
 
-  // Register the tool list handler
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
-    logger.log("Handling ListToolsRequest");
-
-    const tools: Tool[] = handlers.map((handler) => ({
-      name: handler.name,
-      description: handler.description,
-      inputSchema: handler.inputSchema,
-    }));
-
-    return { tools };
-  });
-
-  // Register the tool call handler
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
-    logger.log(`Handling tool call: ${name}`);
-
-    const handler = handlers.find((h) => h.name === name);
-    if (!handler) {
-      const errorMsg = `Unknown tool: ${name}`;
-      logger.error(errorMsg);
-      throw new Error(errorMsg);
-    }
-
-    return handler.handler(args);
-  });
-
-  // Register standard prompts handlers
-  server.setRequestHandler(ListPromptsRequestSchema, async () => {
-    logger.log("Handling ListPromptsRequest");
-
-    return {
-      prompts: [
-        {
-          name: PromptName.LIST_PROCEDURES,
-          description:
-            "Get a list of all available procedures in the eRegulations system",
-        },
-        {
-          name: PromptName.GET_PROCEDURE_DETAILS,
-          description:
-            "Get detailed information about a specific procedure by its ID",
-          arguments: [
-            {
-              name: "procedureId",
-              description: "ID of the procedure to retrieve",
-              required: true,
-            },
-          ],
-        },
-        {
-          name: PromptName.GET_PROCEDURE_STEP,
-          description:
-            "Get information about a specific step within a procedure",
-          arguments: [
-            {
-              name: "procedureId",
-              description: "ID of the procedure",
-              required: true,
-            },
-            {
-              name: "stepId",
-              description: "ID of the step within the procedure",
-              required: true,
-            },
-          ],
-        },
-        {
-          name: PromptName.SEARCH_PROCEDURES,
-          description:
-            "Search for procedures by keyword or phrase. The search uses OR logic between words in the keyword phrase.",
-          arguments: [
-            {
-              name: "keyword",
-              description: "The keyword or phrase to search for",
-              required: true,
-            },
-          ],
-        },
-      ],
-    };
-  });
-
-  // Register handler for getting a specific prompt
-  server.setRequestHandler(GetPromptRequestSchema, async (request) => {
-    const { name } = request.params;
-    logger.log(`Handling GetPromptRequest for prompt: ${name}`);
-
-    // Return messages for the requested prompt
-    if (Object.values(PromptName).includes(name as PromptName)) {
+  // Add the example 'add' tool for testing - REMOVED
+  /*
+  server.tool(
+    "add",
+    { a: z.number(), b: z.number() },
+    async ({ a, b }) => {
+      logger.info(`Handling tool call: add(${a}, ${b})`);
       return {
-        messages: [
-          {
-            role: "user",
-            content: {
-              type: "text",
-              text: PROMPT_TEMPLATES[name as PromptName],
-            },
-          },
-        ],
+        // Ensure response matches MCP ToolResult structure
+        content: [{ type: "text", text: String(a + b) }],
       };
     }
+  );
+  */
 
-    const errorMsg = `Unknown prompt: ${name}`;
-    logger.error(errorMsg);
-    throw new Error(errorMsg);
+  // Register eRegulations tools
+  handlers.forEach((handler) => {
+    const schemaDef = handler.inputSchemaDefinition;
+    // Check if it's an instance of ZodObject
+    if (schemaDef instanceof z.ZodObject) {
+      // Now TypeScript knows schemaDef is a ZodObject and has .shape
+      // Cast handler to 'any' to bypass strict type checking
+      server.tool(handler.name, schemaDef.shape, handler.handler as any);
+      logger.info(`Registered tool '${handler.name}' with McpServer`);
+    } else {
+      // Handle non-object schemas or log warning
+      logger.warn(
+        `Could not register tool '${handler.name}': Schema is not a ZodObject.`
+      );
+    }
   });
 
-  return { server, handlers };
+  // Return only the server instance for now
+  return { server };
+  // Return server instance and an empty handlers array temporarily
+  // return { server, handlers: [] };
 };

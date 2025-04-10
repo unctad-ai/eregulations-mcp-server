@@ -1,0 +1,28 @@
+# MCP Server Docker Implementation TODO
+
+- [x] **Verify Server Code (`src/index.ts`):**
+  - [x] Confirm reading input JSON from `process.stdin`.
+  - [x] Confirm writing output JSON to `process.stdout`.
+  - ~~[ ] **Implement** usage of `process.env.GITHUB_PERSONAL_ACCESS_TOKEN` for GitHub interactions.~~ (Not required for this server)
+- [x] **Local Build & Test:**
+  - [x] Build image: `docker build -t eregulations-mcp-server .`
+  - [x] Test execution: `echo '{"method": "tools/list"...}' | docker run -i --rm -e EREGULATIONS_API_URL=<API_URL> eregulations-mcp-server`
+  - [x] Verify output is correct JSON response.
+- [ ] **Set up Container Registry (GHCR):**
+  - [ ] Ensure GHCR is enabled for `unctad-ai` organization.
+  - [ ] Confirm permissions to publish packages to `ghcr.io/unctad-ai/`.
+- [x] **Implement CI/CD for Publishing (GitHub Actions):**
+  - [x] Create/update `.github/workflows/publish-docker.yml`.
+  - [x] Configure workflow to trigger on `main` push/tags.
+  - [x] Implement login to GHCR.
+  - [x] Implement build step.
+  - [x] Implement tagging (`latest`, version).
+  - [x] Implement push to `ghcr.io/unctad-ai/eregulations-mcp-server`.
+- [x] **Update Documentation (`README.md`):**
+  - [x] Remove/update `npx` instructions.
+  - [x] Add section for Docker usage.
+  - [x] Include `docker run` command example.
+  - [x] Document `EREGULATIONS_API_URL` requirement (instead of GitHub token).
+  - [x] Include example client configuration JSON (adjusting env vars).
+- [x] **Fix Tests:**
+  - [x] Update `src/test/mcp-server.test.ts` to work with McpServer registration.

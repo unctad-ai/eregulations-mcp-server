@@ -14,6 +14,7 @@ export function createListProceduresHandler(api: ERegulationsApi): ToolHandler {
     name: ToolName.LIST_PROCEDURES,
     description: `List all available procedures in the eRegulations system.`,
     inputSchema: zodToJsonSchema(ListProceduresSchema),
+    inputSchemaDefinition: ListProceduresSchema,
     handler: async (args: any) => {
       try {
         // Use the inferred type for args, providing defaults for optional params

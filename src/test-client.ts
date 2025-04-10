@@ -67,24 +67,31 @@ async function main() {
     }
   }
 
-  // Use API URL from command line argument if provided, otherwise from environment
-  const apiUrlArg =
-    apiUrl || process.env.EREGULATIONS_API_URL
-      ? ["--api-url", apiUrl || process.env.EREGULATIONS_API_URL || ""]
-      : [];
-
-  if (apiUrlArg.length > 0) {
-    console.log(`Using API URL: ${apiUrlArg[1]}`);
+  // Prepare environment for Docker - only need the API URL
+  const dockerEnv: Record<string, string> = {};
+  const effectiveApiUrl = apiUrl || process.env.EREGULATIONS_API_URL;
+  if (effectiveApiUrl) {
+    console.log(`Using API URL: ${effectiveApiUrl}`);
+    dockerEnv["EREGULATIONS_API_URL"] = effectiveApiUrl;
   } else {
     console.warn(
       "Warning: No API URL provided. Please set EREGULATIONS_API_URL environment variable or use --api-url argument."
     );
+    // Optionally exit or provide a default if API URL is strictly required
+    // process.exit(1);
   }
 
   const transport = new StdioClientTransport({
-    command: "node",
-    args: [path.join(__dirname, "../dist/index.js"), ...apiUrlArg],
-    env,
+    command: "/usr/local/bin/docker",
+    args: [
+      "run",
+      "-i",
+      "--rm",
+      "-e",
+      "EREGULATIONS_API_URL", // Name of env var expected by container
+      "eregulations-mcp-server:latest", // Local image tag
+    ],
+    env: dockerEnv, // Pass only the required env var to docker run itself
   });
 
   const client = new Client(

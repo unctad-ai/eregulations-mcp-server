@@ -1,0 +1,19 @@
+# Ignore node_modules installed locally
+node_modules
+
+# Ignore build output if generated locally
+dist
+
+# Ignore git directory
+.git
+
+# Ignore environment files
+.env*
+
+# Ignore logs
+*.log
+
+# Ignore IDE/OS files
+.DS_Store
+.idea/
+.vscode/ 

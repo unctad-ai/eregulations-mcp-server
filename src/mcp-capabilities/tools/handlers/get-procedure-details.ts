@@ -16,6 +16,7 @@ export function createGetProcedureDetailsHandler(
     name: ToolName.GET_PROCEDURE_DETAILS,
     description: `Get detailed information about a specific procedure by ID.`,
     inputSchema: zodToJsonSchema(GetProcedureDetailsSchema),
+    inputSchemaDefinition: GetProcedureDetailsSchema,
     handler: async (args: any) => {
       try {
         // Use the inferred type for args

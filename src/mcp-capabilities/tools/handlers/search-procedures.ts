@@ -19,9 +19,9 @@ export function createSearchProceduresHandler(
 ): ToolHandler {
   return {
     name: ToolName.SEARCH_PROCEDURES,
-    description:
-      "Search for procedures by keyword or phrase. The search uses OR logic between words in the keyword phrase.",
+    description: `Search for procedures by keyword or phrase. The search uses OR logic between words in the keyword phrase. For best results, prefer using a single, specific keyword whenever possible.`,
     inputSchema: zodToJsonSchema(SearchProceduresSchema),
+    inputSchemaDefinition: SearchProceduresSchema,
     handler: async (args) => {
       // Use the inferred type for args
       const { keyword, max_items, max_length } = args as SearchProceduresArgs;

@@ -11,36 +11,77 @@ A Model Context Protocol (MCP) server implementation for accessing eRegulations 
 - MCP prompt templates to guide LLM tool usage
 - Streamlined implementation using standard I/O connections
 
-## Installation
+## Usage
 
-### Quick Installation with Smithery
+### Running with Docker (Recommended)
 
-The easiest way to install and run the eRegulations MCP Server is through Smithery:
+The recommended way to run the server is using the published Docker image from the GitHub Container Registry (GHCR). This ensures a consistent and isolated environment.
+
+```bash
+# Pull the latest image (optional)
+docker pull ghcr.io/unctad-ai/eregulations-mcp-server:latest
+
+# Run the server, providing the target eRegulations API URL
+export EREGULATIONS_API_URL="https://your-eregulations-api.com"
+docker run -i --rm -e EREGULATIONS_API_URL ghcr.io/unctad-ai/eregulations-mcp-server
+```
+
+Replace `https://your-eregulations-api.com` with the actual base URL of the eRegulations instance you want to connect to (e.g., `https://api-tanzania.tradeportal.org`).
+
+The server listens for MCP JSON requests on standard input and sends responses to standard output.
+
+### Example Client Configuration
+
+Here's an example of how a client (like Claude) might be configured to use this server via Docker:
+
+```json
+{
+  "mcpServers": {
+    "eregulations": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "EREGULATIONS_API_URL",
+        "ghcr.io/unctad-ai/eregulations-mcp-server:latest"
+      ],
+      "env": {
+        "EREGULATIONS_API_URL": "https://your-eregulations-api.com"
+      }
+    }
+  }
+}
+```
+
+(Remember to replace the `EREGULATIONS_API_URL` value in the `env` section as well.)
+
+### Installation via Smithery
+
+Alternatively, you can install and run the server using Smithery:
 
 Visit [https://smithery.ai/server/@unctad-ai/eregulations-mcp-server](https://smithery.ai/server/@unctad-ai/eregulations-mcp-server) for the installation command.
 
-### Installation via npm Registry
+### Installation via npm Registry (Deprecated)
 
-You can also run the eRegulations MCP Server directly using npx with the published npm package:
+~~Running the server directly using `npx` is deprecated due to potential environment inconsistencies.~~
 
-```bash
-# Set environment variables and run with npx
+~~```bash
+
+# Deprecated: Set environment variables and run with npx
+
 export EREGULATIONS_API_URL=https://example.com/api && export NODE_ENV=production && npx -y @unctad-ai/eregulations-mcp-server@latest
-```
+
+````~~
 
 ## Configuration
 
-The server can be configured using command-line arguments (preferred) or environment variables:
-
-### Command-line Arguments
-
-- `--api-url`: URL of the eRegulations API to connect to
+The server requires the URL of the target eRegulations API.
 
 ### Environment Variables
 
-- `EREGULATIONS_API_URL`: URL of the eRegulations API to connect to (fallback if --api-url is not provided)
-
-**Note**: Command-line arguments take precedence over environment variables.
+- `EREGULATIONS_API_URL`: **(Required)** URL of the eRegulations API to connect to (e.g., `https://api-tanzania.tradeportal.org`). Passed to the Docker container using the `-e` flag.
 
 ## Available Tools
 
@@ -93,4 +134,4 @@ npm run test:watch
 
 # Run test client
 npm run test-client
-```
+````
