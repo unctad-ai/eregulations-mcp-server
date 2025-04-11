@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.11](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.10...v0.4.11) (2025-04-11)
+
+
+### Code Refactoring
+
+* remove max_items and max_length parameters from procedure formatting and handlers, ensuring all items and full descriptions are included in outputs ([ade9917](https://github.com/unctad-ai/eregulations-mcp-server/commit/ade991712b729f274453cc61f278248829bb5e41))
+
 ### [0.4.10](https://github.com/unctad-ai/eregulations-mcp-server/compare/v0.4.9...v0.4.10) (2025-04-11)
 
 
