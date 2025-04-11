@@ -16,15 +16,66 @@ describe("createSearchProceduresHandler", () => {
   let mockApi: ERegulationsApi;
   let handler: ReturnType<typeof createSearchProceduresHandler>;
 
+  // Updated mock data with links
   const mockObjectives: ObjectiveData[] = [
-    { id: 1, name: "Obj 1", description: "Desc 1" },
-    { id: 2, name: "Obj 2" },
+    {
+      id: 1,
+      name: "Procedure 1",
+      description: "Desc 1",
+      links: [{ rel: "procedure", href: "..." }], // This is a procedure
+    },
+    {
+      id: 2,
+      name: "Objective 2",
+      description: "Desc 2",
+      links: [{ rel: "objective", href: "..." }], // This is an objective
+    },
+    {
+      id: 3,
+      name: "Procedure 3",
+      links: [{ rel: "procedure", href: "..." }], // This is a procedure, no description
+    },
+    {
+      id: 4,
+      name: "Item without links",
+      description: "Desc 4",
+    }, // No links, should be filtered out
+    {
+      id: 5,
+      name: "Item with empty links",
+      description: "Desc 5",
+      links: [],
+    }, // Empty links, should be filtered out
+    {
+      id: 6,
+      name: "Item with null link",
+      description: "Desc 6",
+      links: [null],
+    }, // Invalid link, should be filtered out
   ];
+
+  // Expected filtered results for the formatter
+  const expectedFilteredProcedures = [
+    {
+      id: 1,
+      name: "Procedure 1",
+      description: "Desc 1",
+      links: [{ rel: "procedure", href: "..." }],
+    },
+    {
+      id: 3,
+      name: "Procedure 3",
+      links: [{ rel: "procedure", href: "..." }],
+    },
+  ];
+
   const mockFormattedResult = {
     text: "Formatted text",
     data: [
-      { id: 1, name: "Obj 1" },
-      { id: 2, name: "Obj 2" },
+      // Data returned by formatter might differ based on its logic,
+      // but the handler only cares about the 'text' part.
+      { id: 1, name: "Procedure 1" },
+      { id: 3, name: "Procedure 3" },
     ],
   };
 
@@ -56,8 +107,9 @@ describe("createSearchProceduresHandler", () => {
     await handler.handler(args);
 
     expect(mockApi.searchProcedures).toHaveBeenCalledWith("test");
+    // Expect formatter to be called with the FILTERED procedures
     expect(formatters.searchProcedures.format).toHaveBeenCalledWith(
-      mockObjectives,
+      expectedFilteredProcedures, // Use the expected filtered list
       "test",
       undefined,
       undefined

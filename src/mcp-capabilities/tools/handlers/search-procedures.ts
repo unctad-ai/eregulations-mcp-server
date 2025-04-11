@@ -30,17 +30,31 @@ export function createSearchProceduresHandler(
       if (max_length) logger.log(`  max_length: ${max_length}`);
 
       try {
-        const procedures = await api.searchProcedures(keyword);
+        const results = await api.searchProcedures(keyword);
 
-        // Format the results using the search procedures formatter (always text only)
+        // Filter results to only include actual procedures based on links
+        const filteredProcedures = results.filter(
+          (item) =>
+            item.links &&
+            Array.isArray(item.links) &&
+            item.links.some((link) => link && link.rel === "procedure")
+        );
+
+        logger.log(
+          `searchProcedures API returned ${results.length} items, filtered to ${filteredProcedures.length} procedures`
+        );
+
+        // Format the filtered results using the search procedures formatter
         const formattedResult = formatters.searchProcedures.format(
-          procedures,
+          filteredProcedures, // Pass filtered procedures
           keyword, // Pass keyword for context
           max_items,
           max_length
         );
 
-        logger.log(`searchProcedures found ${procedures.length} results`);
+        logger.log(
+          `searchProcedures found ${filteredProcedures.length} results`
+        );
 
         // Always return only text content
         return {

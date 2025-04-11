@@ -124,7 +124,7 @@ export interface ObjectiveData {
   id: number;
   name: string;
   description?: string;
-  // links?: ApiLink[]; // Add if needed later
+  links?: (ApiLink | null)[]; // Add optional links array, allowing nulls
 }
 
 /**
@@ -157,4 +157,12 @@ export interface FormattedProcedureStep {
 export interface FormattedObjectiveList {
   text: string; // Human-readable summary
   data: any[]; // Simplified structured data (id, name, description?)
+}
+
+/**
+ * Basic structure for API link objects
+ */
+export interface ApiLink {
+  rel: string;
+  href: string;
 }
