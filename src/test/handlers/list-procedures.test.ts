@@ -80,9 +80,7 @@ describe("ListProceduresHandler", () => {
     // Verify formatter was called with the API result and default args
     expect(formatters.procedureList.format).toHaveBeenCalledWith(
       mockProcedures,
-      false,
-      undefined,
-      undefined
+      false
     );
 
     // Verify the response structure

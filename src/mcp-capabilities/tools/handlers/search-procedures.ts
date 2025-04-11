@@ -24,10 +24,8 @@ export function createSearchProceduresHandler(
     inputSchemaDefinition: SearchProceduresSchema,
     handler: async (args) => {
       // Use the inferred type for args
-      const { keyword, max_items, max_length } = args as SearchProceduresArgs;
+      const { keyword } = args as SearchProceduresArgs;
       logger.log(`Handling searchProcedures with keyword: ${keyword}`);
-      if (max_items) logger.log(`  max_items: ${max_items}`);
-      if (max_length) logger.log(`  max_length: ${max_length}`);
 
       try {
         const results = await api.searchProcedures(keyword);
@@ -47,9 +45,7 @@ export function createSearchProceduresHandler(
         // Format the filtered results using the search procedures formatter
         const formattedResult = formatters.searchProcedures.format(
           filteredProcedures, // Pass filtered procedures
-          keyword, // Pass keyword for context
-          max_items,
-          max_length
+          keyword // Pass keyword for context
         );
 
         logger.log(

@@ -110,9 +110,7 @@ describe("createSearchProceduresHandler", () => {
     // Expect formatter to be called with the FILTERED procedures
     expect(formatters.searchProcedures.format).toHaveBeenCalledWith(
       expectedFilteredProcedures, // Use the expected filtered list
-      "test",
-      undefined,
-      undefined
+      "test"
     );
   });
 

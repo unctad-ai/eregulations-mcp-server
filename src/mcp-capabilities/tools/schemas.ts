@@ -8,22 +8,7 @@ export enum ToolName {
 }
 
 export const ListProceduresSchema = z.object({
-  max_items: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .describe(
-      "Optional maximum number of procedures to include in the formatted text output."
-    ),
-  max_length: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .describe(
-      "Optional maximum length for procedure descriptions in the formatted text output."
-    ),
+  // Remove max_items and max_length
 });
 
 export const GetProcedureDetailsSchema = z.object({
@@ -47,20 +32,4 @@ export const SearchProceduresSchema = z.object({
   keyword: z
     .string()
     .describe("The keyword or phrase to search for procedures"),
-  max_items: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .describe(
-      "Optional maximum number of procedures to include in the formatted text output."
-    ),
-  max_length: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .describe(
-      "Optional maximum length for procedure descriptions in the formatted text output."
-    ),
 });

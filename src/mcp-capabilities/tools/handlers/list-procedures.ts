@@ -18,20 +18,18 @@ export function createListProceduresHandler(api: ERegulationsApi): ToolHandler {
     handler: async (args: any) => {
       try {
         // Use the inferred type for args
-        const { max_items, max_length } = args as ListProceduresArgs;
+        // const { max_items, max_length } = args as ListProceduresArgs; // Removed
 
         logger.log(`Handling LIST_PROCEDURES request`);
-        if (max_items) logger.log(`  max_items: ${max_items}`);
-        if (max_length) logger.log(`  max_length: ${max_length}`);
+        // Removed logging for max_items, max_length
 
         const procedures = await api.getProceduresList();
 
         // Use the dedicated formatter, always requesting text only
         const formattedResult = formatters.procedureList.format(
           procedures,
-          false,
-          max_items,
-          max_length
+          false
+          // Removed max_items, max_length
         );
 
         logger.log(`LIST_PROCEDURES returning ${procedures.length} procedures`);

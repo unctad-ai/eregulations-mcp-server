@@ -122,32 +122,27 @@ describe("ProcedureListFormatter", () => {
     expect(result.data).toEqual([]);
   });
 
-  it("optimizes descriptions in text output", () => {
+  it("includes full descriptions in text output", () => {
+    const longText = "A".repeat(200);
     const proceduresWithLongDesc = [
       {
         id: 1,
         name: "Test Procedure",
-        explanatoryText: "A".repeat(200),
+        explanatoryText: longText,
       },
     ];
 
-    // Call format with an explicit maxLength to test truncation
-    const maxLength = 80;
-    const result = formatter.format(
-      proceduresWithLongDesc,
-      false,
-      undefined,
-      maxLength
-    );
+    // Call format (maxLength parameter is removed)
+    const result = formatter.format(proceduresWithLongDesc, false);
+
     const descriptionLine = result.text
       .split("\n")
-      .find((line) => line.includes("A"));
+      .find((line) => line.includes(longText)); // Find the line containing the full text
+
     expect(descriptionLine).toBeDefined();
-    // Check that the line is truncated (length < original) and close to maxLength (accounting for indent '   ' and '...')
-    expect(descriptionLine!.length).toBeLessThan(200 + "\n   ".length);
-    expect(descriptionLine!.length).toBe(
-      maxLength + "   ".length + "...".length // Correct length check for line starting with spaces
-    );
-    expect(descriptionLine).toContain("...");
+    // Check that the line contains the full, untruncated description
+    expect(descriptionLine).toContain(longText);
+    // Check that the line does NOT end with '...'
+    expect(descriptionLine!.endsWith("...")).toBe(false);
   });
 });

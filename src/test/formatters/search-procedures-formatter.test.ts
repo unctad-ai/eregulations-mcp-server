@@ -70,56 +70,28 @@ describe("SearchProceduresFormatter", () => {
     expect(resultUndefined.data).toEqual([]);
   });
 
-  it("should truncate long descriptions in text format", () => {
+  it("should include all items and full descriptions in output", () => {
     const longDesc =
-      "This is a very long description that definitely exceeds the one hundred character limit imposed by the formatter to save context window space for the large language model.";
-    const objectivesLong: ObjectiveData[] = [
-      { id: 201, name: "Long Desc Proc", description: longDesc },
-    ];
-    // Pass explicit maxLength to test truncation
-    const maxLength = 100;
-    const result = formatter.format(
-      objectivesLong,
-      "long",
-      undefined,
-      maxLength
-    );
-
-    const expectedTruncated = longDesc.substring(0, maxLength) + "...";
-    expect(result.text).toContain(
-      `1. Long Desc Proc (ID:201)\n   ${expectedTruncated}\n`
-    );
-    // Ensure data part is not truncated
-    expect(result.data[0].description).toBe(longDesc);
-  });
-
-  it("should limit the number of items shown based on maxItems (default 20)", () => {
-    const manyObjectives: ObjectiveData[] = Array.from(
-      { length: 25 },
-      (_, i) => ({
+      "This is a very long description that previously might have been truncated.";
+    const manyObjectives: ObjectiveData[] = [
+      ...Array.from({ length: 25 }, (_, i) => ({
         id: 300 + i,
         name: `Procedure ${i + 1}`,
         description: `Desc ${i + 1}`,
-      })
-    );
+      })),
+      { id: 400, name: "Long Desc Proc", description: longDesc },
+    ];
 
-    // Pass explicit maxItems to test limiting
-    const maxItems = 20;
-    const result = formatter.format(manyObjectives, "many", maxItems);
+    const result = formatter.format(manyObjectives, "many");
 
-    // Check that only maxItems items are listed
-    expect(result.text).toContain(
-      `20. Procedure ${maxItems} (ID:${299 + maxItems})`
-    );
-    expect(result.text).not.toContain(
-      `21. Procedure ${maxItems + 1} (ID:${300 + maxItems})`
-    );
-    // Check for the truncation message
-    expect(result.text).toContain(
-      `... and ${manyObjectives.length - maxItems} more results.`
-    );
+    // Check that all items are listed
+    expect(result.text).toContain(`25. Procedure 25 (ID:324)`);
+    expect(result.text).toContain(`26. Long Desc Proc (ID:400)`);
+    // Check that the long description is NOT truncated
+    expect(result.text).toContain(`\n   ${longDesc}\n`);
+    expect(result.text).not.toContain("..."); // No truncation message
     // Check data still contains all items
-    expect(result.data.length).toBe(25);
+    expect(result.data.length).toBe(26);
   });
 
   it("should handle missing keyword gracefully", () => {

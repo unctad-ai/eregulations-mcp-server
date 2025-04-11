@@ -16,15 +16,11 @@ export class SearchProceduresFormatter
    * Format procedure search results for LLM consumption.
    * @param results The search result data to format (ObjectiveWithDescriptionBaseModel[]).
    * @param keyword The search keyword used.
-   * @param maxItems Optional maximum number of items to include in the formatted text. Defaults to showing all.
-   * @param maxLength Optional maximum length for descriptions in the formatted text. Defaults to showing full description.
    * @returns Formatted procedure search results text and essential data.
    */
   public format(
     results: ObjectiveData[],
-    keyword?: string,
-    maxItems?: number,
-    maxLength?: number
+    keyword?: string
   ): FormattedProcedureList {
     // Renamed variable
     if (!results || !Array.isArray(results) || results.length === 0) {
@@ -34,12 +30,7 @@ export class SearchProceduresFormatter
       };
     }
 
-    const formattedText = this.formatText(
-      results,
-      keyword,
-      maxItems,
-      maxLength
-    ); // Pass new params
+    const formattedText = this.formatText(results, keyword); // Pass new params
     const essentialData = this.extractEssentialData(results); // Pass results
 
     return {
@@ -65,16 +56,9 @@ export class SearchProceduresFormatter
    * Format search results (objectives) as human-readable text representing procedures.
    * @param results The search data to format (objectives).
    * @param keyword The search keyword used.
-   * @param maxItems Optional maximum number of items to include. If undefined, all items are included.
-   * @param maxLength Optional maximum length for descriptions. If undefined, full description is included.
    * @returns Formatted text optimized for LLM context.
    */
-  private formatText(
-    results: ObjectiveData[],
-    keyword?: string,
-    maxItems?: number,
-    maxLength?: number
-  ): string {
+  private formatText(results: ObjectiveData[], keyword?: string): string {
     const searchTerm = keyword ? ` for "${keyword}"` : "";
     const resultCount = results.length;
 
@@ -82,10 +66,7 @@ export class SearchProceduresFormatter
       resultCount !== 1 ? "s" : ""
     }${searchTerm}:\n\n`; // Use "procedure" in text
 
-    const shownResults =
-      maxItems !== undefined && resultCount > maxItems
-        ? results.slice(0, maxItems)
-        : results;
+    const shownResults = results; // Always show all results now
 
     if (shownResults.length > 0) {
       shownResults.forEach((res, index) => {
@@ -94,18 +75,11 @@ export class SearchProceduresFormatter
 
         let description = "";
         if (res.description) {
-          description =
-            maxLength !== undefined && res.description.length > maxLength
-              ? `\n   ${res.description.substring(0, maxLength)}...`
-              : `\n   ${res.description}`;
+          description = `\n   ${res.description}`;
         }
 
         header += `${index + 1}. ${name} (ID:${id})${description}\n`;
       });
-
-      if (maxItems !== undefined && resultCount > maxItems) {
-        header += `\n... and ${resultCount - maxItems} more results.`;
-      }
 
       header += `\n\nTo get details about a specific procedure, use the getProcedureDetails tool with the procedure ID.`; // Keep instruction
     } else {
