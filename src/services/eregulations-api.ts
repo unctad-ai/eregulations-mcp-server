@@ -726,9 +726,11 @@ export class ERegulationsApi {
         const url = `${baseUrl}/Objectives/Search`;
 
         // Create a specific axios instance for this POST request
+        // Wrap keyword in an object as per the new API format
+        const requestBody = { keyword };
         const response = await this.axiosInstance.post<
           ObjectiveWithDescriptionBaseModel[]
-        >(url, JSON.stringify(keyword), {
+        >(url, JSON.stringify(requestBody), {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",

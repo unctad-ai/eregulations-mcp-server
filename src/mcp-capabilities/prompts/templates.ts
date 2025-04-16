@@ -67,20 +67,20 @@ URL: https://tanzania.tradeportal.org/procedure/725
 
 STEPS:
 1. Submit application for buying cloves (STEP ID:2787)
-   Entity: Zanzibar State Trading Corporation (ZSTC) 
+   Entity: Zanzibar State Trading Corporation (ZSTC)
    Requirements: Application letter for buying cloves;
 2. Pay for cloves (STEP ID:2788)
    Entity: The People's Bank of Zanzibar (PBZ)
    Requirements: Profoma invoice - ZSTC;
 3. Submit payment slip (STEP ID:2789)
-   Entity: Zanzibar State Trading Corporation (ZSTC) 
+   Entity: Zanzibar State Trading Corporation (ZSTC)
    Requirements: Swift copy; Stamped bank deposit slip;
 4. Submit shipping instruction (STEP ID:2791)
-   Entity: Zanzibar State Trading Corporation (ZSTC) 
+   Entity: Zanzibar State Trading Corporation (ZSTC)
    Requirements: Shipping instruction;
    Time: ~3 days
 5. Obtain documents and consignment (STEP ID:2790)
-   Entity: Zanzibar State Trading Corporation (ZSTC) 
+   Entity: Zanzibar State Trading Corporation (ZSTC)
 
 FINAL DOCUMENTS: ZSTC Packing list; Certificate of origin from ZCCIA; Bill of lading; Clove consignment; Phytosanitary certificate (Zanzibar); Commercial invoice from ZSTC;
 
@@ -138,7 +138,7 @@ Comprehensive details about a specific step, including:
 STEP: Submit shipping instruction (ID:2791)
 STATUS: Certified
 CONTACT:
-Entity: Zanzibar State Trading Corporation (ZSTC) 
+Entity: Zanzibar State Trading Corporation (ZSTC)
 Phone: +255 242 230 271 | Email: info@zstcznz.org | Web: https://www.zstcznz.org/
 Address: P.O.Box 26, Maisara Street
 Unit: Department of Trade - ZSTC
@@ -182,7 +182,7 @@ Search for procedures in the eRegulations system by keyword or phrase.
 \`\`\`
 
 ## Parameters
-- \`keyword\` (string, required): The keyword or phrase to search for
+- \`keyword\` (string, required): The keyword or phrase to search for procedures
 
 ## Returns
 A list of procedures matching the search criteria, with their IDs, names, and basic information. Use this tool to find relevant procedures based on keywords.
@@ -203,7 +203,7 @@ The response shows each matching procedure with:
 - The specific name of the procedure
 - The procedure ID in parentheses (e.g., ID:251)
 
-## Notes
+## Usage Notes
 - Use specific terms related to the procedure you're looking for.
 - The search uses OR logic between the words in the keyword phrase. For best results, prefer using a single, specific keyword whenever possible.
 - Once you find a relevant procedure ID, use \`getProcedureDetails\` to get comprehensive information about it.

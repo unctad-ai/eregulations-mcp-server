@@ -630,7 +630,7 @@ describe("ERegulationsApi", () => {
 
       expect(axiosPost).toHaveBeenCalledWith(
         `${baseUrl}/Objectives/Search`,
-        JSON.stringify(keyword),
+        JSON.stringify({ keyword }),
         expect.objectContaining({ headers: expect.any(Object) })
       );
       expect(results).toEqual(mockObjectivesResult);

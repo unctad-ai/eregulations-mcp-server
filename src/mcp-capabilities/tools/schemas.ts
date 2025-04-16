@@ -27,5 +27,7 @@ export const GetProcedureStepSchema = z.object({
 export const SearchProceduresSchema = z.object({
   keyword: z
     .string()
-    .describe("The keyword or phrase to search for procedures"),
+    .describe(
+      "The keyword or phrase to search for procedures. This will be wrapped in a JSON object with a 'keyword' property when sent to the API."
+    ),
 });
