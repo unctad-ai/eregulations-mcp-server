@@ -12,15 +12,11 @@ export const ListProceduresSchema = z.object({
 });
 
 export const GetProcedureDetailsSchema = z.object({
-  procedureId: z.number().describe("ID of the procedure to retrieve"),
-  max_length: z
+  procedureId: z
     .number()
     .int()
     .positive()
-    .optional()
-    .describe(
-      "Optional maximum length for the main procedure description in the formatted text output."
-    ),
+    .describe("ID of the procedure to retrieve"),
 });
 
 export const GetProcedureStepSchema = z.object({

@@ -126,28 +126,28 @@ describe("ProcedureFormatter", () => {
     expect(resultUndefined.data).toEqual({});
   });
 
-  it("optimizes long descriptions", () => {
+  it("includes full descriptions", () => {
+    const longDesc = "A".repeat(300);
     const longDescProcedure: ProcedureData = {
       id: 789,
       name: "Test Procedure",
       data: {
-        description: "A".repeat(300),
+        description: longDesc,
       },
     };
 
-    // Call format with an explicit maxLength to test truncation
-    const maxLength = 180;
-    const result = formatter.format(longDescProcedure, maxLength);
+    // Call format (maxLength parameter is removed)
+    const result = formatter.format(longDescProcedure);
 
-    const descriptionText = longDescProcedure.data?.description || "";
     expect(result.text).toContain("DESC:");
-    expect(result.text).toContain("..."); // Check for truncation indicator
     const descLine = result.text
       .split("\n")
       .find((line) => line.startsWith("DESC:"));
+
     expect(descLine).toBeDefined();
-    // Check that the line is truncated (length < original) and close to maxLength (accounting for 'DESC: ' and '...')
-    expect(descLine!.length).toBeLessThan(descriptionText.length);
-    expect(descLine!.length).toBe(maxLength + "DESC: ".length - 3 + 3); // Check exact truncated length: prefix + (maxLength-3 chars) + ...
+    // Check that the line contains the full description
+    expect(descLine).toContain(longDesc);
+    // Check that the line does NOT end with '...'
+    expect(descLine!.endsWith("...")).toBe(false);
   });
 });

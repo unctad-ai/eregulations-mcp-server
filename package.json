@@ -20,7 +20,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "mcp-inspector": "npx @modelcontextprotocol/inspector npx -y @unctad-ai/eregulations-mcp-server@latest --api-url https://api-tanzania.eregulations.org",
-    "mcp-inspector-local": "npx @modelcontextprotocol/inspector node dist/index.js --api-url https://api-tanzania.eregulations.org",
+    "mcp-inspector-local": "npx @modelcontextprotocol/inspector node dist/index.js --api-url https://api-tanzania.tradeportal.org",
     "test-client": "node dist/test-client.js --api-url https://api-tanzania.eregulations.org",
     "prepublishOnly": "npm run build && npm run test",
     "docker:build": "docker build -t eregulations-mcp-server:latest .",

@@ -20,20 +20,16 @@ export function createGetProcedureDetailsHandler(
     handler: async (args: any) => {
       try {
         // Use the inferred type for args
-        const { procedureId, max_length } = args as GetProcedureDetailsArgs;
+        const { procedureId } = args as GetProcedureDetailsArgs;
 
         logger.log(
           `Handling GET_PROCEDURE_DETAILS request for ID ${procedureId}`
         );
-        if (max_length) logger.log(`  max_length: ${max_length}`);
 
         const procedure = await api.getProcedureById(procedureId);
 
         // Use the formatter - Get result (data part will be ignored)
-        const formattedResult = formatters.procedure.format(
-          procedure,
-          max_length
-        );
+        const formattedResult = formatters.procedure.format(procedure);
 
         logger.log(
           `GET_PROCEDURE_DETAILS returning details for ${procedure.name}`

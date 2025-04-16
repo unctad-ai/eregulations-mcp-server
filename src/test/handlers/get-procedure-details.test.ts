@@ -72,11 +72,8 @@ describe("GetProcedureDetailsHandler", () => {
     // Verify API was called with the correct ID
     expect(mockApi.getProcedureById).toHaveBeenCalledWith(mockProcedureId);
 
-    // Verify formatter was called with the API result and undefined for maxLength
-    expect(formatters.procedure.format).toHaveBeenCalledWith(
-      mockProcedure,
-      undefined
-    );
+    // Verify formatter was called with the API result (no maxLength)
+    expect(formatters.procedure.format).toHaveBeenCalledWith(mockProcedure);
 
     // Verify the response structure
     expect(result.content).toHaveLength(1);
