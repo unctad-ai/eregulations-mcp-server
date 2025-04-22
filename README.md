@@ -4,6 +4,10 @@
 
 A Model Context Protocol (MCP) server implementation for accessing eRegulations API data. This server provides structured, AI-friendly access to eRegulations instances, making it easier for AI models to answer user questions about administrative procedures.
 
+<a href="https://glama.ai/mcp/servers/@unctad-ai/eregulations-mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@unctad-ai/eregulations-mcp-server/badge" alt="eRegulations Server MCP server" />
+</a>
+
 ## Features
 
 - Access eRegulations data through a standardized protocol
@@ -134,4 +138,4 @@ npm run test:watch
 
 # Run test client
 npm run test-client
-````
+```
