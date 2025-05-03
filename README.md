@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/unctad-ai-eregulations-mcp-server-badge.png)](https://mseep.ai/app/unctad-ai-eregulations-mcp-server)
+
 # eRegulations MCP Server
 
 [![smithery badge](https://smithery.ai/badge/@unctad-ai/eregulations-mcp-server)](https://smithery.ai/server/@unctad-ai/eregulations-mcp-server)
