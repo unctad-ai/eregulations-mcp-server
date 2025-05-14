@@ -1,10 +1,12 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/unctad-ai-eregulations-mcp-server-badge.png)](https://mseep.ai/app/unctad-ai-eregulations-mcp-server)
-
 # eRegulations MCP Server
+
+[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/f22ecac1-122a-47ee-8605-f0952b1964fd)
 
 [![smithery badge](https://smithery.ai/badge/@unctad-ai/eregulations-mcp-server)](https://smithery.ai/server/@unctad-ai/eregulations-mcp-server)
 
 A Model Context Protocol (MCP) server implementation for accessing eRegulations API data. This server provides structured, AI-friendly access to eRegulations instances, making it easier for AI models to answer user questions about administrative procedures.
+
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/unctad-ai-eregulations-mcp-server-badge.png)](https://mseep.ai/app/unctad-ai-eregulations-mcp-server)
 
 <a href="https://glama.ai/mcp/servers/@unctad-ai/eregulations-mcp-server">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@unctad-ai/eregulations-mcp-server/badge" alt="eRegulations Server MCP server" />
@@ -141,5 +143,3 @@ npm run test:watch
 # Run test client
 npm run test-client
 ```
-
-[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/f22ecac1-122a-47ee-8605-f0952b1964fd)
