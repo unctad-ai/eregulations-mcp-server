@@ -141,3 +141,5 @@ npm run test:watch
 # Run test client
 npm run test-client
 ```
+
+[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/f22ecac1-122a-47ee-8605-f0952b1964fd)
